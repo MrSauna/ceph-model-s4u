@@ -34,11 +34,7 @@ test-git-v3.35:
    - master
   <<: *build_our_img
 
-test-git-v3.34:
-  image: simgrid/stable:v3.34
-  only:
-   - master
-  <<: *build_our_img
+# I forgot to push the v3.34 tag and simgrid v3.33 was never released
 
 test-git-v3.32:
   image: simgrid/stable:v3.32
