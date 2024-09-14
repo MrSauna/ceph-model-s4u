@@ -28,6 +28,12 @@ test-git-unstable:
    - master
   <<: *build_our_img
 
+test-git-v3.36:
+  image: simgrid/stable:v3.36
+  only:
+   - master
+  <<: *build_our_img
+
 test-git-v3.35:
   image: simgrid/stable:v3.35
   only:
@@ -106,19 +112,20 @@ test-git-debian11:
 # Some Ubuntu images require the entrypoint to be specified. And we need /bin/sh to be bash :(
 # See https://gitlab.com/gitlab-org/gitlab-runner/-/issues/27614
 #
-test-git-ubuntu2104:
+test-git-ubuntu2204:
   image:
-    name: ubuntu:21.04
+    name: ubuntu:22.04
     entrypoint: ['/bin/bash', '-c', 'ln -snf /bin/bash /bin/sh && /bin/bash -c $0' ]
-  only: 
-   - simgrid-v3.25
   <<: *build_pkg
-test-git-ubuntu2110:
+test-git-ubuntu2404:
   image:
-    name: ubuntu:21.10
+    name: ubuntu:24.04
     entrypoint: ['/bin/bash', '-c', 'ln -snf /bin/bash /bin/sh && /bin/bash -c $0' ]
-  only:
-    - simgrid-v3.25
+  <<: *build_pkg
+test-git-ubuntu2410:
+  image:
+    name: ubuntu:24.10
+    entrypoint: ['/bin/bash', '-c', 'ln -snf /bin/bash /bin/sh && /bin/bash -c $0' ]
   <<: *build_pkg
 
 # (TEST C) Test the simgrid/tuto-s4u docker image
