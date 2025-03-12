@@ -28,6 +28,12 @@ test-git-unstable:
    - master
   <<: *build_our_img
 
+test-git-v4.0:
+  image: simgrid/stable:v4.0
+  only:
+   - master
+  <<: *build_our_img
+
 test-git-v3.36:
   image: simgrid/stable:v3.36
   only:
