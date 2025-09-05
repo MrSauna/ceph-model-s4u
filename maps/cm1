@@ -1,0 +1,521 @@
+# begin crush map
+tunable choose_local_tries 0
+tunable choose_local_fallback_tries 0
+tunable choose_total_tries 50
+tunable chooseleaf_descend_once 1
+tunable chooseleaf_vary_r 1
+tunable chooseleaf_stable 1
+tunable straw_calc_version 1
+tunable allowed_bucket_algs 54
+
+# devices
+device 0 osd.0 class nvme
+device 101 osd.101 class hdd
+device 102 osd.102 class hdd
+device 103 osd.103 class hdd
+device 104 osd.104 class hdd
+device 105 osd.105 class hdd
+device 106 osd.106 class hdd
+device 107 osd.107 class hdd
+device 108 osd.108 class hdd
+device 109 osd.109 class hdd
+device 110 osd.110 class hdd
+device 111 osd.111 class hdd
+device 112 osd.112 class hdd
+device 113 osd.113 class hdd
+device 114 osd.114 class hdd
+device 115 osd.115 class hdd
+device 116 osd.116 class hdd
+device 117 osd.117 class hdd
+device 118 osd.118 class hdd
+device 119 osd.119 class hdd
+device 120 osd.120 class hdd
+device 121 osd.121 class hdd
+device 122 osd.122 class hdd
+device 123 osd.123 class hdd
+device 124 osd.124 class hdd
+device 125 osd.125 class nvme
+device 126 osd.126 class hdd
+device 127 osd.127 class hdd
+device 128 osd.128 class hdd
+device 129 osd.129 class hdd
+device 130 osd.130 class hdd
+device 131 osd.131 class hdd
+device 132 osd.132 class hdd
+device 133 osd.133 class hdd
+device 134 osd.134 class hdd
+device 135 osd.135 class hdd
+device 136 osd.136 class hdd
+device 137 osd.137 class hdd
+device 138 osd.138 class hdd
+device 139 osd.139 class hdd
+device 140 osd.140 class hdd
+device 141 osd.141 class hdd
+device 142 osd.142 class hdd
+device 143 osd.143 class hdd
+device 144 osd.144 class hdd
+device 145 osd.145 class hdd
+device 146 osd.146 class hdd
+device 147 osd.147 class hdd
+device 148 osd.148 class hdd
+device 149 osd.149 class hdd
+device 150 osd.150 class nvme
+device 151 osd.151 class hdd
+device 152 osd.152 class hdd
+device 153 osd.153 class hdd
+device 154 osd.154 class hdd
+device 155 osd.155 class hdd
+device 156 osd.156 class hdd
+device 157 osd.157 class hdd
+device 158 osd.158 class hdd
+device 159 osd.159 class hdd
+device 160 osd.160 class hdd
+device 161 osd.161 class hdd
+device 162 osd.162 class hdd
+device 163 osd.163 class hdd
+device 164 osd.164 class hdd
+device 165 osd.165 class hdd
+device 166 osd.166 class hdd
+device 167 osd.167 class hdd
+device 168 osd.168 class hdd
+device 169 osd.169 class hdd
+device 170 osd.170 class hdd
+device 171 osd.171 class hdd
+device 172 osd.172 class hdd
+device 173 osd.173 class hdd
+device 174 osd.174 class hdd
+device 175 osd.175 class nvme
+device 176 osd.176 class hdd
+device 177 osd.177 class hdd
+device 178 osd.178 class hdd
+device 179 osd.179 class hdd
+device 180 osd.180 class hdd
+device 181 osd.181 class hdd
+device 182 osd.182 class hdd
+device 183 osd.183 class hdd
+device 184 osd.184 class hdd
+device 185 osd.185 class hdd
+device 186 osd.186 class hdd
+device 187 osd.187 class hdd
+device 188 osd.188 class hdd
+device 189 osd.189 class hdd
+device 190 osd.190 class hdd
+device 191 osd.191 class hdd
+device 192 osd.192 class hdd
+device 193 osd.193 class hdd
+device 194 osd.194 class hdd
+device 195 osd.195 class hdd
+device 196 osd.196 class hdd
+device 197 osd.197 class hdd
+device 198 osd.198 class hdd
+device 199 osd.199 class hdd
+
+# types
+type 0 osd
+type 1 host
+type 2 chassis
+type 3 rack
+type 4 row
+type 5 pdu
+type 6 pod
+type 7 room
+type 8 datacenter
+type 9 zone
+type 10 region
+type 11 root
+
+# buckets
+root default {
+	id -1		# do not change unnecessarily
+	id -6 class nvme		# do not change unnecessarily
+	id -2 class hdd		# do not change unnecessarily
+	# weight 0.000
+	alg straw2
+	hash 0	# rjenkins1
+}
+host oir04stg14_a {
+	id -22		# do not change unnecessarily
+	id -114 class nvme		# do not change unnecessarily
+	id -113 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.176 weight 12.847
+	item osd.177 weight 12.847
+	item osd.178 weight 12.847
+	item osd.179 weight 12.847
+	item osd.180 weight 12.847
+	item osd.181 weight 12.847
+}
+host oir04stg14_b {
+	id -23		# do not change unnecessarily
+	id -112 class nvme		# do not change unnecessarily
+	id -111 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.182 weight 12.847
+	item osd.183 weight 12.847
+	item osd.184 weight 12.847
+	item osd.185 weight 12.847
+	item osd.186 weight 12.847
+	item osd.187 weight 12.847
+}
+host oir04stg14_c {
+	id -24		# do not change unnecessarily
+	id -110 class nvme		# do not change unnecessarily
+	id -109 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.190 weight 12.847
+	item osd.188 weight 12.847
+	item osd.189 weight 12.847
+	item osd.191 weight 12.847
+	item osd.192 weight 12.847
+	item osd.193 weight 12.847
+}
+host oir04stg14_d {
+	id -25		# do not change unnecessarily
+	id -108 class nvme		# do not change unnecessarily
+	id -107 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.194 weight 12.847
+	item osd.195 weight 12.847
+	item osd.196 weight 12.847
+	item osd.197 weight 12.847
+	item osd.198 weight 12.847
+	item osd.199 weight 12.847
+}
+host oir03stg14_a {
+	id -26		# do not change unnecessarily
+	id -106 class nvme		# do not change unnecessarily
+	id -105 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.151 weight 12.847
+	item osd.152 weight 12.847
+	item osd.153 weight 12.847
+	item osd.154 weight 12.847
+	item osd.155 weight 12.847
+	item osd.156 weight 12.847
+}
+host oir03stg14_b {
+	id -27		# do not change unnecessarily
+	id -104 class nvme		# do not change unnecessarily
+	id -103 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.157 weight 12.847
+	item osd.158 weight 12.847
+	item osd.159 weight 12.847
+	item osd.160 weight 12.847
+	item osd.161 weight 12.847
+	item osd.162 weight 12.847
+}
+host oir03stg14_c {
+	id -28		# do not change unnecessarily
+	id -102 class nvme		# do not change unnecessarily
+	id -101 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.163 weight 12.847
+	item osd.164 weight 12.847
+	item osd.165 weight 12.847
+	item osd.166 weight 12.847
+	item osd.167 weight 12.847
+	item osd.168 weight 12.847
+}
+host oir03stg14_d {
+	id -29		# do not change unnecessarily
+	id -100 class nvme		# do not change unnecessarily
+	id -99 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.169 weight 12.847
+	item osd.170 weight 12.847
+	item osd.171 weight 12.847
+	item osd.172 weight 12.847
+	item osd.173 weight 12.847
+	item osd.174 weight 12.847
+}
+host oir02stg14_a {
+	id -30		# do not change unnecessarily
+	id -98 class nvme		# do not change unnecessarily
+	id -97 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.126 weight 12.847
+	item osd.127 weight 12.847
+	item osd.128 weight 12.847
+	item osd.129 weight 12.847
+	item osd.130 weight 12.847
+	item osd.131 weight 12.847
+}
+host oir02stg14_b {
+	id -31		# do not change unnecessarily
+	id -96 class nvme		# do not change unnecessarily
+	id -95 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.132 weight 12.847
+	item osd.133 weight 12.847
+	item osd.134 weight 12.847
+	item osd.135 weight 12.847
+	item osd.136 weight 12.847
+	item osd.137 weight 12.847
+}
+host oir02stg14_c {
+	id -32		# do not change unnecessarily
+	id -94 class nvme		# do not change unnecessarily
+	id -93 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.138 weight 12.847
+	item osd.139 weight 12.847
+	item osd.140 weight 12.847
+	item osd.141 weight 12.847
+	item osd.142 weight 12.847
+	item osd.143 weight 12.847
+}
+host oir02stg14_d {
+	id -33		# do not change unnecessarily
+	id -92 class nvme		# do not change unnecessarily
+	id -91 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.144 weight 12.847
+	item osd.145 weight 12.847
+	item osd.146 weight 12.847
+	item osd.147 weight 12.847
+	item osd.148 weight 12.847
+	item osd.149 weight 12.847
+}
+host oir01stg14_a {
+	id -34		# do not change unnecessarily
+	id -90 class nvme		# do not change unnecessarily
+	id -89 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.101 weight 12.847
+	item osd.102 weight 12.847
+	item osd.103 weight 12.847
+	item osd.104 weight 12.847
+	item osd.105 weight 12.847
+	item osd.106 weight 12.847
+}
+host oir01stg14_b {
+	id -35		# do not change unnecessarily
+	id -88 class nvme		# do not change unnecessarily
+	id -87 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.107 weight 12.847
+	item osd.108 weight 12.847
+	item osd.109 weight 12.847
+	item osd.110 weight 12.847
+	item osd.111 weight 12.847
+	item osd.112 weight 12.847
+}
+host oir01stg14_c {
+	id -36		# do not change unnecessarily
+	id -86 class nvme		# do not change unnecessarily
+	id -85 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.113 weight 12.847
+	item osd.114 weight 12.847
+	item osd.115 weight 12.847
+	item osd.116 weight 12.847
+	item osd.117 weight 12.847
+	item osd.118 weight 12.847
+}
+host oir01stg14 {
+	id -37		# do not change unnecessarily
+	id -39 class nvme		# do not change unnecessarily
+	id -38 class hdd		# do not change unnecessarily
+	# weight 0.910
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.0 weight 0.910
+}
+host oir01stg14_d {
+	id -82		# do not change unnecessarily
+	id -84 class nvme		# do not change unnecessarily
+	id -83 class hdd		# do not change unnecessarily
+	# weight 77.082
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.119 weight 12.847
+	item osd.120 weight 12.847
+	item osd.121 weight 12.847
+	item osd.122 weight 12.847
+	item osd.123 weight 12.847
+	item osd.124 weight 12.847
+}
+rack oir01 {
+	id -43		# do not change unnecessarily
+	id -45 class nvme		# do not change unnecessarily
+	id -44 class hdd		# do not change unnecessarily
+	# weight 309.242
+	alg straw2
+	hash 0	# rjenkins1
+	item oir01stg14 weight 0.910
+	item oir01stg14_a weight 77.083
+	item oir01stg14_b weight 77.083
+	item oir01stg14_c weight 77.083
+	item oir01stg14_d weight 77.083
+}
+host oir02stg14 {
+	id -67		# do not change unnecessarily
+	id -69 class nvme		# do not change unnecessarily
+	id -68 class hdd		# do not change unnecessarily
+	# weight 0.910
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.125 weight 0.910
+}
+rack oir02 {
+	id -58		# do not change unnecessarily
+	id -60 class nvme		# do not change unnecessarily
+	id -59 class hdd		# do not change unnecessarily
+	# weight 309.242
+	alg straw2
+	hash 0	# rjenkins1
+	item oir02stg14 weight 0.910
+	item oir02stg14_a weight 77.083
+	item oir02stg14_b weight 77.083
+	item oir02stg14_c weight 77.083
+	item oir02stg14_d weight 77.083
+}
+host oir03stg14 {
+	id -73		# do not change unnecessarily
+	id -75 class nvme		# do not change unnecessarily
+	id -74 class hdd		# do not change unnecessarily
+	# weight 0.910
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.150 weight 0.910
+}
+rack oir03 {
+	id -61		# do not change unnecessarily
+	id -63 class nvme		# do not change unnecessarily
+	id -62 class hdd		# do not change unnecessarily
+	# weight 309.242
+	alg straw2
+	hash 0	# rjenkins1
+	item oir03stg14 weight 0.910
+	item oir03stg14_a weight 77.083
+	item oir03stg14_b weight 77.083
+	item oir03stg14_c weight 77.083
+	item oir03stg14_d weight 77.083
+}
+host oir04stg14 {
+	id -79		# do not change unnecessarily
+	id -81 class nvme		# do not change unnecessarily
+	id -80 class hdd		# do not change unnecessarily
+	# weight 0.910
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.175 weight 0.910
+}
+rack oir04 {
+	id -64		# do not change unnecessarily
+	id -66 class nvme		# do not change unnecessarily
+	id -65 class hdd		# do not change unnecessarily
+	# weight 309.242
+	alg straw2
+	hash 0	# rjenkins1
+	item oir04stg14 weight 0.910
+	item oir04stg14_a weight 77.083
+	item oir04stg14_b weight 77.083
+	item oir04stg14_c weight 77.083
+	item oir04stg14_d weight 77.083
+}
+datacenter mdc2 {
+	id -48		# do not change unnecessarily
+	id -50 class nvme		# do not change unnecessarily
+	id -49 class hdd		# do not change unnecessarily
+	# weight 1236.960
+	alg straw2
+	hash 0	# rjenkins1
+	item oir01 weight 309.240
+	item oir02 weight 309.240
+	item oir03 weight 309.240
+	item oir04 weight 309.240
+}
+region kajaani {
+	id -47		# do not change unnecessarily
+	id -53 class nvme		# do not change unnecessarily
+	id -51 class hdd		# do not change unnecessarily
+	# weight 1236.960
+	alg straw2
+	hash 0	# rjenkins1
+	item mdc2 weight 1236.960
+}
+root CSC {
+	id -46		# do not change unnecessarily
+	id -54 class nvme		# do not change unnecessarily
+	id -52 class hdd		# do not change unnecessarily
+	# weight 1236.960
+	alg straw2
+	hash 0	# rjenkins1
+	item kajaani weight 1236.960
+}
+
+# rules
+rule test {
+	id 0
+	type erasure
+	min_size 3
+	max_size 11
+	step set_chooseleaf_tries 5
+	step set_choose_tries 100
+	step take CSC class hdd
+	step chooseleaf indep 0 type host
+	step emit
+}
+rule replicated-nvme {
+	id 2
+	type replicated
+	min_size 1
+	max_size 10
+	step take CSC class nvme
+	step chooseleaf firstn 0 type rack
+	step emit
+}
+rule replicated-hdd {
+	id 6
+	type replicated
+	min_size 1
+	max_size 10
+	step take CSC class hdd
+	step chooseleaf firstn 0 type rack
+	step emit
+}
+rule jerasure-hdd {
+	id 7
+	type erasure
+	min_size 3
+	max_size 11
+	step set_chooseleaf_tries 5
+	step set_choose_tries 100
+	step take CSC class hdd
+	step chooseleaf indep 0 type host
+	step emit
+}
+
+# end crush map

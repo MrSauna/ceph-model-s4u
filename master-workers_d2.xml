@@ -1,0 +1,13 @@
+<?xml version='1.0'?>
+<!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
+<platform version="4.1">
+  <!-- The master actor (with some arguments) -->
+  <actor host="mon.0" function="mon">
+    <argument value="maps/pm1"/>  <!-- PG Map -->
+    <argument value="3"/>  <!-- pool id -->
+  </actor>
+  <!-- The worker processes (with no argument) -->
+  <actor host="osd.0" function="osd" start_time="1" />
+  <actor host="osd.1" function="osd" start_time="1" />
+  <actor host="osd.2" function="osd" start_time="1" />
+</platform>
