@@ -1,0 +1,11 @@
+ceph_image: "quay.io/ceph/ceph:v17.2.8"
+container_runtime: "podman"
+mon_bootstrap_script: "inputs/mon_bootstrap.sh"
+
+experiments:
+  "small_cluster":
+    recipe: "inputs/recipes/small_cluster.sh"
+
+  # "real":
+  #   recipe: "inputs/recipes/topo_inject.sh"
+  #   base_map: "inputs/real_osdmaps/osdmap-1234567890.bin"

@@ -1,0 +1,274 @@
+# begin crush map
+tunable choose_local_tries 0
+tunable choose_local_fallback_tries 0
+tunable choose_total_tries 50
+tunable chooseleaf_descend_once 1
+tunable chooseleaf_vary_r 1
+tunable chooseleaf_stable 1
+tunable straw_calc_version 1
+tunable allowed_bucket_algs 54
+
+# devices
+{%- for osd in region.get_osds() %}
+device {{ osd.id }} {{ osd.name }} class hdd 
+{% endfor %}
+
+# types
+type 0 osd
+type 1 host
+type 2 chassis
+type 3 rack
+type 4 row
+type 5 pdu
+type 6 pod
+type 7 room
+type 8 datacenter
+type 9 region
+type 10 root
+
+# buckets
+host host-137 {
+	id -137		# do not change unnecessarily
+	id -138 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1227 weight 22.79800
+	item osd.1228 weight 22.79800
+	item osd.1229 weight 22.79800
+	item osd.1230 weight 22.79800
+	item osd.1231 weight 22.79800
+	item osd.1232 weight 22.79800
+	item osd.1233 weight 22.79800
+	item osd.1234 weight 22.79800
+	item osd.1235 weight 22.79800
+	item osd.1236 weight 22.79800
+	item osd.1237 weight 22.79800
+	item osd.1238 weight 22.79800
+	item osd.1239 weight 22.79800
+	item osd.1240 weight 22.79800
+	item osd.1241 weight 22.79800
+	item osd.1242 weight 22.79800
+	item osd.1243 weight 22.79800
+	item osd.1244 weight 22.79800
+	item osd.1245 weight 22.79800
+	item osd.1246 weight 22.79800
+	item osd.1247 weight 22.79800
+	item osd.1248 weight 22.79800
+	item osd.1249 weight 22.79800
+	item osd.1250 weight 22.79800
+}
+host host-139 {
+	id -139		# do not change unnecessarily
+	id -140 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1251 weight 22.79800
+	item osd.1252 weight 22.79800
+	item osd.1253 weight 22.79800
+	item osd.1254 weight 22.79800
+	item osd.1255 weight 22.79800
+	item osd.1256 weight 22.79800
+	item osd.1257 weight 22.79800
+	item osd.1258 weight 22.79800
+	item osd.1259 weight 22.79800
+	item osd.1260 weight 22.79800
+	item osd.1261 weight 22.79800
+	item osd.1262 weight 22.79800
+	item osd.1263 weight 22.79800
+	item osd.1264 weight 22.79800
+	item osd.1265 weight 22.79800
+	item osd.1266 weight 22.79800
+	item osd.1267 weight 22.79800
+	item osd.1268 weight 22.79800
+	item osd.1269 weight 22.79800
+	item osd.1270 weight 22.79800
+	item osd.1271 weight 22.79800
+	item osd.1272 weight 22.79800
+	item osd.1273 weight 22.79800
+	item osd.1274 weight 22.79800
+}
+rack rack-135 {
+	id -135		# do not change unnecessarily
+	id -136 class hdd               # do not change unnecessarily
+	# weight 1094.30400
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item host-137 weight 547.15200
+	item host-139 weight 547.15200
+}
+host host-143 {
+	id -143		# do not change unnecessarily
+	id -144 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1275 weight 22.79800
+	item osd.1276 weight 22.79800
+	item osd.1277 weight 22.79800
+	item osd.1278 weight 22.79800
+	item osd.1279 weight 22.79800
+	item osd.1280 weight 22.79800
+	item osd.1281 weight 22.79800
+	item osd.1282 weight 22.79800
+	item osd.1283 weight 22.79800
+	item osd.1284 weight 22.79800
+	item osd.1285 weight 22.79800
+	item osd.1286 weight 22.79800
+	item osd.1287 weight 22.79800
+	item osd.1288 weight 22.79800
+	item osd.1289 weight 22.79800
+	item osd.1290 weight 22.79800
+	item osd.1291 weight 22.79800
+	item osd.1292 weight 22.79800
+	item osd.1293 weight 22.79800
+	item osd.1294 weight 22.79800
+	item osd.1295 weight 22.79800
+	item osd.1296 weight 22.79800
+	item osd.1297 weight 22.79800
+	item osd.1298 weight 22.79800
+}
+host host-145 {
+	id -145		# do not change unnecessarily
+	id -146 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1299 weight 22.79800
+	item osd.1300 weight 22.79800
+	item osd.1301 weight 22.79800
+	item osd.1302 weight 22.79800
+	item osd.1303 weight 22.79800
+	item osd.1304 weight 22.79800
+	item osd.1305 weight 22.79800
+	item osd.1306 weight 22.79800
+	item osd.1307 weight 22.79800
+	item osd.1308 weight 22.79800
+	item osd.1309 weight 22.79800
+	item osd.1310 weight 22.79800
+	item osd.1311 weight 22.79800
+	item osd.1312 weight 22.79800
+	item osd.1313 weight 22.79800
+	item osd.1314 weight 22.79800
+	item osd.1315 weight 22.79800
+	item osd.1316 weight 22.79800
+	item osd.1317 weight 22.79800
+	item osd.1318 weight 22.79800
+	item osd.1319 weight 22.79800
+	item osd.1320 weight 22.79800
+	item osd.1321 weight 22.79800
+	item osd.1322 weight 22.79800
+}
+rack rack-141 {
+	id -141		# do not change unnecessarily
+	id -142 class hdd               # do not change unnecessarily
+	# weight 1094.30400
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item host-143 weight 547.15200
+	item host-145 weight 547.15200
+}
+host host-149 {
+	id -149		# do not change unnecessarily
+	id -150 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1323 weight 22.79800
+	item osd.1324 weight 22.79800
+	item osd.1325 weight 22.79800
+	item osd.1326 weight 22.79800
+	item osd.1327 weight 22.79800
+	item osd.1328 weight 22.79800
+	item osd.1329 weight 22.79800
+	item osd.1330 weight 22.79800
+	item osd.1331 weight 22.79800
+	item osd.1332 weight 22.79800
+	item osd.1333 weight 22.79800
+	item osd.1334 weight 22.79800
+	item osd.1335 weight 22.79800
+	item osd.1336 weight 22.79800
+	item osd.1337 weight 22.79800
+	item osd.1338 weight 22.79800
+	item osd.1339 weight 22.79800
+	item osd.1340 weight 22.79800
+	item osd.1341 weight 22.79800
+	item osd.1342 weight 22.79800
+	item osd.1343 weight 22.79800
+	item osd.1344 weight 22.79800
+	item osd.1345 weight 22.79800
+	item osd.1346 weight 22.79800
+}
+host host-151 {
+	id -151		# do not change unnecessarily
+	id -152 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1347 weight 22.79800
+	item osd.1348 weight 22.79800
+	item osd.1349 weight 22.79800
+	item osd.1350 weight 22.79800
+	item osd.1351 weight 22.79800
+	item osd.1352 weight 22.79800
+	item osd.1353 weight 22.79800
+	item osd.1354 weight 22.79800
+	item osd.1355 weight 22.79800
+	item osd.1356 weight 22.79800
+	item osd.1357 weight 22.79800
+	item osd.1358 weight 22.79800
+	item osd.1359 weight 22.79800
+	item osd.1360 weight 22.79800
+	item osd.1361 weight 22.79800
+	item osd.1362 weight 22.79800
+	item osd.1363 weight 22.79800
+	item osd.1364 weight 22.79800
+	item osd.1365 weight 22.79800
+	item osd.1366 weight 22.79800
+	item osd.1367 weight 22.79800
+	item osd.1368 weight 22.79800
+	item osd.1369 weight 22.79800
+	item osd.1370 weight 22.79800
+}
+rack rack-147 {
+	id -147		# do not change unnecessarily
+	id -148 class hdd               # do not change unnecessarily
+	# weight 1094.30400
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item host-149 weight 547.15200
+	item host-151 weight 547.15200
+}
+datacenter dc-133 {
+	id -133		# do not change unnecessarily
+	id -134 class hdd               # do not change unnecessarily
+	# weight 3282.91200
+	alg straw2
+	hash 0	# rjenkins1
+	item rack-135 weight 1094.30400
+	item rack-141 weight 1094.30400
+	item rack-147 weight 1094.30400
+}
+root default {
+	id -1		# do not change unnecessarily
+	id -2 class hdd               # do not change unnecessarily
+	# weight 0.00000
+	alg straw2
+	hash 0	# rjenkins1
+	item dc-133 weight 3282.91200
+}
+
+# rules
+rule replicated_ruleset {
+	id 0
+	type replicated
+	step take csc
+	step chooseleaf firstn 0 type host
+	step emit
+}
+
+# end crush map

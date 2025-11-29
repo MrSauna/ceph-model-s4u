@@ -6,3 +6,5 @@ build/
 cmake_install.cmake
 ping-pong
 master-workers
+maps/
+.snakemake/

@@ -1,0 +1,37 @@
+{%- for dc in region.children %}
+{%- for rack in dc.children %}
+{%- for host in rack.children %}
+host {{ host.name }} {
+	id {{ host.id }}		# do not change unnecessarily
+	id {{ host.hdd_id }} class hdd               # do not change unnecessarily
+	# weight {{ host.weight() }}
+	alg straw2
+	hash 0	# rjenkins1
+	{%- for osd in host.children %}
+	item {{ osd.name }} weight {{ osd.weight() }}
+	{%- endfor %}
+}
+{%- endfor %}
+rack {{ rack.name }} {
+	id {{ rack.id }}		# do not change unnecessarily
+	id {{ rack.hdd_id }} class hdd               # do not change unnecessarily
+	# weight {{ rack.weight() }}
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	{%- for host in rack.children %}
+	item {{ host.name }} weight {{ host.weight() }}
+	{%- endfor %}
+}
+{%- endfor %}
+datacenter {{ dc.name }} {
+	id {{ dc.id }}		# do not change unnecessarily
+	id {{ dc.hdd_id }} class hdd               # do not change unnecessarily
+	# weight {{ dc.weight() }}
+	alg straw2
+	hash 0	# rjenkins1
+	{%- for rack in dc.children %}
+	item {{ rack.name }} weight {{ rack.weight() }}
+	{%- endfor %}
+}
+{%- endfor %}

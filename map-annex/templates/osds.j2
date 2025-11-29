@@ -1,0 +1,3 @@
+{%- for osd in region.get_osds() %}
+device {{ osd.id }} {{ osd.name }} class hdd 
+{%- endfor %}

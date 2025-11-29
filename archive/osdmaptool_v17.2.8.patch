@@ -1,0 +1,56 @@
+diff --git a/src/tools/osdmaptool.cc b/src/tools/osdmaptool.cc
+index 3b4cbff3578..de13111e668 100644
+--- a/src/tools/osdmaptool.cc
++++ b/src/tools/osdmaptool.cc
+@@ -157,6 +157,7 @@ int main(int argc, const char **argv)
+   std::set<std::string> upmap_pools;
+   std::random_device::result_type upmap_seed;
+   std::random_device::result_type *upmap_p_seed = nullptr;
++  int maxosd = -1;
+ 
+   int64_t pg_num = -1;
+   bool test_map_pgs_dump_all = false;
+@@ -266,6 +267,10 @@ int main(int argc, const char **argv)
+       adjust_crush_weight = val;
+     } else if (ceph_argparse_flag(args, i, "--save", (char*)NULL)) {
+       save = true;
++    } else if (ceph_argparse_witharg(args, i, &val, "--setmaxosd", (char*)NULL)) {
++    //} else if (ceph_argparse_witharg(args, i, &val, "--mark-out", (char*)NULL)) {
++    //  marked_out = std::stoi(val);
++	    maxosd = std::stod(val);
+     } else {
+       ++i;
+     }
+@@ -366,6 +371,13 @@ int main(int argc, const char **argv)
+         osdmap.crush->adjust_item_weightf(g_ceph_context, i, 1.0);
+       }
+     }
++    if (save) {
++      OSDMap::Incremental inc;
++      inc.fsid = osdmap.get_fsid();
++      inc.epoch = osdmap.get_epoch() + 1;
++      osdmap.apply_incremental(inc);
++      modified = true;
++    }
+   }
+ 
+   if (marked_out >=0 && marked_out < osdmap.get_max_osd()) {
+@@ -386,6 +398,18 @@ int main(int argc, const char **argv)
+     int id = marked_up;
+     osdmap.set_weight(id, CEPH_OSD_IN);
+   }
++  // oma
++  if (maxosd >= 0) {
++	  cout << "setting osdmax to " << maxosd << std::endl;
++	  osdmap.set_max_osd(maxosd);
++    if (save) {
++      OSDMap::Incremental inc;
++      inc.fsid = osdmap.get_fsid();
++      inc.epoch = osdmap.get_epoch() + 1;
++      osdmap.apply_incremental(inc);
++      modified = true;
++    }
++  }
+ 
+   for_each_substr(adjust_crush_weight, ",", [&](auto osd_to_adjust) {
+     std::string_view osd_to_weight_delimiter{":"};

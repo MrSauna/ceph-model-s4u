@@ -1,0 +1,3379 @@
+# begin crush map
+tunable choose_local_tries 0
+tunable choose_local_fallback_tries 0
+tunable choose_total_tries 50
+tunable chooseleaf_descend_once 1
+tunable chooseleaf_vary_r 1
+tunable chooseleaf_stable 1
+tunable straw_calc_version 1
+tunable allowed_bucket_algs 54
+
+# devices
+device 0 osd.0 class hdd
+device 1 osd.1 class hdd
+device 2 osd.2 class hdd
+device 3 osd.3 class hdd
+device 4 osd.4 class hdd
+device 5 osd.5 class hdd
+device 6 osd.6 class hdd
+device 7 osd.7 class hdd
+device 8 osd.8 class hdd
+device 9 osd.9 class hdd
+device 10 osd.10 class hdd
+device 11 osd.11 class hdd
+device 12 osd.12 class hdd
+device 13 osd.13 class hdd
+device 14 osd.14 class hdd
+device 15 osd.15 class hdd
+device 16 osd.16 class hdd
+device 17 osd.17 class hdd
+device 18 osd.18 class hdd
+device 19 osd.19 class hdd
+device 20 osd.20 class hdd
+device 21 osd.21 class hdd
+device 22 osd.22 class hdd
+device 23 osd.23 class hdd
+device 24 osd.24 class hdd
+device 25 osd.25 class hdd
+device 26 osd.26 class hdd
+device 27 osd.27 class hdd
+device 28 osd.28 class hdd
+device 29 osd.29 class hdd
+device 30 osd.30 class hdd
+device 31 osd.31 class hdd
+device 32 osd.32 class hdd
+device 33 osd.33 class hdd
+device 34 osd.34 class hdd
+device 35 osd.35 class hdd
+device 36 osd.36 class hdd
+device 37 osd.37 class hdd
+device 38 osd.38 class hdd
+device 39 osd.39 class hdd
+device 40 osd.40 class hdd
+device 41 osd.41 class hdd
+device 42 osd.42 class hdd
+device 43 osd.43 class hdd
+device 44 osd.44 class hdd
+device 45 osd.45 class hdd
+device 46 osd.46 class hdd
+device 47 osd.47 class hdd
+device 48 osd.48 class hdd
+device 49 osd.49 class hdd
+device 50 osd.50 class hdd
+device 51 osd.51 class hdd
+device 52 osd.52 class hdd
+device 53 osd.53 class hdd
+device 54 osd.54 class hdd
+device 55 osd.55 class hdd
+device 56 osd.56 class hdd
+device 57 osd.57 class hdd
+device 58 osd.58 class hdd
+device 59 osd.59 class hdd
+device 60 osd.60 class hdd
+device 61 osd.61 class hdd
+device 62 osd.62 class hdd
+device 63 osd.63 class hdd
+device 64 osd.64 class hdd
+device 65 osd.65 class hdd
+device 66 osd.66 class hdd
+device 110 osd.110 class hdd
+device 111 osd.111 class hdd
+device 112 osd.112 class hdd
+device 113 osd.113 class hdd
+device 114 osd.114 class hdd
+device 115 osd.115 class hdd
+device 116 osd.116 class hdd
+device 117 osd.117 class hdd
+device 118 osd.118 class hdd
+device 119 osd.119 class hdd
+device 120 osd.120 class hdd
+device 121 osd.121 class hdd
+device 122 osd.122 class hdd
+device 123 osd.123 class hdd
+device 151 osd.151 class hdd
+device 152 osd.152 class hdd
+device 153 osd.153 class hdd
+device 154 osd.154 class hdd
+device 155 osd.155 class hdd
+device 156 osd.156 class hdd
+device 157 osd.157 class hdd
+device 158 osd.158 class hdd
+device 159 osd.159 class hdd
+device 160 osd.160 class hdd
+device 161 osd.161 class hdd
+device 162 osd.162 class hdd
+device 163 osd.163 class hdd
+device 164 osd.164 class hdd
+device 220 osd.220 class hdd
+device 225 osd.225 class hdd
+device 230 osd.230 class hdd
+device 235 osd.235 class hdd
+device 295 osd.295 class hdd
+device 326 osd.326 class hdd
+device 327 osd.327 class hdd
+device 328 osd.328 class hdd
+device 329 osd.329 class hdd
+device 330 osd.330 class hdd
+device 331 osd.331 class hdd
+device 332 osd.332 class hdd
+device 333 osd.333 class hdd
+device 334 osd.334 class hdd
+device 335 osd.335 class hdd
+device 336 osd.336 class hdd
+device 337 osd.337 class hdd
+device 338 osd.338 class hdd
+device 339 osd.339 class hdd
+device 340 osd.340 class hdd
+device 341 osd.341 class hdd
+device 342 osd.342 class hdd
+device 343 osd.343 class hdd
+device 344 osd.344 class hdd
+device 345 osd.345 class hdd
+device 346 osd.346 class hdd
+device 347 osd.347 class hdd
+device 348 osd.348 class hdd
+device 349 osd.349 class hdd
+device 350 osd.350 class hdd
+device 351 osd.351 class hdd
+device 352 osd.352 class hdd
+device 353 osd.353 class hdd
+device 354 osd.354 class hdd
+device 355 osd.355 class hdd
+device 356 osd.356 class hdd
+device 357 osd.357 class hdd
+device 358 osd.358 class hdd
+device 359 osd.359 class hdd
+device 360 osd.360 class hdd
+device 361 osd.361 class hdd
+device 362 osd.362 class hdd
+device 363 osd.363 class hdd
+device 364 osd.364 class hdd
+device 365 osd.365 class hdd
+device 366 osd.366 class hdd
+device 367 osd.367 class hdd
+device 368 osd.368 class hdd
+device 369 osd.369 class hdd
+device 370 osd.370 class hdd
+device 371 osd.371 class hdd
+device 394 osd.394 class hdd
+device 395 osd.395 class hdd
+device 396 osd.396 class hdd
+device 397 osd.397 class hdd
+device 398 osd.398 class hdd
+device 399 osd.399 class hdd
+device 400 osd.400 class hdd
+device 401 osd.401 class hdd
+device 403 osd.403 class hdd
+device 404 osd.404 class hdd
+device 405 osd.405 class hdd
+device 406 osd.406 class hdd
+device 407 osd.407 class hdd
+device 408 osd.408 class hdd
+device 409 osd.409 class hdd
+device 410 osd.410 class hdd
+device 411 osd.411 class hdd
+device 412 osd.412 class hdd
+device 413 osd.413 class hdd
+device 414 osd.414 class hdd
+device 415 osd.415 class hdd
+device 416 osd.416 class hdd
+device 417 osd.417 class hdd
+device 418 osd.418 class hdd
+device 419 osd.419 class hdd
+device 420 osd.420 class hdd
+device 421 osd.421 class hdd
+device 422 osd.422 class hdd
+device 423 osd.423 class hdd
+device 424 osd.424 class hdd
+device 425 osd.425 class hdd
+device 426 osd.426 class hdd
+device 427 osd.427 class hdd
+device 428 osd.428 class hdd
+device 429 osd.429 class hdd
+device 430 osd.430 class hdd
+device 431 osd.431 class hdd
+device 432 osd.432 class hdd
+device 433 osd.433 class hdd
+device 434 osd.434 class hdd
+device 435 osd.435 class hdd
+device 436 osd.436 class hdd
+device 437 osd.437 class hdd
+device 438 osd.438 class hdd
+device 439 osd.439 class hdd
+device 440 osd.440 class hdd
+device 441 osd.441 class hdd
+device 442 osd.442 class hdd
+device 443 osd.443 class hdd
+device 444 osd.444 class hdd
+device 445 osd.445 class hdd
+device 446 osd.446 class hdd
+device 447 osd.447 class hdd
+device 448 osd.448 class hdd
+device 449 osd.449 class hdd
+device 450 osd.450 class hdd
+device 451 osd.451 class hdd
+device 452 osd.452 class hdd
+device 453 osd.453 class hdd
+device 454 osd.454 class hdd
+device 455 osd.455 class hdd
+device 456 osd.456 class hdd
+device 457 osd.457 class hdd
+device 458 osd.458 class hdd
+device 459 osd.459 class hdd
+device 460 osd.460 class hdd
+device 461 osd.461 class hdd
+device 462 osd.462 class hdd
+device 463 osd.463 class hdd
+device 464 osd.464 class hdd
+device 465 osd.465 class hdd
+device 466 osd.466 class hdd
+device 467 osd.467 class hdd
+device 468 osd.468 class hdd
+device 469 osd.469 class hdd
+device 470 osd.470 class hdd
+device 471 osd.471 class hdd
+device 472 osd.472 class hdd
+device 473 osd.473 class hdd
+device 474 osd.474 class hdd
+device 480 osd.480 class hdd
+device 481 osd.481 class hdd
+device 482 osd.482 class hdd
+device 483 osd.483 class hdd
+device 484 osd.484 class hdd
+device 485 osd.485 class hdd
+device 486 osd.486 class hdd
+device 487 osd.487 class hdd
+device 488 osd.488 class hdd
+device 489 osd.489 class hdd
+device 490 osd.490 class hdd
+device 491 osd.491 class hdd
+device 492 osd.492 class hdd
+device 493 osd.493 class hdd
+device 494 osd.494 class hdd
+device 495 osd.495 class hdd
+device 496 osd.496 class hdd
+device 497 osd.497 class hdd
+device 498 osd.498 class hdd
+device 499 osd.499 class hdd
+device 500 osd.500 class hdd
+device 501 osd.501 class hdd
+device 502 osd.502 class hdd
+device 503 osd.503 class hdd
+device 504 osd.504 class hdd
+device 505 osd.505 class hdd
+device 506 osd.506 class hdd
+device 507 osd.507 class hdd
+device 508 osd.508 class hdd
+device 509 osd.509 class hdd
+device 510 osd.510 class hdd
+device 511 osd.511 class hdd
+device 512 osd.512 class hdd
+device 513 osd.513 class hdd
+device 514 osd.514 class hdd
+device 515 osd.515 class hdd
+device 517 osd.517 class hdd
+device 518 osd.518 class hdd
+device 519 osd.519 class hdd
+device 520 osd.520 class hdd
+device 521 osd.521 class hdd
+device 522 osd.522 class hdd
+device 523 osd.523 class hdd
+device 524 osd.524 class hdd
+device 525 osd.525 class hdd
+device 526 osd.526 class hdd
+device 527 osd.527 class hdd
+device 528 osd.528 class hdd
+device 529 osd.529 class hdd
+device 530 osd.530 class hdd
+device 531 osd.531 class hdd
+device 532 osd.532 class hdd
+device 533 osd.533 class hdd
+device 534 osd.534 class hdd
+device 535 osd.535 class hdd
+device 536 osd.536 class hdd
+device 537 osd.537 class hdd
+device 538 osd.538 class hdd
+device 539 osd.539 class hdd
+device 540 osd.540 class hdd
+device 541 osd.541 class hdd
+device 542 osd.542 class hdd
+device 543 osd.543 class hdd
+device 544 osd.544 class hdd
+device 545 osd.545 class hdd
+device 546 osd.546 class hdd
+device 547 osd.547 class hdd
+device 549 osd.549 class hdd
+device 550 osd.550 class hdd
+device 551 osd.551 class hdd
+device 552 osd.552 class hdd
+device 553 osd.553 class hdd
+device 554 osd.554 class hdd
+device 555 osd.555 class hdd
+device 556 osd.556 class hdd
+device 557 osd.557 class hdd
+device 558 osd.558 class hdd
+device 559 osd.559 class hdd
+device 560 osd.560 class hdd
+device 561 osd.561 class hdd
+device 562 osd.562 class hdd
+device 563 osd.563 class hdd
+device 564 osd.564 class hdd
+device 565 osd.565 class hdd
+device 566 osd.566 class hdd
+device 567 osd.567 class hdd
+device 568 osd.568 class hdd
+device 569 osd.569 class hdd
+device 570 osd.570 class hdd
+device 571 osd.571 class hdd
+device 572 osd.572 class hdd
+device 573 osd.573 class hdd
+device 574 osd.574 class hdd
+device 575 osd.575 class hdd
+device 576 osd.576 class hdd
+device 577 osd.577 class hdd
+device 578 osd.578 class hdd
+device 579 osd.579 class hdd
+device 580 osd.580 class hdd
+device 581 osd.581 class hdd
+device 582 osd.582 class hdd
+device 583 osd.583 class hdd
+device 584 osd.584 class hdd
+device 585 osd.585 class hdd
+device 586 osd.586 class hdd
+device 587 osd.587 class hdd
+device 588 osd.588 class hdd
+device 589 osd.589 class hdd
+device 590 osd.590 class hdd
+device 591 osd.591 class hdd
+device 592 osd.592 class hdd
+device 593 osd.593 class hdd
+device 594 osd.594 class hdd
+device 595 osd.595 class hdd
+device 596 osd.596 class hdd
+device 597 osd.597 class hdd
+device 598 osd.598 class hdd
+device 599 osd.599 class hdd
+device 600 osd.600 class hdd
+device 601 osd.601 class hdd
+device 602 osd.602 class hdd
+device 603 osd.603 class hdd
+device 604 osd.604 class hdd
+device 605 osd.605 class hdd
+device 606 osd.606 class hdd
+device 607 osd.607 class hdd
+device 608 osd.608 class hdd
+device 609 osd.609 class hdd
+device 610 osd.610 class hdd
+device 611 osd.611 class hdd
+device 612 osd.612 class hdd
+device 613 osd.613 class hdd
+device 614 osd.614 class hdd
+device 615 osd.615 class hdd
+device 616 osd.616 class hdd
+device 617 osd.617 class hdd
+device 618 osd.618 class hdd
+device 619 osd.619 class hdd
+device 620 osd.620 class hdd
+device 621 osd.621 class hdd
+device 622 osd.622 class hdd
+device 623 osd.623 class hdd
+device 624 osd.624 class hdd
+device 625 osd.625 class hdd
+device 626 osd.626 class hdd
+device 627 osd.627 class hdd
+device 628 osd.628 class hdd
+device 629 osd.629 class hdd
+device 630 osd.630 class hdd
+device 631 osd.631 class hdd
+device 632 osd.632 class hdd
+device 633 osd.633 class hdd
+device 634 osd.634 class hdd
+device 635 osd.635 class hdd
+device 636 osd.636 class hdd
+device 637 osd.637 class hdd
+device 638 osd.638 class hdd
+device 639 osd.639 class hdd
+device 640 osd.640 class hdd
+device 641 osd.641 class hdd
+device 642 osd.642 class hdd
+device 643 osd.643 class hdd
+device 644 osd.644 class hdd
+device 645 osd.645 class hdd
+device 646 osd.646 class hdd
+device 647 osd.647 class hdd
+device 648 osd.648 class hdd
+device 649 osd.649 class hdd
+device 650 osd.650 class hdd
+device 651 osd.651 class hdd
+device 652 osd.652 class hdd
+device 653 osd.653 class hdd
+device 654 osd.654 class hdd
+device 655 osd.655 class hdd
+device 656 osd.656 class hdd
+device 657 osd.657 class hdd
+device 658 osd.658 class hdd
+device 659 osd.659 class hdd
+device 660 osd.660 class hdd
+device 661 osd.661 class hdd
+device 662 osd.662 class hdd
+device 663 osd.663 class hdd
+device 664 osd.664 class hdd
+device 665 osd.665 class hdd
+device 666 osd.666 class hdd
+device 667 osd.667 class hdd
+device 668 osd.668 class hdd
+device 669 osd.669 class hdd
+device 670 osd.670 class hdd
+device 671 osd.671 class hdd
+device 672 osd.672 class hdd
+device 673 osd.673 class hdd
+device 674 osd.674 class hdd
+device 675 osd.675 class hdd
+device 676 osd.676 class hdd
+device 677 osd.677 class hdd
+device 678 osd.678 class hdd
+device 679 osd.679 class hdd
+device 680 osd.680 class hdd
+device 681 osd.681 class hdd
+device 682 osd.682 class hdd
+device 683 osd.683 class hdd
+device 684 osd.684 class hdd
+device 685 osd.685 class hdd
+device 686 osd.686 class hdd
+device 687 osd.687 class hdd
+device 688 osd.688 class hdd
+device 689 osd.689 class hdd
+device 690 osd.690 class hdd
+device 691 osd.691 class hdd
+device 692 osd.692 class hdd
+device 693 osd.693 class hdd
+device 694 osd.694 class hdd
+device 695 osd.695 class hdd
+device 696 osd.696 class hdd
+device 697 osd.697 class hdd
+device 698 osd.698 class hdd
+device 699 osd.699 class hdd
+device 700 osd.700 class hdd
+device 701 osd.701 class hdd
+device 702 osd.702 class hdd
+device 703 osd.703 class hdd
+device 704 osd.704 class hdd
+device 705 osd.705 class hdd
+device 706 osd.706 class hdd
+device 707 osd.707 class hdd
+device 708 osd.708 class hdd
+device 709 osd.709 class hdd
+device 710 osd.710 class hdd
+device 711 osd.711 class hdd
+device 712 osd.712 class hdd
+device 713 osd.713 class hdd
+device 714 osd.714 class hdd
+device 715 osd.715 class hdd
+device 716 osd.716 class hdd
+device 717 osd.717 class hdd
+device 718 osd.718 class hdd
+device 719 osd.719 class hdd
+device 720 osd.720 class hdd
+device 721 osd.721 class hdd
+device 722 osd.722 class hdd
+device 723 osd.723 class hdd
+device 724 osd.724 class hdd
+device 725 osd.725 class hdd
+device 726 osd.726 class hdd
+device 727 osd.727 class hdd
+device 728 osd.728 class hdd
+device 729 osd.729 class hdd
+device 730 osd.730 class hdd
+device 731 osd.731 class hdd
+device 732 osd.732 class hdd
+device 733 osd.733 class hdd
+device 734 osd.734 class hdd
+device 735 osd.735 class hdd
+device 736 osd.736 class hdd
+device 737 osd.737 class hdd
+device 738 osd.738 class hdd
+device 739 osd.739 class hdd
+device 740 osd.740 class hdd
+device 741 osd.741 class hdd
+device 742 osd.742 class hdd
+device 743 osd.743 class hdd
+device 744 osd.744 class hdd
+device 745 osd.745 class hdd
+device 746 osd.746 class hdd
+device 747 osd.747 class hdd
+device 748 osd.748 class hdd
+device 749 osd.749 class hdd
+device 750 osd.750 class hdd
+device 751 osd.751 class hdd
+device 752 osd.752 class hdd
+device 753 osd.753 class hdd
+device 754 osd.754 class hdd
+device 755 osd.755 class hdd
+device 756 osd.756 class hdd
+device 757 osd.757 class hdd
+device 758 osd.758 class hdd
+device 759 osd.759 class hdd
+device 760 osd.760 class hdd
+device 761 osd.761 class hdd
+device 762 osd.762 class hdd
+device 763 osd.763 class hdd
+device 764 osd.764 class hdd
+device 765 osd.765 class hdd
+device 766 osd.766 class hdd
+device 767 osd.767 class hdd
+device 768 osd.768 class hdd
+device 769 osd.769 class hdd
+device 770 osd.770 class hdd
+device 771 osd.771 class hdd
+device 772 osd.772 class hdd
+device 773 osd.773 class hdd
+device 774 osd.774 class hdd
+device 775 osd.775 class hdd
+device 776 osd.776 class hdd
+device 777 osd.777 class hdd
+device 778 osd.778 class hdd
+device 779 osd.779 class hdd
+device 780 osd.780 class hdd
+device 781 osd.781 class hdd
+device 782 osd.782 class hdd
+device 783 osd.783 class hdd
+device 784 osd.784 class hdd
+device 785 osd.785 class hdd
+device 786 osd.786 class hdd
+device 787 osd.787 class hdd
+device 788 osd.788 class hdd
+device 789 osd.789 class hdd
+device 790 osd.790 class hdd
+device 791 osd.791 class hdd
+device 792 osd.792 class hdd
+device 793 osd.793 class hdd
+device 794 osd.794 class hdd
+device 795 osd.795 class hdd
+device 796 osd.796 class hdd
+device 797 osd.797 class hdd
+device 798 osd.798 class hdd
+device 799 osd.799 class hdd
+device 800 osd.800 class hdd
+device 801 osd.801 class hdd
+device 802 osd.802 class hdd
+device 803 osd.803 class hdd
+device 804 osd.804 class hdd
+device 805 osd.805 class hdd
+device 806 osd.806 class hdd
+device 807 osd.807 class hdd
+device 808 osd.808 class hdd
+device 809 osd.809 class hdd
+device 810 osd.810 class hdd
+device 811 osd.811 class hdd
+device 812 osd.812 class hdd
+device 813 osd.813 class hdd
+device 814 osd.814 class hdd
+device 815 osd.815 class hdd
+device 816 osd.816 class hdd
+device 817 osd.817 class hdd
+device 818 osd.818 class hdd
+device 819 osd.819 class hdd
+device 820 osd.820 class hdd
+device 821 osd.821 class hdd
+device 822 osd.822 class hdd
+device 823 osd.823 class hdd
+device 824 osd.824 class hdd
+device 825 osd.825 class hdd
+device 826 osd.826 class hdd
+device 827 osd.827 class hdd
+device 828 osd.828 class hdd
+device 829 osd.829 class hdd
+device 830 osd.830 class hdd
+device 831 osd.831 class hdd
+device 832 osd.832 class hdd
+device 833 osd.833 class hdd
+device 834 osd.834 class hdd
+device 835 osd.835 class hdd
+device 836 osd.836 class hdd
+device 837 osd.837 class hdd
+device 838 osd.838 class hdd
+device 839 osd.839 class hdd
+device 840 osd.840 class hdd
+device 841 osd.841 class hdd
+device 842 osd.842 class hdd
+device 843 osd.843 class hdd
+device 844 osd.844 class hdd
+device 845 osd.845 class hdd
+device 846 osd.846 class hdd
+device 847 osd.847 class hdd
+device 848 osd.848 class hdd
+device 849 osd.849 class hdd
+device 850 osd.850 class hdd
+device 851 osd.851 class hdd
+device 852 osd.852 class hdd
+device 853 osd.853 class hdd
+device 854 osd.854 class hdd
+device 855 osd.855 class hdd
+device 856 osd.856 class hdd
+device 857 osd.857 class hdd
+device 858 osd.858 class hdd
+device 859 osd.859 class hdd
+device 860 osd.860 class hdd
+device 861 osd.861 class hdd
+device 862 osd.862 class hdd
+device 863 osd.863 class hdd
+device 864 osd.864 class hdd
+device 865 osd.865 class hdd
+device 866 osd.866 class hdd
+device 867 osd.867 class hdd
+device 868 osd.868 class hdd
+device 869 osd.869 class hdd
+device 870 osd.870 class hdd
+device 871 osd.871 class hdd
+device 872 osd.872 class hdd
+device 873 osd.873 class hdd
+device 874 osd.874 class hdd
+device 875 osd.875 class hdd
+device 876 osd.876 class hdd
+device 877 osd.877 class hdd
+device 878 osd.878 class hdd
+device 879 osd.879 class hdd
+device 880 osd.880 class hdd
+device 881 osd.881 class hdd
+device 882 osd.882 class hdd
+device 883 osd.883 class hdd
+device 884 osd.884 class hdd
+device 885 osd.885 class hdd
+device 886 osd.886 class hdd
+device 887 osd.887 class hdd
+device 888 osd.888 class hdd
+device 889 osd.889 class hdd
+device 890 osd.890 class hdd
+device 891 osd.891 class hdd
+device 892 osd.892 class hdd
+device 893 osd.893 class hdd
+device 894 osd.894 class hdd
+device 895 osd.895 class hdd
+device 896 osd.896 class hdd
+device 897 osd.897 class hdd
+device 898 osd.898 class hdd
+device 899 osd.899 class hdd
+device 900 osd.900 class hdd
+device 901 osd.901 class hdd
+device 902 osd.902 class hdd
+device 903 osd.903 class hdd
+device 904 osd.904 class hdd
+device 905 osd.905 class hdd
+device 906 osd.906 class hdd
+device 907 osd.907 class hdd
+device 908 osd.908 class hdd
+device 909 osd.909 class hdd
+device 910 osd.910 class hdd
+device 911 osd.911 class hdd
+device 912 osd.912 class hdd
+device 913 osd.913 class hdd
+device 914 osd.914 class hdd
+device 915 osd.915 class hdd
+device 916 osd.916 class hdd
+device 917 osd.917 class hdd
+device 918 osd.918 class hdd
+device 919 osd.919 class hdd
+device 920 osd.920 class hdd
+device 921 osd.921 class hdd
+device 922 osd.922 class hdd
+device 923 osd.923 class hdd
+device 924 osd.924 class hdd
+device 925 osd.925 class hdd
+device 926 osd.926 class hdd
+device 927 osd.927 class hdd
+device 928 osd.928 class hdd
+device 929 osd.929 class hdd
+device 930 osd.930 class hdd
+device 931 osd.931 class hdd
+device 932 osd.932 class hdd
+device 933 osd.933 class hdd
+device 934 osd.934 class hdd
+device 935 osd.935 class hdd
+device 936 osd.936 class hdd
+device 937 osd.937 class hdd
+device 938 osd.938 class hdd
+device 939 osd.939 class hdd
+device 940 osd.940 class hdd
+device 941 osd.941 class hdd
+device 942 osd.942 class hdd
+device 943 osd.943 class hdd
+device 944 osd.944 class hdd
+device 945 osd.945 class hdd
+device 946 osd.946 class hdd
+device 947 osd.947 class hdd
+device 948 osd.948 class hdd
+device 949 osd.949 class hdd
+device 950 osd.950 class hdd
+device 951 osd.951 class hdd
+device 952 osd.952 class hdd
+device 953 osd.953 class hdd
+device 954 osd.954 class hdd
+device 955 osd.955 class hdd
+device 956 osd.956 class hdd
+device 957 osd.957 class hdd
+device 958 osd.958 class hdd
+device 959 osd.959 class hdd
+device 960 osd.960 class hdd
+device 961 osd.961 class hdd
+device 962 osd.962 class hdd
+device 963 osd.963 class hdd
+device 964 osd.964 class hdd
+device 965 osd.965 class hdd
+device 966 osd.966 class hdd
+device 967 osd.967 class hdd
+device 968 osd.968 class hdd
+device 969 osd.969 class hdd
+device 970 osd.970 class hdd
+device 971 osd.971 class hdd
+device 972 osd.972 class hdd
+device 973 osd.973 class hdd
+device 974 osd.974 class hdd
+device 975 osd.975 class hdd
+device 976 osd.976 class hdd
+device 977 osd.977 class hdd
+device 978 osd.978 class hdd
+device 979 osd.979 class hdd
+device 980 osd.980 class hdd
+device 981 osd.981 class hdd
+device 982 osd.982 class hdd
+device 983 osd.983 class hdd
+device 984 osd.984 class hdd
+device 985 osd.985 class hdd
+device 986 osd.986 class hdd
+device 987 osd.987 class hdd
+device 988 osd.988 class hdd
+device 989 osd.989 class hdd
+device 990 osd.990 class hdd
+device 991 osd.991 class hdd
+device 992 osd.992 class hdd
+device 993 osd.993 class hdd
+device 994 osd.994 class hdd
+device 995 osd.995 class hdd
+device 996 osd.996 class hdd
+device 997 osd.997 class hdd
+device 998 osd.998 class hdd
+device 999 osd.999 class hdd
+device 1000 osd.1000 class hdd
+device 1001 osd.1001 class hdd
+device 1002 osd.1002 class hdd
+device 1003 osd.1003 class hdd
+device 1004 osd.1004 class hdd
+device 1005 osd.1005 class hdd
+device 1006 osd.1006 class hdd
+device 1007 osd.1007 class hdd
+device 1008 osd.1008 class hdd
+device 1009 osd.1009 class hdd
+device 1010 osd.1010 class hdd
+device 1011 osd.1011 class hdd
+device 1012 osd.1012 class hdd
+device 1013 osd.1013 class hdd
+device 1014 osd.1014 class hdd
+device 1015 osd.1015 class hdd
+device 1016 osd.1016 class hdd
+device 1017 osd.1017 class hdd
+device 1018 osd.1018 class hdd
+device 1019 osd.1019 class hdd
+device 1020 osd.1020 class hdd
+device 1021 osd.1021 class hdd
+device 1022 osd.1022 class hdd
+device 1023 osd.1023 class hdd
+device 1024 osd.1024 class hdd
+device 1025 osd.1025 class hdd
+device 1026 osd.1026 class hdd
+device 1027 osd.1027 class hdd
+device 1028 osd.1028 class hdd
+device 1029 osd.1029 class hdd
+device 1030 osd.1030 class hdd
+device 1031 osd.1031 class hdd
+device 1032 osd.1032 class hdd
+device 1033 osd.1033 class hdd
+device 1034 osd.1034 class hdd
+device 1035 osd.1035 class hdd
+device 1036 osd.1036 class hdd
+device 1037 osd.1037 class hdd
+device 1038 osd.1038 class hdd
+device 1039 osd.1039 class hdd
+device 1040 osd.1040 class hdd
+device 1041 osd.1041 class hdd
+device 1042 osd.1042 class hdd
+device 1043 osd.1043 class hdd
+device 1044 osd.1044 class hdd
+device 1045 osd.1045 class hdd
+device 1046 osd.1046 class hdd
+device 1047 osd.1047 class hdd
+device 1048 osd.1048 class hdd
+device 1049 osd.1049 class hdd
+device 1050 osd.1050 class hdd
+device 1051 osd.1051 class hdd
+device 1052 osd.1052 class hdd
+device 1053 osd.1053 class hdd
+device 1054 osd.1054 class hdd
+device 1055 osd.1055 class hdd
+device 1056 osd.1056 class hdd
+device 1057 osd.1057 class hdd
+device 1058 osd.1058 class hdd
+device 1059 osd.1059 class hdd
+device 1060 osd.1060 class hdd
+device 1061 osd.1061 class hdd
+device 1062 osd.1062 class hdd
+device 1063 osd.1063 class hdd
+device 1064 osd.1064 class hdd
+device 1065 osd.1065 class hdd
+device 1066 osd.1066 class hdd
+device 1067 osd.1067 class hdd
+device 1068 osd.1068 class hdd
+device 1069 osd.1069 class hdd
+device 1070 osd.1070 class hdd
+device 1071 osd.1071 class hdd
+device 1072 osd.1072 class hdd
+device 1073 osd.1073 class hdd
+device 1074 osd.1074 class hdd
+device 1075 osd.1075 class hdd
+device 1076 osd.1076 class hdd
+device 1077 osd.1077 class hdd
+device 1078 osd.1078 class hdd
+device 1079 osd.1079 class hdd
+device 1080 osd.1080 class hdd
+device 1081 osd.1081 class hdd
+device 1082 osd.1082 class hdd
+device 1083 osd.1083 class hdd
+device 1084 osd.1084 class hdd
+device 1085 osd.1085 class hdd
+device 1086 osd.1086 class hdd
+device 1087 osd.1087 class hdd
+device 1088 osd.1088 class hdd
+device 1089 osd.1089 class hdd
+device 1090 osd.1090 class hdd
+device 1091 osd.1091 class hdd
+device 1092 osd.1092 class hdd
+device 1093 osd.1093 class hdd
+device 1094 osd.1094 class hdd
+device 1095 osd.1095 class hdd
+device 1096 osd.1096 class hdd
+device 1097 osd.1097 class hdd
+device 1098 osd.1098 class hdd
+device 1099 osd.1099 class hdd
+device 1100 osd.1100 class hdd
+device 1101 osd.1101 class hdd
+device 1102 osd.1102 class hdd
+device 1103 osd.1103 class hdd
+device 1104 osd.1104 class hdd
+device 1105 osd.1105 class hdd
+device 1106 osd.1106 class hdd
+device 1107 osd.1107 class hdd
+device 1108 osd.1108 class hdd
+device 1109 osd.1109 class hdd
+device 1110 osd.1110 class hdd
+device 1111 osd.1111 class hdd
+device 1112 osd.1112 class hdd
+device 1113 osd.1113 class hdd
+device 1114 osd.1114 class hdd
+device 1115 osd.1115 class hdd
+device 1116 osd.1116 class hdd
+device 1117 osd.1117 class hdd
+device 1118 osd.1118 class hdd
+device 1119 osd.1119 class hdd
+device 1120 osd.1120 class hdd
+device 1121 osd.1121 class hdd
+device 1122 osd.1122 class hdd
+device 1123 osd.1123 class hdd
+device 1124 osd.1124 class hdd
+device 1125 osd.1125 class hdd
+device 1126 osd.1126 class hdd
+device 1127 osd.1127 class hdd
+device 1128 osd.1128 class hdd
+device 1129 osd.1129 class hdd
+device 1130 osd.1130 class hdd
+device 1131 osd.1131 class hdd
+device 1132 osd.1132 class hdd
+device 1133 osd.1133 class hdd
+device 1134 osd.1134 class hdd
+device 1135 osd.1135 class hdd
+device 1136 osd.1136 class hdd
+device 1137 osd.1137 class hdd
+device 1138 osd.1138 class hdd
+device 1139 osd.1139 class hdd
+device 1140 osd.1140 class hdd
+device 1141 osd.1141 class hdd
+device 1142 osd.1142 class hdd
+device 1143 osd.1143 class hdd
+device 1144 osd.1144 class hdd
+device 1145 osd.1145 class hdd
+device 1146 osd.1146 class hdd
+device 1147 osd.1147 class hdd
+device 1148 osd.1148 class hdd
+device 1149 osd.1149 class hdd
+device 1150 osd.1150 class hdd
+device 1151 osd.1151 class hdd
+device 1152 osd.1152 class hdd
+device 1153 osd.1153 class hdd
+device 1154 osd.1154 class hdd
+device 1155 osd.1155 class hdd
+device 1156 osd.1156 class hdd
+device 1157 osd.1157 class hdd
+device 1158 osd.1158 class hdd
+device 1159 osd.1159 class hdd
+device 1160 osd.1160 class hdd
+device 1161 osd.1161 class hdd
+device 1162 osd.1162 class hdd
+device 1163 osd.1163 class hdd
+device 1164 osd.1164 class hdd
+device 1165 osd.1165 class hdd
+device 1166 osd.1166 class hdd
+device 1167 osd.1167 class hdd
+device 1168 osd.1168 class hdd
+device 1169 osd.1169 class hdd
+device 1170 osd.1170 class hdd
+device 1171 osd.1171 class hdd
+device 1172 osd.1172 class hdd
+device 1173 osd.1173 class hdd
+device 1174 osd.1174 class hdd
+device 1175 osd.1175 class hdd
+device 1176 osd.1176 class hdd
+device 1177 osd.1177 class hdd
+device 1178 osd.1178 class hdd
+device 1179 osd.1179 class hdd
+device 1180 osd.1180 class hdd
+device 1181 osd.1181 class hdd
+device 1182 osd.1182 class hdd
+device 1183 osd.1183 class hdd
+device 1184 osd.1184 class hdd
+device 1185 osd.1185 class hdd
+device 1186 osd.1186 class hdd
+device 1187 osd.1187 class hdd
+device 1188 osd.1188 class hdd
+device 1189 osd.1189 class hdd
+device 1190 osd.1190 class hdd
+device 1191 osd.1191 class hdd
+device 1192 osd.1192 class hdd
+device 1193 osd.1193 class hdd
+device 1194 osd.1194 class hdd
+device 1195 osd.1195 class hdd
+device 1196 osd.1196 class hdd
+device 1197 osd.1197 class hdd
+device 1198 osd.1198 class hdd
+device 1199 osd.1199 class hdd
+device 1200 osd.1200 class hdd
+device 1201 osd.1201 class hdd
+device 1202 osd.1202 class hdd
+device 1203 osd.1203 class hdd
+device 1204 osd.1204 class hdd
+device 1205 osd.1205 class hdd
+device 1206 osd.1206 class hdd
+device 1207 osd.1207 class hdd
+device 1208 osd.1208 class hdd
+device 1209 osd.1209 class hdd
+device 1210 osd.1210 class hdd
+device 1211 osd.1211 class hdd
+device 1212 osd.1212 class hdd
+device 1213 osd.1213 class hdd
+device 1214 osd.1214 class hdd
+device 1215 osd.1215 class hdd
+device 1216 osd.1216 class hdd
+device 1217 osd.1217 class hdd
+device 1218 osd.1218 class hdd
+device 1219 osd.1219 class hdd
+device 1220 osd.1220 class hdd
+device 1221 osd.1221 class hdd
+device 1222 osd.1222 class hdd
+device 1223 osd.1223 class hdd
+device 1224 osd.1224 class hdd
+device 1225 osd.1225 class hdd
+device 1226 osd.1226 class hdd
+device 1227 osd.1227 class hdd
+device 1228 osd.1228 class hdd
+device 1229 osd.1229 class hdd
+device 1230 osd.1230 class hdd
+device 1231 osd.1231 class hdd
+device 1232 osd.1232 class hdd
+device 1233 osd.1233 class hdd
+device 1234 osd.1234 class hdd
+device 1235 osd.1235 class hdd
+device 1236 osd.1236 class hdd
+device 1237 osd.1237 class hdd
+device 1238 osd.1238 class hdd
+device 1239 osd.1239 class hdd
+device 1240 osd.1240 class hdd
+device 1241 osd.1241 class hdd
+device 1242 osd.1242 class hdd
+device 1243 osd.1243 class hdd
+device 1244 osd.1244 class hdd
+device 1245 osd.1245 class hdd
+device 1246 osd.1246 class hdd
+device 1247 osd.1247 class hdd
+device 1248 osd.1248 class hdd
+device 1249 osd.1249 class hdd
+device 1250 osd.1250 class hdd
+device 1251 osd.1251 class hdd
+device 1252 osd.1252 class hdd
+device 1253 osd.1253 class hdd
+device 1254 osd.1254 class hdd
+device 1255 osd.1255 class hdd
+device 1256 osd.1256 class hdd
+device 1257 osd.1257 class hdd
+device 1258 osd.1258 class hdd
+device 1259 osd.1259 class hdd
+device 1260 osd.1260 class hdd
+device 1261 osd.1261 class hdd
+device 1262 osd.1262 class hdd
+device 1263 osd.1263 class hdd
+device 1264 osd.1264 class hdd
+device 1265 osd.1265 class hdd
+device 1266 osd.1266 class hdd
+device 1267 osd.1267 class hdd
+device 1268 osd.1268 class hdd
+device 1269 osd.1269 class hdd
+device 1270 osd.1270 class hdd
+device 1271 osd.1271 class hdd
+device 1272 osd.1272 class hdd
+device 1273 osd.1273 class hdd
+device 1274 osd.1274 class hdd
+device 1275 osd.1275 class hdd
+device 1276 osd.1276 class hdd
+device 1277 osd.1277 class hdd
+device 1278 osd.1278 class hdd
+device 1279 osd.1279 class hdd
+device 1280 osd.1280 class hdd
+device 1281 osd.1281 class hdd
+device 1282 osd.1282 class hdd
+device 1283 osd.1283 class hdd
+device 1284 osd.1284 class hdd
+device 1285 osd.1285 class hdd
+device 1286 osd.1286 class hdd
+device 1287 osd.1287 class hdd
+device 1288 osd.1288 class hdd
+device 1289 osd.1289 class hdd
+device 1290 osd.1290 class hdd
+device 1291 osd.1291 class hdd
+device 1292 osd.1292 class hdd
+device 1293 osd.1293 class hdd
+device 1294 osd.1294 class hdd
+device 1295 osd.1295 class hdd
+device 1296 osd.1296 class hdd
+device 1297 osd.1297 class hdd
+device 1298 osd.1298 class hdd
+device 1299 osd.1299 class hdd
+device 1300 osd.1300 class hdd
+device 1301 osd.1301 class hdd
+device 1302 osd.1302 class hdd
+device 1303 osd.1303 class hdd
+device 1304 osd.1304 class hdd
+device 1305 osd.1305 class hdd
+device 1306 osd.1306 class hdd
+device 1307 osd.1307 class hdd
+device 1308 osd.1308 class hdd
+device 1309 osd.1309 class hdd
+device 1310 osd.1310 class hdd
+device 1311 osd.1311 class hdd
+device 1312 osd.1312 class hdd
+device 1313 osd.1313 class hdd
+device 1314 osd.1314 class hdd
+device 1315 osd.1315 class hdd
+device 1316 osd.1316 class hdd
+device 1317 osd.1317 class hdd
+device 1318 osd.1318 class hdd
+device 1319 osd.1319 class hdd
+device 1320 osd.1320 class hdd
+device 1321 osd.1321 class hdd
+device 1322 osd.1322 class hdd
+device 1323 osd.1323 class hdd
+device 1324 osd.1324 class hdd
+device 1325 osd.1325 class hdd
+device 1326 osd.1326 class hdd
+device 1327 osd.1327 class hdd
+device 1328 osd.1328 class hdd
+device 1329 osd.1329 class hdd
+device 1330 osd.1330 class hdd
+device 1331 osd.1331 class hdd
+device 1332 osd.1332 class hdd
+device 1333 osd.1333 class hdd
+device 1334 osd.1334 class hdd
+device 1335 osd.1335 class hdd
+device 1336 osd.1336 class hdd
+device 1337 osd.1337 class hdd
+device 1338 osd.1338 class hdd
+device 1339 osd.1339 class hdd
+device 1340 osd.1340 class hdd
+device 1341 osd.1341 class hdd
+device 1342 osd.1342 class hdd
+device 1343 osd.1343 class hdd
+device 1344 osd.1344 class hdd
+device 1345 osd.1345 class hdd
+device 1346 osd.1346 class hdd
+device 1347 osd.1347 class hdd
+device 1348 osd.1348 class hdd
+device 1349 osd.1349 class hdd
+device 1350 osd.1350 class hdd
+device 1351 osd.1351 class hdd
+device 1352 osd.1352 class hdd
+device 1353 osd.1353 class hdd
+device 1354 osd.1354 class hdd
+device 1355 osd.1355 class hdd
+device 1356 osd.1356 class hdd
+device 1357 osd.1357 class hdd
+device 1358 osd.1358 class hdd
+device 1359 osd.1359 class hdd
+device 1360 osd.1360 class hdd
+device 1361 osd.1361 class hdd
+device 1362 osd.1362 class hdd
+device 1363 osd.1363 class hdd
+device 1364 osd.1364 class hdd
+device 1365 osd.1365 class hdd
+device 1366 osd.1366 class hdd
+device 1367 osd.1367 class hdd
+device 1368 osd.1368 class hdd
+device 1369 osd.1369 class hdd
+device 1370 osd.1370 class hdd
+
+# types
+type 0 osd
+type 1 host
+type 2 chassis
+type 3 rack
+type 4 row
+type 5 pdu
+type 6 pod
+type 7 room
+type 8 datacenter
+type 9 region
+type 10 root
+
+# buckets
+host storage0136 {
+	id -77		# do not change unnecessarily
+	id -78 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.420 weight 9.09599
+	item osd.421 weight 9.09599
+	item osd.422 weight 9.09599
+	item osd.423 weight 9.09599
+	item osd.424 weight 9.09599
+	item osd.425 weight 9.09599
+	item osd.426 weight 9.09599
+	item osd.427 weight 9.09599
+	item osd.428 weight 9.09599
+	item osd.429 weight 9.09599
+	item osd.430 weight 9.09599
+	item osd.431 weight 9.09599
+	item osd.432 weight 9.09599
+	item osd.433 weight 9.09599
+	item osd.434 weight 9.09599
+	item osd.435 weight 9.09599
+	item osd.436 weight 9.09599
+	item osd.437 weight 9.09599
+	item osd.438 weight 9.09599
+	item osd.439 weight 9.09599
+	item osd.440 weight 9.09599
+	item osd.441 weight 9.09599
+	item osd.442 weight 9.09599
+	item osd.443 weight 9.09599
+}
+host storage0137 {
+	id -79		# do not change unnecessarily
+	id -80 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.22 weight 9.09599
+	item osd.23 weight 9.09599
+	item osd.24 weight 9.09599
+	item osd.25 weight 9.09599
+	item osd.26 weight 9.09599
+	item osd.27 weight 9.09599
+	item osd.28 weight 9.09599
+	item osd.29 weight 9.09599
+	item osd.30 weight 9.09599
+	item osd.31 weight 9.09599
+	item osd.32 weight 9.09599
+	item osd.33 weight 9.09599
+	item osd.35 weight 9.09599
+	item osd.36 weight 9.09599
+	item osd.37 weight 9.09599
+	item osd.38 weight 9.09599
+	item osd.39 weight 9.09599
+	item osd.40 weight 9.09599
+	item osd.41 weight 9.09599
+	item osd.42 weight 9.09599
+	item osd.43 weight 9.09599
+	item osd.44 weight 9.09599
+	item osd.45 weight 9.09599
+	item osd.46 weight 9.09599
+}
+host storage0138 {
+	id -81		# do not change unnecessarily
+	id -82 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.47 weight 9.09599
+	item osd.48 weight 9.09599
+	item osd.49 weight 9.09599
+	item osd.50 weight 9.09599
+	item osd.51 weight 9.09599
+	item osd.52 weight 9.09599
+	item osd.53 weight 9.09599
+	item osd.54 weight 9.09599
+	item osd.55 weight 9.09599
+	item osd.56 weight 9.09599
+	item osd.57 weight 9.09599
+	item osd.58 weight 9.09599
+	item osd.59 weight 9.09599
+	item osd.60 weight 9.09599
+	item osd.61 weight 9.09599
+	item osd.62 weight 9.09599
+	item osd.63 weight 9.09599
+	item osd.64 weight 9.09599
+	item osd.65 weight 9.09599
+	item osd.220 weight 9.09599
+	item osd.225 weight 9.09599
+	item osd.230 weight 9.09599
+	item osd.235 weight 9.09599
+	item osd.444 weight 9.09599
+}
+host storage0141 {
+	id -8		# do not change unnecessarily
+	id -9 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.488 weight 10.98299
+	item osd.489 weight 10.98299
+	item osd.490 weight 10.98299
+	item osd.491 weight 10.98299
+	item osd.492 weight 10.98299
+	item osd.493 weight 10.98299
+	item osd.494 weight 10.98299
+	item osd.495 weight 10.98299
+	item osd.496 weight 10.98299
+	item osd.497 weight 10.98299
+	item osd.498 weight 10.98299
+	item osd.499 weight 10.98299
+	item osd.500 weight 10.98299
+	item osd.501 weight 10.98299
+	item osd.502 weight 10.98299
+	item osd.503 weight 10.98299
+	item osd.504 weight 10.98299
+	item osd.505 weight 10.98299
+}
+host storage0139 {
+	id -4		# do not change unnecessarily
+	id -5 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.447 weight 10.98299
+	item osd.448 weight 10.98299
+	item osd.449 weight 10.98299
+	item osd.450 weight 10.98299
+	item osd.451 weight 10.98299
+	item osd.452 weight 10.98299
+	item osd.453 weight 10.98299
+	item osd.454 weight 10.98299
+	item osd.455 weight 10.98299
+	item osd.457 weight 10.98299
+	item osd.458 weight 10.98299
+	item osd.459 weight 10.98299
+	item osd.460 weight 10.98299
+	item osd.461 weight 10.98299
+	item osd.464 weight 10.98299
+	item osd.462 weight 10.98299
+	item osd.463 weight 10.98299
+	item osd.632 weight 10.98299
+}
+host storage0145 {
+	id -37		# do not change unnecessarily
+	id -39 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.560 weight 10.98299
+	item osd.561 weight 10.98299
+	item osd.562 weight 10.98299
+	item osd.563 weight 10.98299
+	item osd.564 weight 10.98299
+	item osd.565 weight 10.98299
+	item osd.566 weight 10.98299
+	item osd.567 weight 10.98299
+	item osd.568 weight 10.98299
+	item osd.569 weight 10.98299
+	item osd.570 weight 10.98299
+	item osd.571 weight 10.98299
+	item osd.572 weight 10.98299
+	item osd.573 weight 10.98299
+	item osd.574 weight 10.98299
+	item osd.575 weight 10.98299
+	item osd.576 weight 10.98299
+	item osd.577 weight 10.98299
+}
+host storage0147 {
+	id -42		# do not change unnecessarily
+	id -43 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.596 weight 10.98299
+	item osd.597 weight 10.98299
+	item osd.598 weight 10.98299
+	item osd.599 weight 10.98299
+	item osd.600 weight 10.98299
+	item osd.601 weight 10.98299
+	item osd.602 weight 10.98299
+	item osd.603 weight 10.98299
+	item osd.604 weight 10.98299
+	item osd.605 weight 10.98299
+	item osd.606 weight 10.98299
+	item osd.607 weight 10.98299
+	item osd.608 weight 10.98299
+	item osd.609 weight 10.98299
+	item osd.610 weight 10.98299
+	item osd.611 weight 10.98299
+	item osd.612 weight 10.98299
+	item osd.613 weight 10.98299
+}
+host storage0143 {
+	id -31		# do not change unnecessarily
+	id -32 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.524 weight 10.98299
+	item osd.525 weight 10.98299
+	item osd.526 weight 10.98299
+	item osd.527 weight 10.98299
+	item osd.528 weight 10.98299
+	item osd.529 weight 10.98299
+	item osd.530 weight 10.98299
+	item osd.531 weight 10.98299
+	item osd.532 weight 10.98299
+	item osd.533 weight 10.98299
+	item osd.535 weight 10.98299
+	item osd.536 weight 10.98299
+	item osd.537 weight 10.98299
+	item osd.538 weight 10.98299
+	item osd.539 weight 10.98299
+	item osd.540 weight 10.98299
+	item osd.541 weight 10.98299
+	item osd.0 weight 10.98299
+}
+host storage0171 {
+	id -123		# do not change unnecessarily
+	id -124 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1131 weight 15.03799
+	item osd.1132 weight 15.03799
+	item osd.1133 weight 15.03799
+	item osd.1134 weight 15.03799
+	item osd.1135 weight 15.03799
+	item osd.1136 weight 15.03799
+	item osd.1137 weight 15.03799
+	item osd.1138 weight 15.03799
+	item osd.1139 weight 15.03799
+	item osd.1140 weight 15.03799
+	item osd.1141 weight 15.03799
+	item osd.1142 weight 15.03799
+	item osd.1143 weight 15.03799
+	item osd.1144 weight 15.03799
+	item osd.1145 weight 15.03799
+	item osd.1146 weight 15.03799
+	item osd.1147 weight 15.03799
+	item osd.1148 weight 15.03799
+	item osd.1149 weight 15.03799
+	item osd.1150 weight 15.03799
+	item osd.1151 weight 15.03799
+	item osd.1152 weight 15.03799
+	item osd.1153 weight 15.03799
+	item osd.1154 weight 15.03799
+}
+host storage0172 {
+	id -125		# do not change unnecessarily
+	id -126 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1155 weight 15.03799
+	item osd.1156 weight 15.03799
+	item osd.1157 weight 15.03799
+	item osd.1158 weight 15.03799
+	item osd.1159 weight 15.03799
+	item osd.1160 weight 15.03799
+	item osd.1161 weight 15.03799
+	item osd.1162 weight 15.03799
+	item osd.1163 weight 15.03799
+	item osd.1164 weight 15.03799
+	item osd.1165 weight 15.03799
+	item osd.1166 weight 15.03799
+	item osd.1167 weight 15.03799
+	item osd.1168 weight 15.03799
+	item osd.1169 weight 15.03799
+	item osd.1170 weight 15.03799
+	item osd.1171 weight 15.03799
+	item osd.1172 weight 15.03799
+	item osd.1173 weight 15.03799
+	item osd.1174 weight 15.03799
+	item osd.1175 weight 15.03799
+	item osd.1176 weight 15.03799
+	item osd.1177 weight 15.03799
+	item osd.1178 weight 15.03799
+}
+host storage0173 {
+	id -127		# do not change unnecessarily
+	id -128 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1179 weight 15.03799
+	item osd.1180 weight 15.03799
+	item osd.1181 weight 15.03799
+	item osd.1182 weight 15.03799
+	item osd.1183 weight 15.03799
+	item osd.1184 weight 15.03799
+	item osd.1185 weight 15.03799
+	item osd.1186 weight 15.03799
+	item osd.1187 weight 15.03799
+	item osd.1188 weight 15.03799
+	item osd.1189 weight 15.03799
+	item osd.1190 weight 15.03799
+	item osd.1191 weight 15.03799
+	item osd.1192 weight 15.03799
+	item osd.1193 weight 15.03799
+	item osd.1194 weight 15.03799
+	item osd.1195 weight 15.03799
+	item osd.1196 weight 15.03799
+	item osd.1197 weight 15.03799
+	item osd.1198 weight 15.03799
+	item osd.1199 weight 15.03799
+	item osd.1200 weight 15.03799
+	item osd.1201 weight 15.03799
+	item osd.1202 weight 15.03799
+}
+host storage0174 {
+	id -129		# do not change unnecessarily
+	id -130 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1203 weight 15.03799
+	item osd.1204 weight 15.03799
+	item osd.1205 weight 15.03799
+	item osd.1206 weight 15.03799
+	item osd.1207 weight 15.03799
+	item osd.1208 weight 15.03799
+	item osd.1209 weight 15.03799
+	item osd.1210 weight 15.03799
+	item osd.1211 weight 15.03799
+	item osd.1212 weight 15.03799
+	item osd.1213 weight 15.03799
+	item osd.1214 weight 15.03799
+	item osd.1215 weight 15.03799
+	item osd.1216 weight 15.03799
+	item osd.1217 weight 15.03799
+	item osd.1218 weight 15.03799
+	item osd.1219 weight 15.03799
+	item osd.1220 weight 15.03799
+	item osd.1221 weight 15.03799
+	item osd.1222 weight 15.03799
+	item osd.1223 weight 15.03799
+	item osd.1224 weight 15.03799
+	item osd.1225 weight 15.03799
+	item osd.1226 weight 15.03799
+}
+rack PM13 {
+	id -72		# do not change unnecessarily
+	id -74 class hdd		# do not change unnecessarily
+	# weight 3087.04199
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item storage0137 weight 218.29700
+	item storage0138 weight 218.29700
+	item storage0141 weight 197.70300
+	item storage0139 weight 197.70300
+	item storage0145 weight 197.70300
+	item storage0147 weight 197.70300
+	item storage0143 weight 197.70300
+	item storage0171 weight 360.90900
+	item storage0172 weight 360.90900
+	item storage0173 weight 360.90900
+	item storage0174 weight 360.90900
+}
+host storage0133 {
+	id -69		# do not change unnecessarily
+	id -70 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.2 weight 9.09599
+	item osd.3 weight 9.09599
+	item osd.4 weight 9.09599
+	item osd.5 weight 9.09599
+	item osd.6 weight 9.09599
+	item osd.7 weight 9.09599
+	item osd.8 weight 9.09599
+	item osd.9 weight 9.09599
+	item osd.10 weight 9.09599
+	item osd.11 weight 9.09599
+	item osd.12 weight 9.09599
+	item osd.13 weight 9.09599
+	item osd.14 weight 9.09599
+	item osd.15 weight 9.09599
+	item osd.16 weight 9.09599
+	item osd.17 weight 9.09599
+	item osd.18 weight 9.09599
+	item osd.19 weight 9.09599
+	item osd.20 weight 9.09599
+	item osd.21 weight 9.09599
+	item osd.34 weight 9.09599
+	item osd.117 weight 9.09599
+	item osd.326 weight 9.09599
+	item osd.327 weight 9.09599
+}
+host storage0135 {
+	id -75		# do not change unnecessarily
+	id -76 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.348 weight 9.09599
+	item osd.395 weight 9.09599
+	item osd.396 weight 9.09599
+	item osd.397 weight 9.09599
+	item osd.398 weight 9.09599
+	item osd.399 weight 9.09599
+	item osd.400 weight 9.09599
+	item osd.401 weight 9.09599
+	item osd.403 weight 9.09599
+	item osd.404 weight 9.09599
+	item osd.405 weight 9.09599
+	item osd.406 weight 9.09599
+	item osd.407 weight 9.09599
+	item osd.408 weight 9.09599
+	item osd.409 weight 9.09599
+	item osd.410 weight 9.09599
+	item osd.411 weight 9.09599
+	item osd.412 weight 9.09599
+	item osd.413 weight 9.09599
+	item osd.414 weight 9.09599
+	item osd.415 weight 9.09599
+	item osd.416 weight 9.09599
+	item osd.417 weight 9.09599
+	item osd.418 weight 9.09599
+}
+host storage0134 {
+	id -83		# do not change unnecessarily
+	id -84 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.328 weight 9.09599
+	item osd.329 weight 9.09599
+	item osd.330 weight 9.09599
+	item osd.331 weight 9.09599
+	item osd.332 weight 9.09599
+	item osd.333 weight 9.09599
+	item osd.334 weight 9.09599
+	item osd.335 weight 9.09599
+	item osd.336 weight 9.09599
+	item osd.337 weight 9.09599
+	item osd.338 weight 9.09599
+	item osd.339 weight 9.09599
+	item osd.340 weight 9.09599
+	item osd.341 weight 9.09599
+	item osd.342 weight 9.09599
+	item osd.343 weight 9.09599
+	item osd.344 weight 9.09599
+	item osd.345 weight 9.09599
+	item osd.346 weight 9.09599
+	item osd.347 weight 9.09599
+	item osd.394 weight 9.09599
+	item osd.419 weight 9.09599
+	item osd.445 weight 9.09599
+	item osd.446 weight 9.09599
+}
+host storage0132 {
+	id -35		# do not change unnecessarily
+	id -3 class hdd		# do not change unnecessarily
+	# weight 218.30383
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.121 weight 9.09599
+	item osd.349 weight 9.09599
+	item osd.350 weight 9.09599
+	item osd.351 weight 9.09599
+	item osd.352 weight 9.09599
+	item osd.353 weight 9.09599
+	item osd.354 weight 9.09599
+	item osd.355 weight 9.09599
+	item osd.356 weight 9.09599
+	item osd.357 weight 9.09599
+	item osd.358 weight 9.09599
+	item osd.359 weight 9.09599
+	item osd.360 weight 9.09599
+	item osd.361 weight 9.09599
+	item osd.362 weight 9.09599
+	item osd.363 weight 9.09599
+	item osd.364 weight 9.09599
+	item osd.365 weight 9.09599
+	item osd.366 weight 9.09599
+	item osd.367 weight 9.09599
+	item osd.368 weight 9.09599
+	item osd.369 weight 9.09599
+	item osd.370 weight 9.09599
+	item osd.371 weight 9.09599
+}
+host storage0140 {
+	id -6		# do not change unnecessarily
+	id -7 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.465 weight 10.98299
+	item osd.466 weight 10.98299
+	item osd.467 weight 10.98299
+	item osd.468 weight 10.98299
+	item osd.469 weight 10.98299
+	item osd.470 weight 10.98299
+	item osd.471 weight 10.98299
+	item osd.472 weight 10.98299
+	item osd.473 weight 10.98299
+	item osd.474 weight 10.98299
+	item osd.480 weight 10.98299
+	item osd.481 weight 10.98299
+	item osd.482 weight 10.98299
+	item osd.483 weight 10.98299
+	item osd.484 weight 10.98299
+	item osd.485 weight 10.98299
+	item osd.486 weight 10.98299
+	item osd.487 weight 10.98299
+}
+host storage0142 {
+	id -29		# do not change unnecessarily
+	id -30 class hdd		# do not change unnecessarily
+	# weight 186.71077
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.506 weight 10.98299
+	item osd.507 weight 10.98299
+	item osd.508 weight 10.98299
+	item osd.509 weight 10.98299
+	item osd.510 weight 10.98299
+	item osd.511 weight 10.98299
+	item osd.512 weight 10.98299
+	item osd.513 weight 10.98299
+	item osd.515 weight 10.98299
+	item osd.517 weight 10.98299
+	item osd.518 weight 10.98299
+	item osd.519 weight 10.98299
+	item osd.520 weight 10.98299
+	item osd.521 weight 10.98299
+	item osd.522 weight 10.98299
+	item osd.523 weight 10.98299
+	item osd.514 weight 10.98299
+}
+host storage0144 {
+	id -33		# do not change unnecessarily
+	id -36 class hdd		# do not change unnecessarily
+	# weight 186.71077
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.542 weight 10.98299
+	item osd.543 weight 10.98299
+	item osd.544 weight 10.98299
+	item osd.545 weight 10.98299
+	item osd.546 weight 10.98299
+	item osd.547 weight 10.98299
+	item osd.549 weight 10.98299
+	item osd.550 weight 10.98299
+	item osd.551 weight 10.98299
+	item osd.552 weight 10.98299
+	item osd.553 weight 10.98299
+	item osd.554 weight 10.98299
+	item osd.555 weight 10.98299
+	item osd.556 weight 10.98299
+	item osd.557 weight 10.98299
+	item osd.558 weight 10.98299
+	item osd.559 weight 10.98299
+}
+host storage0146 {
+	id -40		# do not change unnecessarily
+	id -41 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.578 weight 10.98299
+	item osd.579 weight 10.98299
+	item osd.580 weight 10.98299
+	item osd.581 weight 10.98299
+	item osd.582 weight 10.98299
+	item osd.583 weight 10.98299
+	item osd.584 weight 10.98299
+	item osd.585 weight 10.98299
+	item osd.586 weight 10.98299
+	item osd.587 weight 10.98299
+	item osd.588 weight 10.98299
+	item osd.589 weight 10.98299
+	item osd.590 weight 10.98299
+	item osd.591 weight 10.98299
+	item osd.592 weight 10.98299
+	item osd.593 weight 10.98299
+	item osd.594 weight 10.98299
+	item osd.595 weight 10.98299
+}
+host storage0148 {
+	id -44		# do not change unnecessarily
+	id -45 class hdd		# do not change unnecessarily
+	# weight 197.69376
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.614 weight 10.98299
+	item osd.615 weight 10.98299
+	item osd.616 weight 10.98299
+	item osd.617 weight 10.98299
+	item osd.618 weight 10.98299
+	item osd.619 weight 10.98299
+	item osd.620 weight 10.98299
+	item osd.621 weight 10.98299
+	item osd.623 weight 10.98299
+	item osd.624 weight 10.98299
+	item osd.625 weight 10.98299
+	item osd.626 weight 10.98299
+	item osd.627 weight 10.98299
+	item osd.628 weight 10.98299
+	item osd.629 weight 10.98299
+	item osd.630 weight 10.98299
+	item osd.631 weight 10.98299
+	item osd.456 weight 10.98299
+}
+host storage0168 {
+	id -117		# do not change unnecessarily
+	id -118 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1059 weight 15.03799
+	item osd.1060 weight 15.03799
+	item osd.1061 weight 15.03799
+	item osd.1062 weight 15.03799
+	item osd.1063 weight 15.03799
+	item osd.1064 weight 15.03799
+	item osd.1065 weight 15.03799
+	item osd.1066 weight 15.03799
+	item osd.1067 weight 15.03799
+	item osd.1068 weight 15.03799
+	item osd.1069 weight 15.03799
+	item osd.1070 weight 15.03799
+	item osd.1071 weight 15.03799
+	item osd.1072 weight 15.03799
+	item osd.1073 weight 15.03799
+	item osd.1074 weight 15.03799
+	item osd.1075 weight 15.03799
+	item osd.1076 weight 15.03799
+	item osd.1077 weight 15.03799
+	item osd.1078 weight 15.03799
+	item osd.1079 weight 15.03799
+	item osd.1080 weight 15.03799
+	item osd.1081 weight 15.03799
+	item osd.1082 weight 15.03799
+}
+host storage0169 {
+	id -119		# do not change unnecessarily
+	id -120 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1083 weight 15.03799
+	item osd.1084 weight 15.03799
+	item osd.1085 weight 15.03799
+	item osd.1086 weight 15.03799
+	item osd.1087 weight 15.03799
+	item osd.1088 weight 15.03799
+	item osd.1089 weight 15.03799
+	item osd.1090 weight 15.03799
+	item osd.1091 weight 15.03799
+	item osd.1092 weight 15.03799
+	item osd.1093 weight 15.03799
+	item osd.1094 weight 15.03799
+	item osd.1095 weight 15.03799
+	item osd.1096 weight 15.03799
+	item osd.1097 weight 15.03799
+	item osd.1098 weight 15.03799
+	item osd.1099 weight 15.03799
+	item osd.1100 weight 15.03799
+	item osd.1101 weight 15.03799
+	item osd.1102 weight 15.03799
+	item osd.1103 weight 15.03799
+	item osd.1104 weight 15.03799
+	item osd.1105 weight 15.03799
+	item osd.1106 weight 15.03799
+}
+host storage0170 {
+	id -121		# do not change unnecessarily
+	id -122 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1107 weight 15.03799
+	item osd.1108 weight 15.03799
+	item osd.1109 weight 15.03799
+	item osd.1110 weight 15.03799
+	item osd.1111 weight 15.03799
+	item osd.1112 weight 15.03799
+	item osd.1113 weight 15.03799
+	item osd.1114 weight 15.03799
+	item osd.1115 weight 15.03799
+	item osd.1116 weight 15.03799
+	item osd.1117 weight 15.03799
+	item osd.1118 weight 15.03799
+	item osd.1119 weight 15.03799
+	item osd.1120 weight 15.03799
+	item osd.1121 weight 15.03799
+	item osd.1122 weight 15.03799
+	item osd.1123 weight 15.03799
+	item osd.1124 weight 15.03799
+	item osd.1125 weight 15.03799
+	item osd.1126 weight 15.03799
+	item osd.1127 weight 15.03799
+	item osd.1128 weight 15.03799
+	item osd.1129 weight 15.03799
+	item osd.1130 weight 15.03799
+}
+rack PM10 {
+	id -71		# do not change unnecessarily
+	id -73 class hdd		# do not change unnecessarily
+	# weight 2922.44556
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0133 weight 218.29700
+	item storage0135 weight 218.29700
+	item storage0134 weight 218.29700
+	item storage0132 weight 218.29700
+	item storage0140 weight 197.70300
+	item storage0142 weight 186.71077
+	item storage0144 weight 186.71077
+	item storage0146 weight 197.70300
+	item storage0148 weight 197.70300
+	item storage0168 weight 360.90900
+	item storage0169 weight 360.90900
+	item storage0170 weight 360.90900
+}
+host storage0149 {
+	id -64		# do not change unnecessarily
+	id -65 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.622 weight 12.97600
+	item osd.633 weight 12.97600
+	item osd.634 weight 12.97600
+	item osd.635 weight 12.97600
+	item osd.636 weight 12.97600
+	item osd.637 weight 12.97600
+	item osd.638 weight 12.97600
+	item osd.639 weight 12.97600
+	item osd.640 weight 12.97600
+	item osd.641 weight 12.97600
+	item osd.642 weight 12.97600
+	item osd.643 weight 12.97600
+	item osd.644 weight 12.97600
+	item osd.645 weight 12.97600
+	item osd.646 weight 12.97600
+	item osd.647 weight 12.97600
+	item osd.648 weight 12.97600
+	item osd.649 weight 12.97600
+	item osd.650 weight 12.97600
+	item osd.651 weight 12.97600
+	item osd.652 weight 12.97600
+	item osd.653 weight 12.97600
+	item osd.654 weight 12.97600
+	item osd.655 weight 12.97600
+}
+host storage0150 {
+	id -85		# do not change unnecessarily
+	id -86 class hdd		# do not change unnecessarily
+	# weight 324.39996
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.656 weight 12.97600
+	item osd.657 weight 12.97600
+	item osd.658 weight 12.97600
+	item osd.659 weight 12.97600
+	item osd.660 weight 12.97600
+	item osd.661 weight 12.97600
+	item osd.662 weight 12.97600
+	item osd.663 weight 12.97600
+	item osd.664 weight 12.97600
+	item osd.665 weight 12.97600
+	item osd.666 weight 12.97600
+	item osd.667 weight 12.97600
+	item osd.668 weight 12.97600
+	item osd.669 weight 12.97600
+	item osd.670 weight 12.97600
+	item osd.671 weight 12.97600
+	item osd.672 weight 12.97600
+	item osd.673 weight 12.97600
+	item osd.674 weight 12.97600
+	item osd.675 weight 12.97600
+	item osd.676 weight 12.97600
+	item osd.677 weight 12.97600
+	item osd.678 weight 12.97600
+	item osd.679 weight 12.97600
+	item osd.66 weight 12.97600
+}
+host storage0151 {
+	id -87		# do not change unnecessarily
+	id -88 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.680 weight 12.97600
+	item osd.681 weight 12.97600
+	item osd.682 weight 12.97600
+	item osd.683 weight 12.97600
+	item osd.684 weight 12.97600
+	item osd.685 weight 12.97600
+	item osd.686 weight 12.97600
+	item osd.687 weight 12.97600
+	item osd.688 weight 12.97600
+	item osd.689 weight 12.97600
+	item osd.690 weight 12.97600
+	item osd.691 weight 12.97600
+	item osd.692 weight 12.97600
+	item osd.693 weight 12.97600
+	item osd.694 weight 12.97600
+	item osd.695 weight 12.97600
+	item osd.696 weight 12.97600
+	item osd.697 weight 12.97600
+	item osd.698 weight 12.97600
+	item osd.699 weight 12.97600
+	item osd.700 weight 12.97600
+	item osd.701 weight 12.97600
+	item osd.702 weight 12.97600
+	item osd.703 weight 12.97600
+}
+host storage0152 {
+	id -89		# do not change unnecessarily
+	id -90 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.704 weight 12.97600
+	item osd.705 weight 12.97600
+	item osd.706 weight 12.97600
+	item osd.707 weight 12.97600
+	item osd.708 weight 12.97600
+	item osd.709 weight 12.97600
+	item osd.710 weight 12.97600
+	item osd.711 weight 12.97600
+	item osd.712 weight 12.97600
+	item osd.713 weight 12.97600
+	item osd.714 weight 12.97600
+	item osd.715 weight 12.97600
+	item osd.716 weight 12.97600
+	item osd.717 weight 12.97600
+	item osd.718 weight 12.97600
+	item osd.719 weight 12.97600
+	item osd.720 weight 12.97600
+	item osd.721 weight 12.97600
+	item osd.722 weight 12.97600
+	item osd.723 weight 12.97600
+	item osd.724 weight 12.97600
+	item osd.725 weight 12.97600
+	item osd.726 weight 12.97600
+	item osd.727 weight 12.97600
+}
+host storage0153 {
+	id -91		# do not change unnecessarily
+	id -92 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.728 weight 12.97600
+	item osd.729 weight 12.97600
+	item osd.730 weight 12.97600
+	item osd.731 weight 12.97600
+	item osd.732 weight 12.97600
+	item osd.733 weight 12.97600
+	item osd.734 weight 12.97600
+	item osd.735 weight 12.97600
+	item osd.736 weight 12.97600
+	item osd.737 weight 12.97600
+	item osd.738 weight 12.97600
+	item osd.739 weight 12.97600
+	item osd.740 weight 12.97600
+	item osd.741 weight 12.97600
+	item osd.742 weight 12.97600
+	item osd.743 weight 12.97600
+	item osd.744 weight 12.97600
+	item osd.745 weight 12.97600
+	item osd.746 weight 12.97600
+	item osd.747 weight 12.97600
+	item osd.748 weight 12.97600
+	item osd.749 weight 12.97600
+	item osd.750 weight 12.97600
+	item osd.751 weight 12.97600
+}
+host storage0154 {
+	id -93		# do not change unnecessarily
+	id -94 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.752 weight 12.97600
+	item osd.753 weight 12.97600
+	item osd.754 weight 12.97600
+	item osd.755 weight 12.97600
+	item osd.756 weight 12.97600
+	item osd.757 weight 12.97600
+	item osd.758 weight 12.97600
+	item osd.759 weight 12.97600
+	item osd.760 weight 12.97600
+	item osd.761 weight 12.97600
+	item osd.762 weight 12.97600
+	item osd.763 weight 12.97600
+	item osd.764 weight 12.97600
+	item osd.765 weight 12.97600
+	item osd.767 weight 12.97600
+	item osd.768 weight 12.97600
+	item osd.769 weight 12.97600
+	item osd.770 weight 12.97600
+	item osd.771 weight 12.97600
+	item osd.772 weight 12.97600
+	item osd.773 weight 12.97600
+	item osd.774 weight 12.97600
+	item osd.775 weight 12.97600
+	item osd.766 weight 12.97600
+}
+host storage0155 {
+	id -95		# do not change unnecessarily
+	id -96 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.776 weight 12.97600
+	item osd.777 weight 12.97600
+	item osd.778 weight 12.97600
+	item osd.779 weight 12.97600
+	item osd.780 weight 12.97600
+	item osd.781 weight 12.97600
+	item osd.782 weight 12.97600
+	item osd.783 weight 12.97600
+	item osd.784 weight 12.97600
+	item osd.785 weight 12.97600
+	item osd.786 weight 12.97600
+	item osd.787 weight 12.97600
+	item osd.788 weight 12.97600
+	item osd.789 weight 12.97600
+	item osd.790 weight 12.97600
+	item osd.791 weight 12.97600
+	item osd.792 weight 12.97600
+	item osd.793 weight 12.97600
+	item osd.794 weight 12.97600
+	item osd.795 weight 12.97600
+	item osd.796 weight 12.97600
+	item osd.797 weight 12.97600
+	item osd.798 weight 12.97600
+	item osd.799 weight 12.97600
+}
+host storage0156 {
+	id -97		# do not change unnecessarily
+	id -98 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.800 weight 12.97600
+	item osd.801 weight 12.97600
+	item osd.802 weight 12.97600
+	item osd.803 weight 12.97600
+	item osd.804 weight 12.97600
+	item osd.805 weight 12.97600
+	item osd.806 weight 12.97600
+	item osd.807 weight 12.97600
+	item osd.808 weight 12.97600
+	item osd.809 weight 12.97600
+	item osd.810 weight 12.97600
+	item osd.811 weight 12.97600
+	item osd.812 weight 12.97600
+	item osd.813 weight 12.97600
+	item osd.814 weight 12.97600
+	item osd.815 weight 12.97600
+	item osd.816 weight 12.97600
+	item osd.817 weight 12.97600
+	item osd.818 weight 12.97600
+	item osd.819 weight 12.97600
+	item osd.820 weight 12.97600
+	item osd.821 weight 12.97600
+	item osd.822 weight 12.97600
+	item osd.823 weight 12.97600
+}
+host storage0157 {
+	id -99		# do not change unnecessarily
+	id -100 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.824 weight 12.97600
+	item osd.825 weight 12.97600
+	item osd.826 weight 12.97600
+	item osd.827 weight 12.97600
+	item osd.828 weight 12.97600
+	item osd.829 weight 12.97600
+	item osd.830 weight 12.97600
+	item osd.831 weight 12.97600
+	item osd.832 weight 12.97600
+	item osd.833 weight 12.97600
+	item osd.834 weight 12.97600
+	item osd.835 weight 12.97600
+	item osd.836 weight 12.97600
+	item osd.837 weight 12.97600
+	item osd.838 weight 12.97600
+	item osd.839 weight 12.97600
+	item osd.840 weight 12.97600
+	item osd.841 weight 12.97600
+	item osd.842 weight 12.97600
+	item osd.843 weight 12.97600
+	item osd.844 weight 12.97600
+	item osd.845 weight 12.97600
+	item osd.846 weight 12.97600
+	item osd.847 weight 12.97600
+}
+host storage0158 {
+	id -101		# do not change unnecessarily
+	id -102 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.848 weight 12.97600
+	item osd.849 weight 12.97600
+	item osd.850 weight 12.97600
+	item osd.851 weight 12.97600
+	item osd.852 weight 12.97600
+	item osd.853 weight 12.97600
+	item osd.854 weight 12.97600
+	item osd.855 weight 12.97600
+	item osd.856 weight 12.97600
+	item osd.857 weight 12.97600
+	item osd.858 weight 12.97600
+	item osd.859 weight 12.97600
+	item osd.860 weight 12.97600
+	item osd.861 weight 12.97600
+	item osd.862 weight 12.97600
+	item osd.863 weight 12.97600
+	item osd.864 weight 12.97600
+	item osd.865 weight 12.97600
+	item osd.866 weight 12.97600
+	item osd.867 weight 12.97600
+	item osd.868 weight 12.97600
+	item osd.869 weight 12.97600
+	item osd.870 weight 12.97600
+	item osd.871 weight 12.97600
+}
+host storage0159 {
+	id -103		# do not change unnecessarily
+	id -104 class hdd		# do not change unnecessarily
+	# weight 311.42395
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.872 weight 12.97600
+	item osd.873 weight 12.97600
+	item osd.874 weight 12.97600
+	item osd.875 weight 12.97600
+	item osd.876 weight 12.97600
+	item osd.877 weight 12.97600
+	item osd.878 weight 12.97600
+	item osd.879 weight 12.97600
+	item osd.880 weight 12.97600
+	item osd.881 weight 12.97600
+	item osd.882 weight 12.97600
+	item osd.883 weight 12.97600
+	item osd.884 weight 12.97600
+	item osd.885 weight 12.97600
+	item osd.886 weight 12.97600
+	item osd.887 weight 12.97600
+	item osd.888 weight 12.97600
+	item osd.889 weight 12.97600
+	item osd.890 weight 12.97600
+	item osd.891 weight 12.97600
+	item osd.892 weight 12.97600
+	item osd.893 weight 12.97600
+	item osd.894 weight 12.97600
+	item osd.895 weight 12.97600
+}
+host storage0160 {
+	id -12		# do not change unnecessarily
+	id -16 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1 weight 15.03799
+	item osd.110 weight 15.03799
+	item osd.111 weight 15.03799
+	item osd.112 weight 15.03799
+	item osd.113 weight 15.03799
+	item osd.114 weight 15.03799
+	item osd.115 weight 15.03799
+	item osd.116 weight 15.03799
+	item osd.118 weight 15.03799
+	item osd.119 weight 15.03799
+	item osd.120 weight 15.03799
+	item osd.122 weight 15.03799
+	item osd.123 weight 15.03799
+	item osd.151 weight 15.03799
+	item osd.152 weight 15.03799
+	item osd.153 weight 15.03799
+	item osd.154 weight 15.03799
+	item osd.155 weight 15.03799
+	item osd.156 weight 15.03799
+	item osd.157 weight 15.03799
+	item osd.158 weight 15.03799
+	item osd.159 weight 15.03799
+	item osd.160 weight 15.03799
+	item osd.161 weight 15.03799
+}
+host storage0161 {
+	id -55		# do not change unnecessarily
+	id -60 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.162 weight 15.03799
+	item osd.163 weight 15.03799
+	item osd.164 weight 15.03799
+	item osd.295 weight 15.03799
+	item osd.534 weight 15.03799
+	item osd.896 weight 15.03799
+	item osd.897 weight 15.03799
+	item osd.898 weight 15.03799
+	item osd.899 weight 15.03799
+	item osd.900 weight 15.03799
+	item osd.901 weight 15.03799
+	item osd.902 weight 15.03799
+	item osd.903 weight 15.03799
+	item osd.904 weight 15.03799
+	item osd.905 weight 15.03799
+	item osd.906 weight 15.03799
+	item osd.907 weight 15.03799
+	item osd.908 weight 15.03799
+	item osd.909 weight 15.03799
+	item osd.910 weight 15.03799
+	item osd.911 weight 15.03799
+	item osd.912 weight 15.03799
+	item osd.913 weight 15.03799
+	item osd.914 weight 15.03799
+}
+host storage0162 {
+	id -105		# do not change unnecessarily
+	id -106 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.915 weight 15.03799
+	item osd.916 weight 15.03799
+	item osd.917 weight 15.03799
+	item osd.918 weight 15.03799
+	item osd.919 weight 15.03799
+	item osd.920 weight 15.03799
+	item osd.921 weight 15.03799
+	item osd.922 weight 15.03799
+	item osd.923 weight 15.03799
+	item osd.924 weight 15.03799
+	item osd.925 weight 15.03799
+	item osd.926 weight 15.03799
+	item osd.927 weight 15.03799
+	item osd.928 weight 15.03799
+	item osd.929 weight 15.03799
+	item osd.930 weight 15.03799
+	item osd.931 weight 15.03799
+	item osd.932 weight 15.03799
+	item osd.933 weight 15.03799
+	item osd.934 weight 15.03799
+	item osd.935 weight 15.03799
+	item osd.936 weight 15.03799
+	item osd.937 weight 15.03799
+	item osd.938 weight 15.03799
+}
+host storage0163 {
+	id -107		# do not change unnecessarily
+	id -108 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.939 weight 15.03799
+	item osd.940 weight 15.03799
+	item osd.941 weight 15.03799
+	item osd.942 weight 15.03799
+	item osd.943 weight 15.03799
+	item osd.944 weight 15.03799
+	item osd.945 weight 15.03799
+	item osd.946 weight 15.03799
+	item osd.947 weight 15.03799
+	item osd.948 weight 15.03799
+	item osd.949 weight 15.03799
+	item osd.950 weight 15.03799
+	item osd.951 weight 15.03799
+	item osd.952 weight 15.03799
+	item osd.953 weight 15.03799
+	item osd.954 weight 15.03799
+	item osd.955 weight 15.03799
+	item osd.956 weight 15.03799
+	item osd.957 weight 15.03799
+	item osd.958 weight 15.03799
+	item osd.959 weight 15.03799
+	item osd.960 weight 15.03799
+	item osd.961 weight 15.03799
+	item osd.962 weight 15.03799
+}
+host storage0164 {
+	id -109		# do not change unnecessarily
+	id -110 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.963 weight 15.03799
+	item osd.964 weight 15.03799
+	item osd.965 weight 15.03799
+	item osd.966 weight 15.03799
+	item osd.967 weight 15.03799
+	item osd.968 weight 15.03799
+	item osd.969 weight 15.03799
+	item osd.970 weight 15.03799
+	item osd.971 weight 15.03799
+	item osd.972 weight 15.03799
+	item osd.973 weight 15.03799
+	item osd.974 weight 15.03799
+	item osd.975 weight 15.03799
+	item osd.976 weight 15.03799
+	item osd.977 weight 15.03799
+	item osd.978 weight 15.03799
+	item osd.979 weight 15.03799
+	item osd.980 weight 15.03799
+	item osd.981 weight 15.03799
+	item osd.982 weight 15.03799
+	item osd.983 weight 15.03799
+	item osd.984 weight 15.03799
+	item osd.985 weight 15.03799
+	item osd.986 weight 15.03799
+}
+host storage0165 {
+	id -111		# do not change unnecessarily
+	id -112 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.987 weight 15.03799
+	item osd.988 weight 15.03799
+	item osd.989 weight 15.03799
+	item osd.990 weight 15.03799
+	item osd.991 weight 15.03799
+	item osd.992 weight 15.03799
+	item osd.993 weight 15.03799
+	item osd.994 weight 15.03799
+	item osd.995 weight 15.03799
+	item osd.996 weight 15.03799
+	item osd.997 weight 15.03799
+	item osd.998 weight 15.03799
+	item osd.999 weight 15.03799
+	item osd.1000 weight 15.03799
+	item osd.1001 weight 15.03799
+	item osd.1002 weight 15.03799
+	item osd.1003 weight 15.03799
+	item osd.1004 weight 15.03799
+	item osd.1005 weight 15.03799
+	item osd.1006 weight 15.03799
+	item osd.1007 weight 15.03799
+	item osd.1008 weight 15.03799
+	item osd.1009 weight 15.03799
+	item osd.1010 weight 15.03799
+}
+host storage0166 {
+	id -113		# do not change unnecessarily
+	id -114 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1011 weight 15.03799
+	item osd.1012 weight 15.03799
+	item osd.1013 weight 15.03799
+	item osd.1014 weight 15.03799
+	item osd.1015 weight 15.03799
+	item osd.1016 weight 15.03799
+	item osd.1017 weight 15.03799
+	item osd.1018 weight 15.03799
+	item osd.1019 weight 15.03799
+	item osd.1020 weight 15.03799
+	item osd.1021 weight 15.03799
+	item osd.1022 weight 15.03799
+	item osd.1023 weight 15.03799
+	item osd.1024 weight 15.03799
+	item osd.1025 weight 15.03799
+	item osd.1026 weight 15.03799
+	item osd.1027 weight 15.03799
+	item osd.1028 weight 15.03799
+	item osd.1029 weight 15.03799
+	item osd.1030 weight 15.03799
+	item osd.1031 weight 15.03799
+	item osd.1032 weight 15.03799
+	item osd.1033 weight 15.03799
+	item osd.1034 weight 15.03799
+}
+host storage0167 {
+	id -115		# do not change unnecessarily
+	id -116 class hdd		# do not change unnecessarily
+	# weight 360.91187
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1035 weight 15.03799
+	item osd.1036 weight 15.03799
+	item osd.1037 weight 15.03799
+	item osd.1038 weight 15.03799
+	item osd.1039 weight 15.03799
+	item osd.1040 weight 15.03799
+	item osd.1041 weight 15.03799
+	item osd.1042 weight 15.03799
+	item osd.1043 weight 15.03799
+	item osd.1044 weight 15.03799
+	item osd.1045 weight 15.03799
+	item osd.1046 weight 15.03799
+	item osd.1047 weight 15.03799
+	item osd.1048 weight 15.03799
+	item osd.1049 weight 15.03799
+	item osd.1050 weight 15.03799
+	item osd.1051 weight 15.03799
+	item osd.1052 weight 15.03799
+	item osd.1053 weight 15.03799
+	item osd.1054 weight 15.03799
+	item osd.1055 weight 15.03799
+	item osd.1056 weight 15.03799
+	item osd.1057 weight 15.03799
+	item osd.1058 weight 15.03799
+}
+rack PQ10 {
+	id -46		# do not change unnecessarily
+	id -53 class hdd		# do not change unnecessarily
+	# weight 6325.91211
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0149 weight 311.42401
+	item storage0150 weight 324.39996
+	item storage0151 weight 311.42401
+	item storage0152 weight 311.42401
+	item storage0153 weight 311.42401
+	item storage0154 weight 311.42401
+	item storage0155 weight 311.42401
+	item storage0156 weight 311.42401
+	item storage0157 weight 311.42401
+	item storage0158 weight 311.42401
+	item storage0159 weight 311.42401
+	item storage0160 weight 360.90900
+	item storage0161 weight 360.90900
+	item storage0162 weight 360.90900
+	item storage0163 weight 360.90900
+	item storage0164 weight 360.90900
+	item storage0165 weight 360.90900
+	item storage0166 weight 360.90900
+	item storage0167 weight 360.90900
+}
+room pohja {
+	id -28		# do not change unnecessarily
+	id -38 class hdd		# do not change unnecessarily
+	# weight 12335.39844
+	alg straw2
+	hash 0	# rjenkins1
+	item PM13 weight 3087.04102
+	item PM10 weight 2922.44556
+	item PQ10 weight 6325.91211
+}
+datacenter keilaranta {
+	id -27		# do not change unnecessarily
+	id -66 class hdd		# do not change unnecessarily
+	# weight 12335.39844
+	alg straw2
+	hash 0	# rjenkins1
+	item pohja weight 12335.39844
+}
+host host-137 {
+	id -137		# do not change unnecessarily
+	id -138 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1227 weight 22.79800
+	item osd.1228 weight 22.79800
+	item osd.1229 weight 22.79800
+	item osd.1230 weight 22.79800
+	item osd.1231 weight 22.79800
+	item osd.1232 weight 22.79800
+	item osd.1233 weight 22.79800
+	item osd.1234 weight 22.79800
+	item osd.1235 weight 22.79800
+	item osd.1236 weight 22.79800
+	item osd.1237 weight 22.79800
+	item osd.1238 weight 22.79800
+	item osd.1239 weight 22.79800
+	item osd.1240 weight 22.79800
+	item osd.1241 weight 22.79800
+	item osd.1242 weight 22.79800
+	item osd.1243 weight 22.79800
+	item osd.1244 weight 22.79800
+	item osd.1245 weight 22.79800
+	item osd.1246 weight 22.79800
+	item osd.1247 weight 22.79800
+	item osd.1248 weight 22.79800
+	item osd.1249 weight 22.79800
+	item osd.1250 weight 22.79800
+}
+host host-139 {
+	id -139		# do not change unnecessarily
+	id -140 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1251 weight 22.79800
+	item osd.1252 weight 22.79800
+	item osd.1253 weight 22.79800
+	item osd.1254 weight 22.79800
+	item osd.1255 weight 22.79800
+	item osd.1256 weight 22.79800
+	item osd.1257 weight 22.79800
+	item osd.1258 weight 22.79800
+	item osd.1259 weight 22.79800
+	item osd.1260 weight 22.79800
+	item osd.1261 weight 22.79800
+	item osd.1262 weight 22.79800
+	item osd.1263 weight 22.79800
+	item osd.1264 weight 22.79800
+	item osd.1265 weight 22.79800
+	item osd.1266 weight 22.79800
+	item osd.1267 weight 22.79800
+	item osd.1268 weight 22.79800
+	item osd.1269 weight 22.79800
+	item osd.1270 weight 22.79800
+	item osd.1271 weight 22.79800
+	item osd.1272 weight 22.79800
+	item osd.1273 weight 22.79800
+	item osd.1274 weight 22.79800
+}
+rack rack-135 {
+	id -135		# do not change unnecessarily
+	id -136 class hdd               # do not change unnecessarily
+	# weight 1094.30400
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item host-137 weight 547.15200
+	item host-139 weight 547.15200
+}
+host host-143 {
+	id -143		# do not change unnecessarily
+	id -144 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1275 weight 22.79800
+	item osd.1276 weight 22.79800
+	item osd.1277 weight 22.79800
+	item osd.1278 weight 22.79800
+	item osd.1279 weight 22.79800
+	item osd.1280 weight 22.79800
+	item osd.1281 weight 22.79800
+	item osd.1282 weight 22.79800
+	item osd.1283 weight 22.79800
+	item osd.1284 weight 22.79800
+	item osd.1285 weight 22.79800
+	item osd.1286 weight 22.79800
+	item osd.1287 weight 22.79800
+	item osd.1288 weight 22.79800
+	item osd.1289 weight 22.79800
+	item osd.1290 weight 22.79800
+	item osd.1291 weight 22.79800
+	item osd.1292 weight 22.79800
+	item osd.1293 weight 22.79800
+	item osd.1294 weight 22.79800
+	item osd.1295 weight 22.79800
+	item osd.1296 weight 22.79800
+	item osd.1297 weight 22.79800
+	item osd.1298 weight 22.79800
+}
+host host-145 {
+	id -145		# do not change unnecessarily
+	id -146 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1299 weight 22.79800
+	item osd.1300 weight 22.79800
+	item osd.1301 weight 22.79800
+	item osd.1302 weight 22.79800
+	item osd.1303 weight 22.79800
+	item osd.1304 weight 22.79800
+	item osd.1305 weight 22.79800
+	item osd.1306 weight 22.79800
+	item osd.1307 weight 22.79800
+	item osd.1308 weight 22.79800
+	item osd.1309 weight 22.79800
+	item osd.1310 weight 22.79800
+	item osd.1311 weight 22.79800
+	item osd.1312 weight 22.79800
+	item osd.1313 weight 22.79800
+	item osd.1314 weight 22.79800
+	item osd.1315 weight 22.79800
+	item osd.1316 weight 22.79800
+	item osd.1317 weight 22.79800
+	item osd.1318 weight 22.79800
+	item osd.1319 weight 22.79800
+	item osd.1320 weight 22.79800
+	item osd.1321 weight 22.79800
+	item osd.1322 weight 22.79800
+}
+rack rack-141 {
+	id -141		# do not change unnecessarily
+	id -142 class hdd               # do not change unnecessarily
+	# weight 1094.30400
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item host-143 weight 547.15200
+	item host-145 weight 547.15200
+}
+host host-149 {
+	id -149		# do not change unnecessarily
+	id -150 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1323 weight 22.79800
+	item osd.1324 weight 22.79800
+	item osd.1325 weight 22.79800
+	item osd.1326 weight 22.79800
+	item osd.1327 weight 22.79800
+	item osd.1328 weight 22.79800
+	item osd.1329 weight 22.79800
+	item osd.1330 weight 22.79800
+	item osd.1331 weight 22.79800
+	item osd.1332 weight 22.79800
+	item osd.1333 weight 22.79800
+	item osd.1334 weight 22.79800
+	item osd.1335 weight 22.79800
+	item osd.1336 weight 22.79800
+	item osd.1337 weight 22.79800
+	item osd.1338 weight 22.79800
+	item osd.1339 weight 22.79800
+	item osd.1340 weight 22.79800
+	item osd.1341 weight 22.79800
+	item osd.1342 weight 22.79800
+	item osd.1343 weight 22.79800
+	item osd.1344 weight 22.79800
+	item osd.1345 weight 22.79800
+	item osd.1346 weight 22.79800
+}
+host host-151 {
+	id -151		# do not change unnecessarily
+	id -152 class hdd               # do not change unnecessarily
+	# weight 547.15200
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1347 weight 22.79800
+	item osd.1348 weight 22.79800
+	item osd.1349 weight 22.79800
+	item osd.1350 weight 22.79800
+	item osd.1351 weight 22.79800
+	item osd.1352 weight 22.79800
+	item osd.1353 weight 22.79800
+	item osd.1354 weight 22.79800
+	item osd.1355 weight 22.79800
+	item osd.1356 weight 22.79800
+	item osd.1357 weight 22.79800
+	item osd.1358 weight 22.79800
+	item osd.1359 weight 22.79800
+	item osd.1360 weight 22.79800
+	item osd.1361 weight 22.79800
+	item osd.1362 weight 22.79800
+	item osd.1363 weight 22.79800
+	item osd.1364 weight 22.79800
+	item osd.1365 weight 22.79800
+	item osd.1366 weight 22.79800
+	item osd.1367 weight 22.79800
+	item osd.1368 weight 22.79800
+	item osd.1369 weight 22.79800
+	item osd.1370 weight 22.79800
+}
+rack rack-147 {
+	id -147		# do not change unnecessarily
+	id -148 class hdd               # do not change unnecessarily
+	# weight 1094.30400
+	alg straw2
+	hash 0	# rjenkins1
+	item storage0136 weight 218.29700
+	item host-149 weight 547.15200
+	item host-151 weight 547.15200
+}
+datacenter dc-133 {
+	id -133		# do not change unnecessarily
+	id -134 class hdd               # do not change unnecessarily
+	# weight 3282.91200
+	alg straw2
+	hash 0	# rjenkins1
+	item rack-135 weight 1094.30400
+	item rack-141 weight 1094.30400
+	item rack-147 weight 1094.30400
+}
+region espoo {
+	id -26		# do not change unnecessarily
+	id -67 class hdd		# do not change unnecessarily
+	# weight 15618.31044
+	alg straw2
+	hash 0	# rjenkins1
+	item keilaranta weight 12335.39844
+	item dc-133 weight 3282.91200
+}
+root csc {
+	id -1		# do not change unnecessarily
+	id -68 class hdd		# do not change unnecessarily
+	# weight 12335.39844
+	alg straw2
+	hash 0	# rjenkins1
+	item espoo weight 12335.39844
+}
+root default {
+	id -34		# do not change unnecessarily
+	id -2 class hdd		# do not change unnecessarily
+	# weight 0.00000
+	alg straw2
+	hash 0	# rjenkins1
+}
+
+# rules
+rule replicated_ruleset {
+	id 0
+	type replicated
+	step take csc
+	step chooseleaf firstn 0 type host
+	step emit
+}
+rule rack_replicated_ruleset {
+	id 1
+	type replicated
+	step take csc
+	step chooseleaf firstn 0 type rack
+	step emit
+}
+
+# choose_args
+choose_args 18446744073709551615 {
+  {
+    bucket_id -1
+    weight_set [
+      [ 12335.41602 ]
+    ]
+  }
+  {
+    bucket_id -2
+    weight_set [
+      [ ]
+    ]
+  }
+  {
+    bucket_id -3
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -4
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -5
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -6
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -7
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -8
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -9
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -12
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -16
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -26
+    weight_set [
+      [ 12335.41602 ]
+    ]
+  }
+  {
+    bucket_id -27
+    weight_set [
+      [ 12335.41602 ]
+    ]
+  }
+  {
+    bucket_id -28
+    weight_set [
+      [ 3087.02783 2922.45361 6325.93457 ]
+    ]
+  }
+  {
+    bucket_id -29
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -30
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -31
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -32
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -33
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -34
+    weight_set [
+      [ ]
+    ]
+  }
+  {
+    bucket_id -35
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -36
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -37
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -38
+    weight_set [
+      [ 3087.02783 2922.45361 6325.93457 ]
+    ]
+  }
+  {
+    bucket_id -39
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -40
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -41
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -42
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -43
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -44
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -45
+    weight_set [
+      [ 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 10.98299 ]
+    ]
+  }
+  {
+    bucket_id -46
+    weight_set [
+      [ 311.42395 324.39996 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 360.91187 360.91187 360.91187 360.91187 360.91187 360.91187 360.91187 360.91187 ]
+    ]
+  }
+  {
+    bucket_id -53
+    weight_set [
+      [ 311.42395 324.39996 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 311.42395 360.91187 360.91187 360.91187 360.91187 360.91187 360.91187 360.91187 360.91187 ]
+    ]
+  }
+  {
+    bucket_id -55
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -60
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -64
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -65
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -66
+    weight_set [
+      [ 12335.41602 ]
+    ]
+  }
+  {
+    bucket_id -67
+    weight_set [
+      [ 12335.41602 ]
+    ]
+  }
+  {
+    bucket_id -68
+    weight_set [
+      [ 12335.41602 ]
+    ]
+  }
+  {
+    bucket_id -69
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -70
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -71
+    weight_set [
+      [ 218.30383 218.30383 218.30383 218.30383 197.69376 186.71077 186.71077 197.69376 197.69376 360.91187 360.91187 360.91187 ]
+    ]
+  }
+  {
+    bucket_id -72
+    weight_set [
+      [ 218.30383 218.30383 218.30383 197.69376 197.69376 197.69376 197.69376 197.69376 360.91187 360.91187 360.91187 360.91187 ]
+    ]
+  }
+  {
+    bucket_id -73
+    weight_set [
+      [ 218.30383 218.30383 218.30383 218.30383 197.69376 186.71077 186.71077 197.69376 197.69376 360.91187 360.91187 360.91187 ]
+    ]
+  }
+  {
+    bucket_id -74
+    weight_set [
+      [ 218.30383 218.30383 218.30383 197.69376 197.69376 197.69376 197.69376 197.69376 360.91187 360.91187 360.91187 360.91187 ]
+    ]
+  }
+  {
+    bucket_id -75
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -76
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -77
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -78
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -79
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -80
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -81
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -82
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -83
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -84
+    weight_set [
+      [ 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 9.09599 ]
+    ]
+  }
+  {
+    bucket_id -85
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -86
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -87
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -88
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -89
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -90
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -91
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -92
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -93
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -94
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -95
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -96
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -97
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -98
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -99
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -100
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -101
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -102
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -103
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -104
+    weight_set [
+      [ 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 12.97600 ]
+    ]
+  }
+  {
+    bucket_id -105
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -106
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -107
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -108
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -109
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -110
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -111
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -112
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -113
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -114
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -115
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -116
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -117
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -118
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -119
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -120
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -121
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -122
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -123
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -124
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -125
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -126
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -127
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -128
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -129
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+  {
+    bucket_id -130
+    weight_set [
+      [ 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 15.03799 ]
+    ]
+  }
+}
+
+# end crush map
