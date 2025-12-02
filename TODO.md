@@ -7,15 +7,17 @@ todo stuff
 
 Do I parse the pgdump.txt fully in c++?
 
+intermediate formats would be kinda dumb, parse directly in c++.
+
 
 ## How do I generate the platform?
 
 Preferably it should be generated dynamically from the same parameters as as the crushmap; or from the crushmap.
 
 
-## How do I generate the deployment?
+## Create deployment
 
-simgrid was organized so that it usually is handmade input for separation of concerns. But I have clear inputs so I could generate it from input parameters as well?
+Defining it in c++ code would remove the requirement for deployment.xml. I can always use snakemake for defining different experiments using different cli arguments.
 
 
 ## add visualization of crushmaps to Snakemake
