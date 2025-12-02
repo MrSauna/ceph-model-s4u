@@ -4,7 +4,18 @@ mon_bootstrap_script: "inputs/mon_bootstrap.sh"
 
 experiments:
   "small_cluster":
-    recipe: "inputs/recipes/small_cluster.sh"
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 8
+    pg_num: 32
+    "crush_spec_params":
+      - osds_per_host_num: 1
+        hosts_per_rack_table: [2, 2]
+        racks_per_dc_table: [2]
+        osd_weight_per_dc_table: [14.0]
+      - osds_per_host_num: 1
+        hosts_per_rack_table: [2, 2]
+        racks_per_dc_table: [2,2]
+        osd_weight_per_dc_table: [14.0, 20.0]
 
   # "real":
   #   recipe: "inputs/recipes/topo_inject.sh"

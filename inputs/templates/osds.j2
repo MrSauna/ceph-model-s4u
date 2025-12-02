@@ -1,0 +1,5 @@
+{%- for root in roots %}
+{%- for osd in root.get_osds() %}
+device {{ osd.id }} {{ osd.name }} class hdd 
+{%- endfor %}
+{%- endfor %}
