@@ -3,8 +3,8 @@
 <platform version="4.1">
   <!-- The master actor (with some arguments) -->
   <actor host="mon.0" function="mon">
-    <argument value="maps/pm1"/>  <!-- PG Map -->
-    <argument value="3"/>  <!-- pool id -->
+    <argument value="results/small_cluster/0/pgdump.txt"/>  <!-- PG Map -->
+    <argument value="1"/>  <!-- pool id -->
   </actor>
   <!-- The worker processes (with no argument) -->
   <actor host="osd.0" function="osd" start_time="1" />
