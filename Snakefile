@@ -1,4 +1,5 @@
 # Snakefile
+import glob
 
 configfile: "inputs/config.yaml"
 
@@ -33,6 +34,39 @@ rule all:
         expand("results/{exp}/{i}/crushmap.txt", exp=EXPERIMENTS, i=CRUSH_SPEC_PARAMS_IDX),
         expand("results/{exp}/{i}/crushmap.json", exp=EXPERIMENTS, i=CRUSH_SPEC_PARAMS_IDX),
 
+        expand("results/{exp}/result.txt", exp=EXPERIMENTS),
+
+
+rule run_sim:
+    input:
+        binary = "build_release/ceph-sim",
+        platform = "inputs/platforms/small_platform.xml",
+        deployment = "inputs/platforms/small_ceph_deployment.xml",
+    output:
+        result = "results/{exp}/result.txt",
+    shell:
+        """
+        {input.binary} \
+            {input.platform} {input.deployment} > {output.result}
+        """
+
+
+SOURCES = glob.glob("src/*.cpp") + glob.glob("src/*.hpp")
+
+rule compile_sim:
+    input:
+        src = SOURCES,
+        cmakelists = "CMakeLists.txt",
+    output:
+        binary = "build_release/ceph-sim",
+    params:
+        build_dir = "build_release",
+    shell:
+        """
+        mkdir -p {params.build_dir}
+        cmake -S . -B {params.build_dir} -DCMAKE_BUILD_TYPE=Release
+        cmake --build {params.build_dir} --target ceph-sim -- -j2
+        """
 
 rule build_maps:
     input:
