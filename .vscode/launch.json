@@ -18,7 +18,8 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb",
-            "preLaunchTask": "build"
+            "preLaunchTask": "build",
+            "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "name": "Python Debugger: Current File with Arguments",
