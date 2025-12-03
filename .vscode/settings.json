@@ -70,5 +70,7 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "shared_mutex": "cpp"
-    }
+    },
+    "makefile.configureOnOpen": false,
+    "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }

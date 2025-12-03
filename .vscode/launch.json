@@ -9,14 +9,17 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/ceph-sim",
-            "args": ["small_platform.xml", "master-workers_d2.xml"],
+            "args": [
+                "inputs/platforms/small_platform.xml",
+                "inputs/platforms/small_ceph_deployment.xml"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "lldb"
+            "MIMode": "lldb",
+            "preLaunchTask": "build"
         },
-
         {
             "name": "Python Debugger: Current File with Arguments",
             "type": "debugpy",
