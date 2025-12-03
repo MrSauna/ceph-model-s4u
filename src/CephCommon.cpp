@@ -5,12 +5,14 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <iomanip>
 
 namespace fs = std::filesystem;
 
 
 std::istream& operator>>(std::istream& is, OSDSet& set) {
     OSDSet temp;
+    unsigned int primary;
     char ch;
 
     // "(["
@@ -36,7 +38,8 @@ std::istream& operator>>(std::istream& is, OSDSet& set) {
     }
 
     // "1"
-    is >> temp.primary;
+    is >> primary;
+    xbt_assert(primary == temp.primary(), "Parsed primary %u does not match first member %u", primary, temp.primary());
 
     // "], p"
     if (!(is >> ch && ch == ')')) {
@@ -77,6 +80,14 @@ PG::PG(std::string line) {
     ss >> acting;
 }
 
+std::string PG::to_string() const {
+    std::ostringstream ss;
+    ss << "PG " << id << "(" << std::hex << id << ") ";
+    ss << "up " << up.to_string() << " ";
+    ss << "acting " << acting.to_string();
+    return ss.str();
+}
+
 PGMap::PGMap(std::string path, unsigned int pool) {
     // parse path + assert
     xbt_assert(fs::is_regular_file(path));
@@ -109,6 +120,36 @@ PGMap::PGMap(std::string path, unsigned int pool) {
     }
 }
 
+const std::vector<OSDSet> PGMap::get_up() const {
+    std::vector<OSDSet> up_list;
+    for (const auto& pg : pgs) {
+        up_list.push_back(pg.get_up());
+    }
+    return up_list;
+}
+
+const std::vector<OSDSet> PGMap::get_acting() const {
+    std::vector<OSDSet> acting_list;
+    for (const auto& pg : pgs) {
+        acting_list.push_back(pg.get_acting());
+    }
+    return acting_list;
+}
+
+void PGMap::set_up(const std::vector<OSDSet>& up_list) {
+    xbt_assert(up_list.size() == pgs.size());
+    for (size_t i = 0; i < pgs.size(); i++) {
+        pgs[i].set_up(up_list[i]);
+    }
+}
+
+void PGMap::set_acting(const std::vector<OSDSet>& acting_list) {
+    xbt_assert(acting_list.size() == pgs.size());
+    for (size_t i = 0; i < pgs.size(); i++) {
+        pgs[i].set_acting(acting_list[i]);
+    }
+}
+
 size_t PGMap::size() const {
     return pgs.size();
 }
@@ -119,4 +160,13 @@ int PGMap::find_pg_up(int pg) const {
 
 int PGMap::find_pg_acting(int pg) const {
     return -1;
+}
+
+std::string PGMap::to_string() const {
+    std::ostringstream ss;
+    ss << "PGMap (Size " << pgs.size() << "):\n";
+    for (const auto& pg : pgs) {
+        ss << "  " << pg.to_string() << "\n";
+    }
+    return ss.str();
 }

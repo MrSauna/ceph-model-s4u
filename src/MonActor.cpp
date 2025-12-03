@@ -1,21 +1,31 @@
 #include "MonActor.hpp"
-
 #include <filesystem>
+#include <typeinfo>
 
 namespace fs = std::filesystem;
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim_mon, "Messages specific for MonActors");
 
-Mon::Mon(std::vector<std::string> args)
+PGMap Mon::create_initial_pg_map(std::vector<std::string> args)
 {
-  xbt_assert(args.size() == 3, "The master function expects 3 argument");
-  xbt_assert(fs::is_regular_file(args[1]), "args[1] not a file path");
+  xbt_assert(args.size() == 4, "The master function expects 4 argument");
+  xbt_assert(fs::is_regular_file(args[2]), "args[2] not a file path");
+  xbt_assert(fs::is_regular_file(args[3]), "args[3] not a file path");
 
   // Initial pg map
-  pool_id = std::stoul(args[2]);
-  PGMap initial_pg_map(std::string(args[1]), pool_id);
-  pg_history.push_back(initial_pg_map);
-  XBT_INFO("PGMap initialized. Size is %lu", initial_pg_map.size());
+  unsigned int pool_id = std::stoul(args[1]);
+  PGMap old_pg_map(std::string(args[2]), pool_id);
+  PGMap new_pg_map(std::string(args[3]), pool_id);
+
+  old_pg_map.set_up(new_pg_map.get_up());
+  return old_pg_map;
+}
+
+Mon::Mon(std::vector<std::string> args)
+  : pg_map(create_initial_pg_map(args))
+{
+
+  XBT_INFO("Initial PGMap\n%s", pg_map.to_string().c_str());
 
   mailbox = simgrid::s4u::Mailbox::by_name("mon");
 
@@ -28,26 +38,27 @@ Mon::Mon(std::vector<std::string> args)
 
 void Mon::process_message(Message* msg) {
 
-  std::visit([&](auto&& payload) {
-      // 'msg' has the correct, concrete type here! No casting needed.
-      using T = std::decay_t<decltype(payload)>;
-
-      // osd should have this, a monitor should never get kill signal
-      if constexpr (std::is_same_v<T, KillMsg>) {
-          simgrid::s4u::this_actor::exit();
-      } else if constexpr (std::is_same_v<T, SubscribeToPGMapChangeMsg>) {
-          // 'payload' is a SubscribeToPGMapChangeMsg object
-          XBT_INFO("%s subscribed to pg map changes", msg->sender.c_str());
-          PGMap* pg_map_ptr = &pg_history.back();
-          auto response_msg = make_message<PGMapNotification>(pg_map_ptr);
-          auto return_mb = simgrid::s4u::Mailbox::by_name(msg->sender);
-          return_mb->put(response_msg, 0);
-      } else {
-        xbt_die("Monitor received unexpected message");
+  std::visit(overloaded {
+      [&](const KillMsg& ) {
+          xbt_die("Monitor received unexpected KillMsg");
+      },
+      [&](const SubscribeToPGMapChangeMsg& ) {
+          this->on_subscribe_pgmap_change(msg->sender, std::get<SubscribeToPGMapChangeMsg>(msg->payload));
+      },
+      [&](const auto& unknown_payload) {
+          xbt_die("Monitor received unexpected message type: %s", typeid(unknown_payload).name());
       }
   }, msg->payload);
 
   delete msg;
+}
+
+void Mon::on_subscribe_pgmap_change(const std::string& sender, const SubscribeToPGMapChangeMsg& payload) {
+  XBT_INFO("%s subscribed to pg map changes", sender.c_str());
+  PGMap* pg_map_ptr = &pg_map;
+  auto response_msg = make_message<PGMapNotification>(pg_map_ptr);
+  auto return_mb = simgrid::s4u::Mailbox::by_name(sender);
+  return_mb->put(response_msg, 0);
 }
 
 // TODO implement actual logic
