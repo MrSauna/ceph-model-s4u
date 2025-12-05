@@ -1,14 +1,12 @@
+#include "CLI11.hpp"
+#include "ClientActor.hpp"
 #include "MonActor.hpp"
 #include "OsdActor.hpp"
-#include "ClientActor.hpp"
-#include "CLI11.hpp"
 #include <simgrid/s4u.hpp>
-
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim, "Messages specific for ceph-sim");
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
   simgrid::s4u::Engine e(&argc, argv);
   xbt_assert(argc > 2, "Usage: %s platform_file deployment_file\n", argv[0]);
 
