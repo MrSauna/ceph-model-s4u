@@ -14,16 +14,23 @@ PGMap Mon::create_initial_pg_map(std::vector<std::string> args) {
 
   // Initial pg map
   unsigned int pool_id = std::stoul(args[1]);
-  PGMap old_pg_map(std::string(args[2]), pool_id);
-  PGMap new_pg_map(std::string(args[3]), pool_id);
+  PGMap initial_pgmap(std::string(args[2]), pool_id); // acting
+  PGMap up_pgmap(std::string(args[3]), pool_id);      // up
 
-  old_pg_map.set_up(new_pg_map.get_up());
-  return old_pg_map;
+  // todo combine maps
+  for (size_t i = 0; i < initial_pgmap.size(); i++) {
+    std::vector<unsigned int> up_members = up_pgmap.get_pg(i)->get_up_ids();
+    initial_pgmap.get_pg(i)->set_up(up_members);
+  }
+  initial_pgmap.rebuild_primary_osd_to_pg_index();
+  return initial_pgmap;
 }
 
 Mon::Mon(std::vector<std::string> args) : pg_map(create_initial_pg_map(args)) {
 
   XBT_INFO("Initial PGMap\n%s", pg_map.to_string().c_str());
+  XBT_INFO("Initial map's reverse index\n%s",
+           pg_map.primary_osds_to_pgs_string().c_str());
 
   mailbox = simgrid::s4u::Mailbox::by_name("mon");
 

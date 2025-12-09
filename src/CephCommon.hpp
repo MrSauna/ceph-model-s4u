@@ -1,53 +1,109 @@
 #pragma once
 #include <simgrid/s4u.hpp>
 #include <variant>
+#include <vector>
 
-struct OSDSet {
-  std::vector<unsigned int> members;
-  unsigned int primary() const { return members.at(0); };
+namespace sg4 = simgrid::s4u;
+
+// PG forward declaration
+class PG;
+
+class PGShard {
+  PG *pg;
+  unsigned int osd_id;
+  unsigned int index;
+  unsigned long long int
+      objects; // non-acting (up) pg shard might be incomplete
+
+public:
+  PGShard(PG *pg, unsigned int osd_id, unsigned int index, unsigned int objects)
+      : pg(pg), osd_id(osd_id), index(index), objects(objects) {}
+  unsigned int get_pg_id() const;
+  unsigned int get_osd_id() const;
+  unsigned int get_index() const { return index; }
+  bool is_acting();
+  unsigned long long int get_objects() const;
+};
+
+// PG Shard set
+struct PGShardSet {
+  std::vector<PGShard *> members;
+  PGShard *primary() const { return members.at(0); };
+
+  bool contains_shard(PGShard *shard) const {
+    return members.size() > shard->get_index() &&
+           members.at(shard->get_index()) == shard;
+  }
+
   std::string to_string() const {
     std::ostringstream ss;
     ss << "[";
     for (size_t i = 0; i < members.size(); ++i) {
-      ss << members[i] << (i < members.size() - 1 ? "," : "");
+      ss << members[i]->get_osd_id() << (i < members.size() - 1 ? "," : "");
     }
     ss << "]";
     return ss.str();
   }
 };
 
-// PG struct
+// PG class
 class PG {
+  // mutex is non-recursive, actor must ensure no deadlock
+  sg4::MutexPtr mutex_ = sg4::Mutex::create();
   unsigned int id;
-  OSDSet up;
-  OSDSet acting;
+  // ownership
+  std::set<std::unique_ptr<PGShard>> shards;
+  // current state of those shards
+  PGShardSet up;
+  PGShardSet acting;
+  void prune_shards();
 
 public:
   explicit PG(std::string line);
-  void set_up(const OSDSet &up_set) { up = up_set; }
-  void set_acting(const OSDSet &acting_set) { acting = acting_set; }
-  const OSDSet &get_up() const { return up; }
-  const OSDSet &get_acting() const { return acting; }
+  void set_up(const std::vector<unsigned int> &set);
+  void set_acting(const std::vector<unsigned int> &set);
+  const PGShardSet get_up() const { return up; }
+  const std::vector<unsigned int> get_up_ids() const {
+    std::vector<unsigned int> ids;
+    for (const auto &shard : up.members) {
+      ids.push_back(shard->get_osd_id());
+    }
+    return ids;
+  }
+  const std::vector<unsigned int> get_acting_ids() const {
+    std::vector<unsigned int> ids;
+    for (const auto &shard : acting.members) {
+      ids.push_back(shard->get_osd_id());
+    }
+    return ids;
+  }
+  const PGShardSet get_acting() const { return acting; }
   unsigned int get_id() const { return id; }
   bool needs_backfill() const;
   std::string to_string() const;
 };
 
-// pg map
+// PGMap
 class PGMap {
-  std::vector<PG> pgs;
+  // mutex is non-recursive, actor must ensure no deadlock
+  sg4::MutexPtr mutex_ = sg4::Mutex::create();
+  std::vector<std::unique_ptr<PG>> pgs;
+  std::map<unsigned int, std::set<PG *>> primary_osd_to_pg_index;
 
 public:
   PGMap(std::string path, unsigned int pool);
 
-  const std::vector<OSDSet> get_up() const;
-  const std::vector<OSDSet> get_acting() const;
-  void set_up(const std::vector<OSDSet> &up_list);
-  void set_acting(const std::vector<OSDSet> &acting_list);
-
   size_t size() const;
-  int find_pg_up(int pg) const;
-  int find_pg_acting(int pg) const;
+  const std::vector<PGShardSet> get_up() const;
+  const std::vector<PGShardSet> get_acting() const;
+
+  const PG *get_pg(int pg) const { return pgs.at(pg).get(); };
+  PG *get_pg(int pg) { return pgs.at(pg).get(); };
+
+  void rebuild_primary_osd_to_pg_index();
+  void refresh_primary_osd_to_pg_index_for_pg(unsigned int pg_id);
+
+  std::string primary_osds_to_pgs_string() const;
   std::string to_string() const;
 };
 
