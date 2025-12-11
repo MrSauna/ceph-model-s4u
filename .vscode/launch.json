@@ -11,7 +11,9 @@
             "program": "${workspaceFolder}/build/ceph-sim",
             "args": [
                 "inputs/platforms/small_platform.xml",
-                "inputs/platforms/small_ceph_deployment.xml"
+                "inputs/platforms/small_ceph_deployment.xml",
+                "results/small_cluster/0/pgdump.txt",
+                "results/small_cluster/1/pgdump.txt",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

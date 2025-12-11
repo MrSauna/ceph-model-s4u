@@ -10,10 +10,10 @@
 
 namespace fs = std::filesystem;
 
-std::istream &operator>>(std::istream &is, std::vector<unsigned int> &v) {
-  unsigned int osd_id;
+std::istream &operator>>(std::istream &is, std::vector<int> &v) {
+  int osd_id;
   char ch;
-  std::vector<unsigned int> members;
+  std::vector<int> members;
 
   // "(["
   if (!(is >> ch && ch == '(' && is >> ch && ch == '[')) {
@@ -56,9 +56,9 @@ std::istream &operator>>(std::istream &is, std::vector<unsigned int> &v) {
 }
 
 // PGShard
-unsigned int PGShard::get_pg_id() const { return pg->get_id(); }
+int PGShard::get_pg_id() const { return pg->get_id(); }
 
-unsigned int PGShard::get_osd_id() const { return osd_id; }
+int PGShard::get_osd_id() const { return osd_id; }
 
 bool PGShard::is_acting() {
 
@@ -76,7 +76,7 @@ PG::PG(std::string line) {
   // 3.18 raw ([123,73,98], p123) up ([123,73,98], p123) acting ([123,73,98],
   // p123)
   std::string temp;
-  std::vector<unsigned int> members;
+  std::vector<int> members;
 
   // "3.18"
   char del = '.';
@@ -92,17 +92,16 @@ PG::PG(std::string line) {
   // "up ([123,73,98], p123)"
   ss >> temp;
   ss >> members;
-  set_up(members); // data types don't make sense here
+  init_up(members);
 
   // "acting ([123,73,98], p123)""
   ss >> temp;
   ss >> members;
-  set_acting(members);
+  init_acting(members);
 }
 
-void PG::set_up(const std::vector<unsigned int> &v) {
+void PG::init_up(const std::vector<int> &v) {
   xbt_assert(v.size() >= 1);
-  const std::scoped_lock lock(*mutex_);
 
   PGShardSet new_up;
   // if acting[i] == v[i], we reuse the shard
@@ -119,10 +118,13 @@ void PG::set_up(const std::vector<unsigned int> &v) {
   prune_shards();
 }
 
-void PG::set_acting(const std::vector<unsigned int> &v) {
-  xbt_assert(v.size() >= 1);
+void PG::update_up(const std::vector<int> &v) {
   const std::scoped_lock lock(*mutex_);
+  init_up(v);
+}
 
+void PG::init_acting(const std::vector<int> &v) {
+  xbt_assert(v.size() >= 1);
   PGShardSet new_acting;
   // if up[i] == v[i], we reuse the shard
   for (int i = 0; i < v.size(); ++i) {
@@ -138,6 +140,11 @@ void PG::set_acting(const std::vector<unsigned int> &v) {
   prune_shards();
 }
 
+void PG::update_acting(const std::vector<int> &v) {
+  const std::scoped_lock lock(*mutex_);
+  init_acting(v);
+}
+
 void PG::prune_shards() {
   for (auto it = shards.begin(); it != shards.end();) {
     PGShard *shard = it->get();
@@ -150,7 +157,6 @@ void PG::prune_shards() {
 }
 
 std::string PG::to_string() const {
-  const std::scoped_lock lock(*mutex_);
   std::ostringstream ss;
   ss << "PG " << id << "(" << std::hex << id << ") ";
   ss << "up " << up.to_string() << " ";
@@ -159,16 +165,16 @@ std::string PG::to_string() const {
 }
 
 // PGMap
-PGMap::PGMap(std::string path, unsigned int pool) {
+PGMap::PGMap(int pool_id, std::string path) {
   // parse path + assert
   xbt_assert(fs::is_regular_file(path));
 
   // open
   std::ifstream file(path);
   std::string line;
-  unsigned int current_pool;
-  unsigned int pg_num;
-  unsigned int pgs_to_parse;
+  int current_pool = 0;
+  int pg_num = 0;
+  int pgs_to_parse = 0;
   std::string discard;
 
   // parse
@@ -178,12 +184,12 @@ PGMap::PGMap(std::string path, unsigned int pool) {
     ss >> first_word;
     if (first_word == "pool") {
       ss >> current_pool;
-      if (current_pool == pool) {
+      if (current_pool == pool_id) {
         ss >> discard >> pg_num;
         pgs_to_parse = pg_num;
       }
 
-    } else if (current_pool == pool && pgs_to_parse > 0) {
+    } else if (current_pool == pool_id && pgs_to_parse > 0) {
       pgs.push_back(std::make_unique<PG>(line));
       pgs_to_parse--;
     }
@@ -208,18 +214,21 @@ const std::vector<PGShardSet> PGMap::get_acting() const {
   return acting_set;
 }
 
-void PGMap::rebuild_primary_osd_to_pg_index() {
-  const std::scoped_lock lock(*mutex_);
+void PGMap::init_primary_osd_to_pg_index() {
   primary_osd_to_pg_index.clear();
   for (const auto &pg_ptr : pgs) {
-    unsigned int primary_osd =
-        pg_ptr->get_acting_ids().at(0); // first is primary
+    int primary_osd = pg_ptr->get_acting_ids().at(0); // first is primary
     primary_osd_to_pg_index[primary_osd].insert(pg_ptr.get());
   }
 }
 
-size_t PGMap::size() const {
+void PGMap::update_primary_osd_to_pg_index() {
   const std::scoped_lock lock(*mutex_);
+  init_primary_osd_to_pg_index();
+}
+
+size_t PGMap::size() const {
+  // just assume it doesn't change  const std::scoped_lock lock(*mutex_);
   return pgs.size();
 }
 
@@ -244,7 +253,6 @@ std::string PGMap::primary_osds_to_pgs_string() const {
 }
 
 std::string PGMap::to_string() const {
-  const std::scoped_lock lock(*mutex_);
   std::ostringstream ss;
   ss << "PGMap (Size " << pgs.size() << "):\n";
   for (const auto &pg : pgs) {

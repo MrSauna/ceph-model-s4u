@@ -7,8 +7,15 @@
     <argument value="results/small_cluster/0/pgdump.txt"/>  <!-- PG Map -->
     <argument value="results/small_cluster/1/pgdump.txt"/>  <!-- PG Map -->
   </actor>
-  <!-- The worker processes (with no argument) -->
-  <actor host="osd.0" function="osd" start_time="1" />
-  <actor host="osd.1" function="osd" start_time="1" />
-  <actor host="osd.2" function="osd" start_time="1" />
+
+  <!-- The worker processes -->
+  <actor host="osd.0" function="osd">
+    <argument value="0"/>  <!-- osd id -->
+  </actor>
+  <actor host="osd.1" function="osd">
+    <argument value="1"/>  <!-- osd id -->
+  </actor>
+  <actor host="osd.2" function="osd">
+    <argument value="2"/>  <!-- osd id -->
+  </actor>
 </platform>

@@ -10,17 +10,17 @@ class PG;
 
 class PGShard {
   PG *pg;
-  unsigned int osd_id;
-  unsigned int index;
+  int osd_id;
+  int index;
   unsigned long long int
       objects; // non-acting (up) pg shard might be incomplete
 
 public:
-  PGShard(PG *pg, unsigned int osd_id, unsigned int index, unsigned int objects)
+  PGShard(PG *pg, int osd_id, int index, int objects)
       : pg(pg), osd_id(osd_id), index(index), objects(objects) {}
-  unsigned int get_pg_id() const;
-  unsigned int get_osd_id() const;
-  unsigned int get_index() const { return index; }
+  int get_pg_id() const;
+  int get_osd_id() const;
+  int get_index() const { return index; }
   bool is_acting();
   unsigned long long int get_objects() const;
 };
@@ -50,7 +50,7 @@ struct PGShardSet {
 class PG {
   // mutex is non-recursive, actor must ensure no deadlock
   sg4::MutexPtr mutex_ = sg4::Mutex::create();
-  unsigned int id;
+  int id;
   // ownership
   std::set<std::unique_ptr<PGShard>> shards;
   // current state of those shards
@@ -60,25 +60,27 @@ class PG {
 
 public:
   explicit PG(std::string line);
-  void set_up(const std::vector<unsigned int> &set);
-  void set_acting(const std::vector<unsigned int> &set);
+  void init_up(const std::vector<int> &set);
+  void update_up(const std::vector<int> &set);
+  void init_acting(const std::vector<int> &set);
+  void update_acting(const std::vector<int> &set);
   const PGShardSet get_up() const { return up; }
-  const std::vector<unsigned int> get_up_ids() const {
-    std::vector<unsigned int> ids;
+  const std::vector<int> get_up_ids() const {
+    std::vector<int> ids;
     for (const auto &shard : up.members) {
       ids.push_back(shard->get_osd_id());
     }
     return ids;
   }
-  const std::vector<unsigned int> get_acting_ids() const {
-    std::vector<unsigned int> ids;
+  const std::vector<int> get_acting_ids() const {
+    std::vector<int> ids;
     for (const auto &shard : acting.members) {
       ids.push_back(shard->get_osd_id());
     }
     return ids;
   }
   const PGShardSet get_acting() const { return acting; }
-  unsigned int get_id() const { return id; }
+  int get_id() const { return id; }
   bool needs_backfill() const;
   std::string to_string() const;
 };
@@ -88,23 +90,72 @@ class PGMap {
   // mutex is non-recursive, actor must ensure no deadlock
   sg4::MutexPtr mutex_ = sg4::Mutex::create();
   std::vector<std::unique_ptr<PG>> pgs;
-  std::map<unsigned int, std::set<PG *>> primary_osd_to_pg_index;
+  std::map<int, std::set<PG *>> primary_osd_to_pg_index;
 
 public:
-  PGMap(std::string path, unsigned int pool);
+  PGMap(int pool_id, std::string path);
 
+  // getters
   size_t size() const;
   const std::vector<PGShardSet> get_up() const;
   const std::vector<PGShardSet> get_acting() const;
-
   const PG *get_pg(int pg) const { return pgs.at(pg).get(); };
   PG *get_pg(int pg) { return pgs.at(pg).get(); };
 
-  void rebuild_primary_osd_to_pg_index();
-  void refresh_primary_osd_to_pg_index_for_pg(unsigned int pg_id);
+  // primary osd to pgs
+  const std::set<PG *> primary_osd_get_pgs(int osd_id) const {
+    const std::scoped_lock lock(*mutex_);
+    std::set<PG *> result;
+    auto pg_set = primary_osd_to_pg_index.at(osd_id);
+    for (auto pg : pg_set) {
+      result.insert(pg);
+    }
+    return result;
+  }
+
+  // refreshers
+  void init_primary_osd_to_pg_index();
+  void update_primary_osd_to_pg_index();
+  void refresh_primary_osd_to_pg_index_for_pg(int pg_id);
 
   std::string primary_osds_to_pgs_string() const;
   std::string to_string() const;
+};
+
+// OSD ops and op contexts
+enum class OpType {
+  BACKFILL,
+  REPLICA_WRITE, // works for client write and replication
+  CLIENT_READ,
+  CLIENT_WRITE,
+};
+
+enum class OpState {
+  OP_CREATED,
+  OP_QUEUED, // not started yet
+  OP_WAITING_DISK,
+  OP_WAITING_PEER,
+  OP_COMPLETED,
+};
+
+struct OpContext {
+  int id;
+  OpType type;
+  int pgid;
+  int sender; // positive is osd id, negative is client id
+  size_t size;
+
+  OpState state;
+  std::set<int> pending_peers;
+};
+
+struct Op {
+  OpType type;
+  int id; // unique only within sender
+  int sender;
+  int recipient;
+  int pgid;
+  size_t size;
 };
 
 // message types
@@ -116,10 +167,9 @@ template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 struct KillMsg {};
 struct SubscribeToPGMapChangeMsg {};
-struct SubscribeToPGChangeMsg {};
 
 struct PGMapNotification {
-  PGMap *pg_map;
+  PGMap *pgmap;
 };
 
 struct PGNotification {
@@ -127,9 +177,17 @@ struct PGNotification {
   int acting;
 };
 
+struct OsdOpMsg {
+  Op *op;
+};
+
+struct OsdOpAckMsg {
+  int op_id;
+};
+
 using MessagePayload =
-    std::variant<KillMsg, SubscribeToPGMapChangeMsg, SubscribeToPGChangeMsg,
-                 PGMapNotification, PGNotification>;
+    std::variant<KillMsg, SubscribeToPGMapChangeMsg, PGMapNotification,
+                 PGNotification, OsdOpMsg, OsdOpAckMsg>;
 
 struct Message {
   std::string sender;
