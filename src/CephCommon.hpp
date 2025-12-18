@@ -2,6 +2,7 @@
 #include <simgrid/s4u.hpp>
 #include <variant>
 #include <vector>
+#include <sstream>
 
 namespace sg4 = simgrid::s4u;
 
