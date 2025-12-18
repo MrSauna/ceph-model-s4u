@@ -6,14 +6,24 @@
     "configurations": [
         {
             "name": "oma1 Launch",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/ceph-sim",
             "args": [
-                "inputs/platforms/small_platform.xml",
-                "inputs/platforms/small_ceph_deployment.xml",
-                "results/small_cluster/0/pgdump.txt",
-                "results/small_cluster/1/pgdump.txt",
+                // "--help",
+                "--dc-shape=2:2:2",
+                "--dc-speed=10:10:10",
+                "--dc-weight=10::",
+                "--pgdump=results/small_cluster/0/pgdump.txt",
+                "--pgdump=results/small_cluster/1/pgdump.txt",
+                "--pg-objects=10000",
+                "--object-size=4194304",
+                "--pool-id=1",
+                "--disk-read-bandwidth=125829120",
+                "--disk-write-bandwidth=83886080",
+                "--cfg=tracing:1",
+                // "--cfg=tracing/uncategorized:1", // crashes simulation
+                "--cfg=tracing/filename:results/vscode/simgrid.trace",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -21,7 +31,7 @@
             "externalConsole": false,
             "MIMode": "lldb",
             "preLaunchTask": "build",
-            "internalConsoleOptions": "openOnSessionStart"
+            // "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "name": "Python Debugger: Current File with Arguments",

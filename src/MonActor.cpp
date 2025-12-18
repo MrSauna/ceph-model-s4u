@@ -13,10 +13,12 @@ Mon::Mon(PGMap *pgmap) : pgmap(pgmap) {
 
   mailbox = simgrid::s4u::Mailbox::by_name("mon");
 
-  // fixme: discover osds dynamically
-  for (int i = 0; i < 3; i++)
+  // dynamically discover osds
+  std::vector<int> osds = pgmap->get_osds();
+  for (int i = 0; i < osds.size(); i++) {
     osd_mailboxes[i] =
-        simgrid::s4u::Mailbox::by_name("osd." + std::to_string(i));
+        simgrid::s4u::Mailbox::by_name("osd." + std::to_string(osds[i]));
+  }
 
   // XBT_INFO("Got %zu osds", osds.size());
   sg4::Engine *engine = sg4::Engine::get_instance();
@@ -34,8 +36,8 @@ void Mon::main_loop() {
       process_message(msg);
     }
     // stop condition for simulation
-    if (is_cluster_balanced()) {
-      XBT_INFO("Cluster is balanced, exiting main loop");
+    if (!pgmap->needs_backfill()) {
+      XBT_INFO("Cluster does not need backfill, exiting main loop");
       break;
     }
     simgrid::s4u::this_actor::sleep_for(0.1);
@@ -69,14 +71,6 @@ void Mon::on_subscribe_pgmap_change(const std::string &sender,
   auto response_msg = make_message<PGMapNotification>(pgmap);
   auto return_mb = simgrid::s4u::Mailbox::by_name(sender);
   return_mb->put(response_msg, 0);
-}
-
-// TODO implement actual logic
-bool Mon::is_cluster_balanced() {
-
-  if (simgrid::s4u::Engine::get_clock() >= 100)
-    return true;
-  return false;
 }
 
 void Mon::kill_all_osds() {

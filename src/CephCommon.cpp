@@ -10,6 +10,19 @@
 
 namespace fs = std::filesystem;
 
+XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_common,
+                             "Messages specific for CephCommon");
+
+int sender_str_to_int(std::string sender) {
+  if (sender.rfind("osd.", 0) == 0) {
+    return std::stoi(sender.substr(4));
+  } else if (sender.rfind("client.", 0) == 0) {
+    return -std::stoi(sender.substr(7));
+  } else {
+    xbt_die("Unknown sender: %s", sender.c_str());
+  }
+}
+
 std::istream &operator>>(std::istream &is, std::vector<int> &v) {
   int osd_id;
   char ch;
@@ -67,10 +80,9 @@ bool PGShard::is_acting() {
          acting_members.end();
 }
 
-unsigned long long int PGShard::get_objects() const { return objects; }
-
 // PG
-PG::PG(std::string line) {
+PG::PG(std::string line, size_t object_size, size_t pg_objects)
+    : pg_objects(pg_objects), object_size(object_size) {
   std::stringstream ss(line);
   // eg.
   // 3.18 raw ([123,73,98], p123) up ([123,73,98], p123) acting ([123,73,98],
@@ -109,7 +121,7 @@ void PG::init_up(const std::vector<int> &v) {
     if (i < acting.members.size() && acting.members[i]->get_osd_id() == v[i]) {
       new_up.members.push_back(acting.members[i]);
     } else {
-      auto shard = std::make_unique<PGShard>(this, v[i], i, 0);
+      auto shard = std::make_unique<PGShard>(this, v[i], i);
       new_up.members.push_back(shard.get());
       shards.insert(std::move(shard));
     }
@@ -131,7 +143,7 @@ void PG::init_acting(const std::vector<int> &v) {
     if (i < up.members.size() && up.members[i]->get_osd_id() == v[i]) {
       new_acting.members.push_back(up.members[i]);
     } else {
-      auto shard = std::make_unique<PGShard>(this, v[i], i, 0);
+      auto shard = std::make_unique<PGShard>(this, v[i], i);
       new_acting.members.push_back(shard.get());
       shards.insert(std::move(shard));
     }
@@ -165,7 +177,9 @@ std::string PG::to_string() const {
 }
 
 // PGMap
-PGMap::PGMap(int pool_id, std::string path) {
+PGMap::PGMap(int pool_id, std::string path, size_t object_size,
+             size_t pg_objects)
+    : object_size(object_size), pg_objects(pg_objects) {
   // parse path + assert
   xbt_assert(fs::is_regular_file(path));
 
@@ -190,7 +204,7 @@ PGMap::PGMap(int pool_id, std::string path) {
       }
 
     } else if (current_pool == pool_id && pgs_to_parse > 0) {
-      pgs.push_back(std::make_unique<PG>(line));
+      pgs.push_back(std::make_unique<PG>(line, object_size, pg_objects));
       pgs_to_parse--;
     }
   }
@@ -214,8 +228,21 @@ const std::vector<PGShardSet> PGMap::get_acting() const {
   return acting_set;
 }
 
-void PGMap::init_primary_osd_to_pg_index() {
+void PGMap::_update_primary_osd_to_pg_index() {
   primary_osd_to_pg_index.clear();
+
+  // find max osd id
+  max_osd_id = 0;
+  for (const auto &pg_ptr : pgs) {
+    max_osd_id = std::max(max_osd_id, pg_ptr->get_max_osd_id());
+  }
+
+  // ensure every osd is in the index
+  for (int o = 0; o <= max_osd_id; o++) {
+    primary_osd_to_pg_index[o] = std::set<PG *>();
+  }
+
+  // populate index
   for (const auto &pg_ptr : pgs) {
     int primary_osd = pg_ptr->get_acting_ids().at(0); // first is primary
     primary_osd_to_pg_index[primary_osd].insert(pg_ptr.get());
@@ -224,7 +251,27 @@ void PGMap::init_primary_osd_to_pg_index() {
 
 void PGMap::update_primary_osd_to_pg_index() {
   const std::scoped_lock lock(*mutex_);
-  init_primary_osd_to_pg_index();
+  _update_primary_osd_to_pg_index();
+}
+
+std::vector<int> PGMap::get_osds() const {
+  const std::scoped_lock lock(*mutex_);
+  std::vector<int> osds;
+  for (const auto &pair : primary_osd_to_pg_index) {
+    osds.push_back(pair.first);
+  }
+
+  return osds;
+}
+
+bool PGMap::needs_backfill() const {
+  const std::scoped_lock lock(*mutex_);
+  for (const auto &pg_ptr : pgs) {
+    if (pg_ptr->needs_backfill()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 size_t PGMap::size() const {
@@ -232,9 +279,34 @@ size_t PGMap::size() const {
   return pgs.size();
 }
 
+size_t PGMap::get_object_size() const { return object_size; }
+
+size_t PGMap::get_objects_per_pg() const { return pg_objects; }
+
 bool PG::needs_backfill() const {
   const std::scoped_lock lock(*mutex_);
   return up.members != acting.members;
+}
+
+void PG::on_object_recovered() {
+  const std::scoped_lock lock(*mutex_);
+  objects_recovered++;
+  // lazy simplified logic: if we recovered enough, we are done
+  if (objects_recovered >= pg_objects) {
+    acting = up;
+    prune_shards();
+    XBT_INFO("PG %d backfill complete (recovered %d objects)", id,
+             objects_recovered);
+  }
+}
+
+bool PG::schedule_recovery() {
+  const std::scoped_lock lock(*mutex_);
+  if (objects_recoveries_scheduled >= pg_objects) {
+    return false;
+  }
+  objects_recoveries_scheduled++;
+  return true;
 }
 
 std::string PGMap::primary_osds_to_pgs_string() const {

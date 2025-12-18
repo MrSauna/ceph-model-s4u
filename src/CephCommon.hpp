@@ -5,6 +5,9 @@
 
 namespace sg4 = simgrid::s4u;
 
+// helper functions
+int sender_str_to_int(std::string sender);
+
 // PG forward declaration
 class PG;
 
@@ -12,17 +15,14 @@ class PGShard {
   PG *pg;
   int osd_id;
   int index;
-  unsigned long long int
-      objects; // non-acting (up) pg shard might be incomplete
 
 public:
-  PGShard(PG *pg, int osd_id, int index, int objects)
-      : pg(pg), osd_id(osd_id), index(index), objects(objects) {}
+  PGShard(PG *pg, int osd_id, int index)
+      : pg(pg), osd_id(osd_id), index(index) {}
   int get_pg_id() const;
   int get_osd_id() const;
   int get_index() const { return index; }
   bool is_acting();
-  unsigned long long int get_objects() const;
 };
 
 // PG Shard set
@@ -56,14 +56,35 @@ class PG {
   // current state of those shards
   PGShardSet up;
   PGShardSet acting;
+
+  // Backfill state
+  int pg_objects;
+  int object_size;
+  int objects_recovered = 0;
+  int objects_recoveries_scheduled = 0;
+
   void prune_shards();
 
 public:
-  explicit PG(std::string line);
+  explicit PG(std::string line, size_t object_size, size_t pg_objects);
   void init_up(const std::vector<int> &set);
   void update_up(const std::vector<int> &set);
   void init_acting(const std::vector<int> &set);
   void update_acting(const std::vector<int> &set);
+
+  // State transitions
+  void on_object_recovered();
+  bool schedule_recovery();
+
+  int get_max_osd_id() const {
+    int max = 0;
+    for (const auto &shard : shards) {
+      max = std::max(max, shard->get_osd_id());
+    }
+    return max;
+  }
+  size_t get_object_size() const { return object_size; }
+  size_t get_objects_per_pg() const { return pg_objects; }
   const PGShardSet get_up() const { return up; }
   const std::vector<int> get_up_ids() const {
     std::vector<int> ids;
@@ -91,9 +112,12 @@ class PGMap {
   sg4::MutexPtr mutex_ = sg4::Mutex::create();
   std::vector<std::unique_ptr<PG>> pgs;
   std::map<int, std::set<PG *>> primary_osd_to_pg_index;
+  int max_osd_id;
+  size_t object_size;
+  size_t pg_objects;
 
 public:
-  PGMap(int pool_id, std::string path);
+  PGMap(int pool_id, std::string path, size_t object_size, size_t pg_objects);
 
   // getters
   size_t size() const;
@@ -101,6 +125,11 @@ public:
   const std::vector<PGShardSet> get_acting() const;
   const PG *get_pg(int pg) const { return pgs.at(pg).get(); };
   PG *get_pg(int pg) { return pgs.at(pg).get(); };
+
+  std::vector<int> get_osds() const;
+
+  size_t get_object_size() const;
+  size_t get_objects_per_pg() const;
 
   // primary osd to pgs
   const std::set<PG *> primary_osd_get_pgs(int osd_id) const {
@@ -112,9 +141,10 @@ public:
     }
     return result;
   }
+  bool needs_backfill() const;
 
   // refreshers
-  void init_primary_osd_to_pg_index();
+  void _update_primary_osd_to_pg_index();
   void update_primary_osd_to_pg_index();
   void refresh_primary_osd_to_pg_index_for_pg(int pg_id);
 
@@ -152,7 +182,6 @@ struct OpContext {
 struct Op {
   OpType type;
   int id; // unique only within sender
-  int sender;
   int recipient;
   int pgid;
   size_t size;
@@ -195,6 +224,6 @@ struct Message {
 };
 
 template <typename T, typename... Args> Message *make_message(Args &&...args) {
-  return new Message{.sender = simgrid::s4u::this_actor::get_host()->get_name(),
+  return new Message{.sender = simgrid::s4u::Actor::self()->get_name(),
                      .payload = T{std::forward<Args>(args)...}};
 }

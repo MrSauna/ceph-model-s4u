@@ -1,0 +1,45 @@
+#pragma once
+
+#include "CLI11.hpp"
+#include <simgrid/s4u.hpp>
+#include <string>
+#include <vector>
+
+// --- Helper Functions ---
+std::vector<std::string> split_str(const std::string &s, char delim);
+
+double resolve_val(std::string spec, int self_id, int parent_id,
+                   double fallback);
+
+// --- Validator ---
+struct ShapeValidator : public CLI::Validator {
+  ShapeValidator();
+};
+
+// --- Context ---
+struct SimContext {
+  int pool_id = 0;
+  int global_rack_id = 0;
+  int global_host_id = 0;
+  int global_osd_id = 0;
+
+  int disk_read_bandwidth = 0;
+  int disk_write_bandwidth = 0;
+
+  std::vector<std::string> shapes;
+  std::vector<std::string> speeds;
+  std::vector<std::string> weights;
+
+  int pg_objects = 1000;
+  int object_size = 4 * 1024 * 1024;
+
+  std::vector<std::string> cfg; // for simgrid engine
+  std::map<std::string, simgrid::s4u::NetZone *> host_zones;
+
+  std::string get_hierarchy_spec(const std::vector<std::string> &vec,
+                                 int dc_idx, int level);
+  std::string to_string();
+};
+
+// --- Top-Level Builder ---
+void build_dc(SimContext &ctx, simgrid::s4u::NetZone *world, int dc_config_idx);

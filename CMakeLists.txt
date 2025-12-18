@@ -20,6 +20,7 @@ include_directories(${SimGrid_INCLUDE_DIR})
 # my stuff
 add_executable(ceph-sim
     src/ceph-sim.cpp
+    src/SimContext.cpp
     src/CephCommon.cpp
     src/OsdActor.cpp
     src/MonActor.cpp
