@@ -26,11 +26,9 @@ void MetricMonitor::operator()() {
 
   file << "timestamp,resource_type,resource_name,value\n";
 
-  // Initialize map
+  // Initialize vector
   auto all_links = sg4::Engine::get_instance()->get_all_links();
-  for (auto *link : all_links) {
-    cumulative_load_[link->get_cname()] = 0.0;
-  }
+  cumulative_load_.assign(all_links.size(), 0.0);
 
   double polling_period = 0.001; // 1ms polling for high resolution
   double last_time = sg4::Engine::get_clock();
@@ -42,24 +40,24 @@ void MetricMonitor::operator()() {
     double dt = now - last_time;
 
     // Integrate Load: Bytes = Bps * seconds
-    for (auto *link : all_links) {
-      cumulative_load_[link->get_cname()] += link->get_load() * dt;
+    for (size_t i = 0; i < all_links.size(); ++i) {
+      cumulative_load_[i] += all_links[i]->get_load() * dt;
     }
 
     // Report if interval passed
     if (now >= next_report) {
-      for (auto const &[name, bytes] : cumulative_load_) {
+      for (size_t i = 0; i < all_links.size(); ++i) {
+        double bytes = cumulative_load_[i];
+
         // Average Bandwidth = Total Bytes / Interval
-        // Note: Use actual interval (now - (next_report - interval_)) to be
-        // precise? Or just interval_. SimGrid clocks are precise.
         double avg_bw = bytes / interval_;
 
         // Log if non-zero (or all to match user request)
         if (avg_bw > 1.0) { // Filter extremely small noise
           file << std::fixed << std::setprecision(2) << next_report << ",link,"
-               << name << "," << avg_bw << "\n";
+               << all_links[i]->get_cname() << "," << avg_bw << "\n";
         }
-        cumulative_load_[name] = 0.0; // Reset
+        cumulative_load_[i] = 0.0; // Reset
       }
       next_report += interval_;
     }

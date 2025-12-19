@@ -2,7 +2,9 @@
 #include "ClientActor.hpp"
 #include "MonActor.hpp"
 #include "OsdActor.hpp"
+#include <filesystem>
 #include <simgrid/s4u.hpp>
+namespace fs = std::filesystem;
 
 #define READ_BANDWIDTH (120 * 1024 * 1024) // 120 MiB/s
 #define WRITE_BANDWIDTH (80 * 1024 * 1024) // 80 MiB/s
@@ -165,8 +167,24 @@ int main(int argc, char *argv[]) {
   app.add_flag("--help-tracing", "Print this help message and exit")
       ->default_val(false);
 
+  // --output-dir
+  auto *output_dir_opt = app.add_option("--output-dir", ctx.output_dir,
+                                        "Output directory for artifacts");
+  output_dir_opt->required()->type_name("DIR");
+
   // Do the parsing
   CLI11_PARSE(app, argc, argv);
+
+  // Create output directory
+  try {
+    if (!ctx.output_dir.empty() && !fs::exists(ctx.output_dir)) {
+      fs::create_directories(ctx.output_dir);
+      XBT_INFO("Created output directory: %s", ctx.output_dir.c_str());
+    }
+  } catch (const std::exception &e) {
+    XBT_ERROR("Failed to create output directory: %s", e.what());
+    return 1;
+  }
 
   // Create the simgrid engine
   simgrid::s4u::Engine e(&argc, argv);
@@ -249,15 +267,16 @@ int main(int argc, char *argv[]) {
       get_tree_str(world_star, "  ", host_actors, zone_hosts);
   XBT_INFO("Deployment Tree:\n%s", tree_str.c_str());
 
-  XBT_INFO("Simulation context:\n%s", ctx.to_string().c_str());
-
   // Export Topology
-  ctx.serialize_topology("topology.json");
+  std::string topo_path = (fs::path(ctx.output_dir) / "topology.json").string();
+  ctx.serialize_topology(topo_path);
 
   // Start Metric Monitor
-  e.add_actor("metric_monitor", e.get_all_hosts()[0], []() {
+  std::string metrics_path =
+      (fs::path(ctx.output_dir) / "metrics.csv").string();
+  e.add_actor("metric_monitor", e.get_all_hosts()[0], [metrics_path]() {
     sg4::Actor::self()->daemonize();
-    MetricMonitor monitor(1.0, "metrics.csv");
+    MetricMonitor monitor(1.0, metrics_path);
     monitor();
   });
 

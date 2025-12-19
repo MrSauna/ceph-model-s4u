@@ -16,6 +16,7 @@
                 "--dc-weight=10::",
                 "--pgdump=results/small_cluster/0/pgdump.txt",
                 "--pgdump=results/small_cluster/1/pgdump.txt",
+                "--output-dir=results/vscode",
                 "--pg-objects=10000",
                 "--object-size=4194304",
                 "--pool-id=1",

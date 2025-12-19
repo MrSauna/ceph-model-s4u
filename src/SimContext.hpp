@@ -35,6 +35,7 @@ struct SimContext {
 
   std::vector<std::string> cfg; // for simgrid engine
   std::map<std::string, simgrid::s4u::NetZone *> host_zones;
+  std::string output_dir = ".";
 
   std::string get_hierarchy_spec(const std::vector<std::string> &vec,
                                  int dc_idx, int level);
