@@ -39,6 +39,9 @@ struct SimContext {
   std::string get_hierarchy_spec(const std::vector<std::string> &vec,
                                  int dc_idx, int level);
   std::string to_string();
+
+  // Topology Export
+  void serialize_topology(const std::string &filename);
 };
 
 // --- Top-Level Builder ---

@@ -21,9 +21,9 @@
                 "--pool-id=1",
                 "--disk-read-bandwidth=125829120",
                 "--disk-write-bandwidth=83886080",
-                "--cfg=tracing:1",
+                // "--cfg=tracing:1",
                 // "--cfg=tracing/uncategorized:1", // crashes simulation
-                "--cfg=tracing/filename:results/vscode/simgrid.trace",
+                // "--cfg=tracing/filename:results/vscode/simgrid.trace",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

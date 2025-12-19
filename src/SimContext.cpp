@@ -1,5 +1,10 @@
 #include "SimContext.hpp"
+#include <fstream>
+#include <functional>
 #include <sstream>
+
+XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_sim_context,
+                             "Messages specific for the simulation context");
 
 namespace sg4 = simgrid::s4u;
 
@@ -216,4 +221,58 @@ std::string SimContext::to_string() {
     ss << s << " ";
   ss << std::endl;
   return ss.str();
+}
+
+// --- Topology Export ---
+
+void SimContext::serialize_topology(const std::string &filename) {
+  std::ofstream file(filename);
+  if (!file.is_open()) {
+    XBT_ERROR("Failed to open topology file: %s", filename.c_str());
+    return;
+  }
+
+  simgrid::s4u::Engine *e = simgrid::s4u::Engine::get_instance();
+  auto *root = e->get_netzone_root();
+
+  // Pre-process hosts to organize by zone
+  std::map<simgrid::s4u::NetZone *, std::vector<std::string>> zone_to_hosts;
+  for (const auto &[hostname, zone_ptr] : host_zones) {
+    zone_to_hosts[zone_ptr].push_back(hostname);
+  }
+
+  // Recursive Lambda
+  std::function<void(simgrid::s4u::NetZone *, int)> dump_zone;
+  dump_zone = [&](simgrid::s4u::NetZone *zone, int depth) {
+    std::string indent(depth * 2, ' ');
+    file << indent << "{\n";
+    file << indent << "  \"name\": \"" << zone->get_name() << "\",\n";
+
+    file << indent << "  \"hosts\": [";
+    if (zone_to_hosts.count(zone)) {
+      const auto &hosts = zone_to_hosts[zone];
+      for (size_t i = 0; i < hosts.size(); ++i) {
+        if (i > 0)
+          file << ", ";
+        file << "\"" << hosts[i] << "\"";
+      }
+    }
+    file << "],\n";
+
+    file << indent << "  \"children\": [\n";
+    auto children_vec = zone->get_children();
+    bool first = true;
+    for (auto *child : children_vec) {
+      if (!first)
+        file << ",\n";
+      dump_zone(child, depth + 1);
+      first = false;
+    }
+    file << "\n" << indent << "  ]\n";
+    file << indent << "}";
+  };
+
+  dump_zone(root, 0);
+  file.close();
+  XBT_INFO("Topology exported to %s", filename.c_str());
 }

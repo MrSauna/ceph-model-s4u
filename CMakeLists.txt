@@ -25,6 +25,7 @@ add_executable(ceph-sim
     src/OsdActor.cpp
     src/MonActor.cpp
     src/ClientActor.cpp
+    src/MetricMonitor.cpp
 )
 target_include_directories(ceph-sim PUBLIC src)
 target_link_libraries(ceph-sim ${SimGrid_LIBRARY})

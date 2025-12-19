@@ -8,6 +8,7 @@
 #define WRITE_BANDWIDTH (80 * 1024 * 1024) // 80 MiB/s
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim, "Messages specific for ceph-sim");
 
+#include "MetricMonitor.hpp"
 #include "SimContext.hpp"
 
 // --- Helper Functions and Topology Builders have been moved to SimContext.cpp
@@ -249,6 +250,16 @@ int main(int argc, char *argv[]) {
   XBT_INFO("Deployment Tree:\n%s", tree_str.c_str());
 
   XBT_INFO("Simulation context:\n%s", ctx.to_string().c_str());
+
+  // Export Topology
+  ctx.serialize_topology("topology.json");
+
+  // Start Metric Monitor
+  e.add_actor("metric_monitor", e.get_all_hosts()[0], []() {
+    sg4::Actor::self()->daemonize();
+    MetricMonitor monitor(1.0, "metrics.csv");
+    monitor();
+  });
 
   auto start_time = std::chrono::steady_clock::now();
   /* Run the simulation */
