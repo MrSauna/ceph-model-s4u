@@ -40,14 +40,26 @@ rule all:
 rule run_sim:
     input:
         binary = "build_release/ceph-sim",
-        platform = "inputs/platforms/small_platform.xml",
-        deployment = "inputs/platforms/small_ceph_deployment.xml",
+        pgdump1 = "results/{exp}/0/pgdump.txt",
+        pgdump2 = "results/{exp}/1/pgdump.txt",
     output:
         result = "results/{exp}/result.txt",
     shell:
         """
         {input.binary} \
-            {input.platform} {input.deployment} > {output.result}
+            "--dc-shape=2:2:2" \
+            "--dc-speed=10:10:10" \
+            "--dc-weight=10::" \
+            "--pgdump={input.pgdump1}" \
+            "--pgdump={input.pgdump2}" \
+            "--pg-objects=10000" \
+            "--object-size=4194304" \
+            "--pool-id=1" \
+            "--disk-read-bandwidth=125829120" \
+            "--disk-write-bandwidth=83886080" \
+            "--cfg=tracing:1" \
+            "--cfg=tracing/filename:results/{wildcards.exp}/simgrid.trace" \
+            > {output.result}
         """
 
 
