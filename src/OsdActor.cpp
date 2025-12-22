@@ -28,7 +28,7 @@ std::string Osd::primary_pgs_to_string() const {
 }
 
 void Osd::on_pgmap_change() {
-  auto my_pgs = pgmap->primary_osd_get_pgs(osd_id);
+  auto my_pgs = pgmap->primary_osd_get_pgs(id);
   my_primary_pgs.clear();
   needs_backfill_pgs.clear();
 
@@ -44,11 +44,6 @@ void Osd::on_pgmap_change() {
   } else {
     XBT_INFO("%s", pg_str.c_str());
   }
-}
-
-void Osd::kill_self() {
-  XBT_INFO("%s is killing itself", my_host->get_name().c_str());
-  simgrid::s4u::this_actor::exit();
 }
 
 void Osd::maybe_reserve_backfill() {
@@ -73,7 +68,7 @@ void Osd::maybe_schedule_object_backfill() {
       .id = op_id,
       .type = OpType::BACKFILL,
       .pgid = backfilling_pg->get_id(),
-      .sender = osd_id,
+      .sender = id,
       .size = backfilling_pg->get_object_size(),
       .state = OpState::OP_WAITING_DISK,
   };
@@ -92,8 +87,7 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
 
   switch (op->type) {
   case OpType::REPLICA_WRITE: {
-    sg4::Mailbox *target_osd_mb =
-        simgrid::s4u::Mailbox::by_name("osd." + std::to_string(sender));
+    sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(sender);
     Message *ack_msg = make_message<OsdOpAckMsg>(op->id);
     target_osd_mb->put_async(ack_msg, 0).detach(); // note detached()
     XBT_DEBUG("received replica write op %u from osd.%u. Acking immediately",
@@ -101,7 +95,7 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     break;
   }
   default:
-    xbt_die("osd.%u received op message with unknown type %d", osd_id,
+    xbt_die("osd.%u received op message with unknown type %d", id,
             static_cast<int>(op->type));
   }
 }
@@ -116,7 +110,7 @@ void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
     advance_backfill_op(context, sender);
     break;
   default:
-    xbt_die("osd.%u received ack message with unknown type %d", osd_id,
+    xbt_die("osd.%u received ack message with unknown type %d", id,
             static_cast<int>(context->type));
   }
 }
@@ -152,8 +146,7 @@ void Osd::process_message(Message *msg) {
 void Osd::send_op(Op *op) {
   // TODO: store the mailboxes somewhere always looking up by name seems like a
   // bad idea.
-  sg4::Mailbox *target_osd_mb =
-      simgrid::s4u::Mailbox::by_name("osd." + std::to_string(op->recipient));
+  sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(op->recipient);
 
   Message *msg = make_message<OsdOpMsg>(op);
   target_osd_mb->put_async(msg, op->size).detach();
@@ -166,7 +159,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
     // send to peers
     for (auto peer_osd_shard : backfilling_pg->get_up().members) {
 
-      if (peer_osd_shard->get_osd_id() == osd_id || peer_osd_shard->is_acting())
+      if (peer_osd_shard->get_osd_id() == id || peer_osd_shard->is_acting())
         continue;
 
       Op *op = new Op{
@@ -200,14 +193,14 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
     }
     break;
   default:
-    xbt_die("osd.%u advancing backfill op in unknown state", osd_id);
+    xbt_die("osd.%u advancing backfill op in unknown state", id);
   }
 }
 
 void Osd::process_finished_activity(sg4::ActivityPtr activity) {
 
   if (op_context_map.find(activity) == op_context_map.end()) {
-    xbt_die("osd.%u finished unknown activity", osd_id);
+    xbt_die("osd.%u finished unknown activity", id);
   }
 
   OpContext *context = op_context_map[activity];
@@ -215,60 +208,29 @@ void Osd::process_finished_activity(sg4::ActivityPtr activity) {
   switch (context->type) {
   case OpType::BACKFILL:
     op_context_map.erase(activity);
-    advance_backfill_op(context, osd_id);
+    advance_backfill_op(context, id);
     break;
   default:
-    xbt_die("osd.%u finished activity with unknown type", osd_id);
+    xbt_die("osd.%u finished activity with unknown type", id);
   }
 }
 
-void Osd::main_loop() {
-
-  // start off listener
-  Message *message;
-  sg4::CommPtr listener = mb->get_async(&message);
-  activities.push(listener);
-
-  while (true) {
-
-    maybe_reserve_backfill();
-    maybe_schedule_object_backfill();
-
-    // wait any activity
-    sg4::ActivityPtr finished = activities.wait_any();
-
-    // new message arrived
-    if (finished == listener) {
-      process_message(message);
-
-      // restart listener
-      listener = mb->get_async(&message);
-      activities.push(listener);
-      continue;
-    }
-
-    // something else finished
-    else {
-      process_finished_activity(finished);
-    }
-  }
+void Osd::make_progress() {
+  maybe_reserve_backfill();
+  maybe_schedule_object_backfill();
 }
 
 void Osd::operator()() {
   XBT_INFO("Started");
 
-  main_loop();
+  CephActor::main_loop();
   xbt_die("should never reach here");
 }
 
 Osd::Osd(PGMap *pgmap, int osd_id, std::string disk_name)
-    : pgmap(pgmap), osd_id(osd_id) {
+    : CephActor(osd_id, pgmap) {
 
-  my_host = simgrid::s4u::this_actor::get_host();
-  my_actor = sg4::Actor::self();
-  mb = simgrid::s4u::Mailbox::by_name(my_actor->get_name());
-  mon_mb = simgrid::s4u::Mailbox::by_name("mon");
-
+  xbt_assert(osd_id >= 0, "osd_id must be non-negative");
   disk = my_host->get_disk_by_name(disk_name);
   on_pgmap_change();
 }

@@ -24,6 +24,7 @@ add_executable(ceph-sim
     src/CephCommon.cpp
     src/OsdActor.cpp
     src/MonActor.cpp
+    src/CephActor.cpp
     src/ClientActor.cpp
     src/MetricMonitor.cpp
 )

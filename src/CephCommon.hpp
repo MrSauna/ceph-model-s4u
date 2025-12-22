@@ -1,8 +1,8 @@
 #pragma once
 #include <simgrid/s4u.hpp>
+#include <sstream>
 #include <variant>
 #include <vector>
-#include <sstream>
 
 namespace sg4 = simgrid::s4u;
 
@@ -102,6 +102,7 @@ public:
     return ids;
   }
   const PGShardSet get_acting() const { return acting; }
+  int get_primary() const { return acting.primary()->get_osd_id(); }
   int get_id() const { return id; }
   bool needs_backfill() const;
   std::string to_string() const;
@@ -143,6 +144,12 @@ public:
     return result;
   }
   bool needs_backfill() const;
+
+  // mailboxes
+  std::vector<sg4::Mailbox *> osd_mailboxes;
+  sg4::Mailbox *get_osd_mailbox(int osd_id) const {
+    return osd_mailboxes.at(osd_id);
+  }
 
   // refreshers
   void _update_primary_osd_to_pg_index();
