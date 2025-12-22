@@ -53,10 +53,12 @@ void Client::make_progress() {
     return;
 
   // equal distribution of read/write
-  if (last_op_id % 2 == 0) {
-    gen_op(OpType::CLIENT_WRITE);
-  } else {
-    gen_op(OpType::CLIENT_READ);
+  while (in_flight_ops < max_concurrent_ops) {
+    if (last_op_id % 2 == 0) {
+      gen_op(OpType::CLIENT_WRITE);
+    } else {
+      gen_op(OpType::CLIENT_READ);
+    }
   }
 }
 

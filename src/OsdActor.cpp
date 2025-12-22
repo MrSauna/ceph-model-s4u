@@ -57,26 +57,26 @@ void Osd::maybe_reserve_backfill() {
 }
 
 void Osd::maybe_schedule_object_backfill() {
-  if (used_recovery_threads >= max_recovery_threads || !backfilling_pg ||
-      !backfilling_pg->schedule_recovery())
-    return;
+  while (used_recovery_threads < max_recovery_threads && backfilling_pg &&
+         backfilling_pg->schedule_recovery()) {
 
-  int op_id = last_op_id++;
-  auto a = disk->read_async(backfilling_pg->get_object_size());
-  activities.push(a);
-  OpContext *oc = new OpContext{
-      .local_id = op_id,
-      .client_op_id = op_id, // strictly internal, so it matches local_id
-      .type = OpType::BACKFILL,
-      .pgid = backfilling_pg->get_id(),
-      .sender = id,
-      .size = backfilling_pg->get_object_size(),
-      .state = OpState::OP_WAITING_DISK,
-  };
-  op_context_map[a] = oc;
-  op_contexts[op_id] = oc;
+    int op_id = last_op_id++;
+    auto a = disk->read_async(backfilling_pg->get_object_size());
+    activities.push(a);
+    OpContext *oc = new OpContext{
+        .local_id = op_id,
+        .client_op_id = op_id, // strictly internal, so it matches local_id
+        .type = OpType::BACKFILL,
+        .pgid = backfilling_pg->get_id(),
+        .sender = id,
+        .size = backfilling_pg->get_object_size(),
+        .state = OpState::OP_WAITING_DISK,
+    };
+    op_context_map[a] = oc;
+    op_contexts[op_id] = oc;
 
-  used_recovery_threads++;
+    used_recovery_threads++;
+  }
 }
 
 void Osd::advance_write_op(int op_id) {}
