@@ -1,4 +1,5 @@
 #include "ClientActor.hpp"
+#include "CephCommon.hpp"
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim_client,
                              "Messages specific for ClientActors");
@@ -9,67 +10,99 @@ Client::Client(PGMap *pgmap, int client_id) : CephActor(client_id, pgmap) {
   xbt_assert(client_id < 0, "client_id must be negative");
 }
 
-void Client::make_progress() {
+void Client::gen_op(OpType type) {
 
+  in_flight_ops++;
   // Create Op
   int op_id = last_op_id++;
   int pg_id = last_op_pg++ % pgmap->size();
   int target_osd_id = pgmap->get_pg(pg_id)->get_primary();
 
   Op *op = new Op{
-      .type = OpType::CLIENT_WRITE,
+      .type = type,
       .id = op_id,
       .recipient = target_osd_id,
       .pgid = pg_id,
-      .size = (size_t)communication_cost,
+      .size = pgmap->get_object_size(),
   };
 
   // Track Context
   OpContext *oc = new OpContext{
-      .id = op_id,
-      .type = OpType::CLIENT_WRITE,
+      .local_id = op_id,
+      .client_op_id = op_id,
+      .type = type,
       .pgid = pg_id,
       .sender = id,
       .size = op->size,
       .state = OpState::OP_WAITING_PEER,
+      .start_time = sg4::Engine::get_clock(),
   };
   op_contexts[op_id] = oc;
 
   // Send
-  // Send
   sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(target_osd_id);
   Message *msg = make_message<OsdOpMsg>(op);
-  // Overwrite sender with client name/ID if needed, but make_message uses
-  // actor name
 
-  target_osd_mb->put_async(msg, communication_cost).detach();
+  target_osd_mb->put_async(msg, pgmap->get_object_size()).detach();
 
-  XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
+  // XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
+}
+
+void Client::make_progress() {
+  if (in_flight_ops >= max_concurrent_ops)
+    return;
+
+  // equal distribution of read/write
+  if (last_op_id % 2 == 0) {
+    gen_op(OpType::CLIENT_WRITE);
+  } else {
+    gen_op(OpType::CLIENT_READ);
+  }
+}
+
+void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
+
+  OpContext *context = op_contexts[msg.op_id];
+  XBT_DEBUG("received ack for op %u", msg.op_id);
+  xbt_assert(context, "op context is null");
+
+  switch (context->type) {
+  case OpType::CLIENT_WRITE: {
+    double dt = sg4::Engine::get_clock() - context->start_time;
+    XBT_INFO("wr op %d took %f seconds", msg.op_id, dt);
+    break;
+  }
+  case OpType::CLIENT_READ: {
+    double dt = sg4::Engine::get_clock() - context->start_time;
+    XBT_INFO("rd op %d took %f seconds", msg.op_id, dt);
+    break;
+  }
+  default:
+    xbt_die("osd.%u received ack message with unknown type %d", id,
+            static_cast<int>(context->type));
+  }
+
+  in_flight_ops--;
+  op_contexts.erase(msg.op_id);
+  delete context;
 }
 
 void Client::process_message(Message *msg) {
   std::visit(overloaded{[&](const OsdOpAckMsg &ack) {
-                          if (op_contexts.count(ack.op_id)) {
-                            XBT_DEBUG("Received Ack for op %d", ack.op_id);
-                            delete op_contexts[ack.op_id];
-                            op_contexts.erase(ack.op_id);
-                            tasks_acked++;
-                          } else {
-                            XBT_WARN("Received Ack for unknown op %d",
-                                     ack.op_id);
-                          }
+                          XBT_DEBUG("Received Ack for op %d", ack.op_id);
+                          on_osd_op_ack_message(sender_str_to_int(msg->sender),
+                                                ack);
                         },
+                        [&](const KillMsg &kill) { CephActor::kill_self(); },
                         [&](const auto &) {
-                          XBT_WARN("Client received unexpected message");
+                          xbt_die("Client received unexpected message");
                         }},
              msg->payload);
   delete msg;
 }
 
 void Client::process_finished_activity(sg4::ActivityPtr activity) {
-  // Only listener activities are tracked in main loop if we don't push others.
-  // Client put_async are detached.
-  // implementation needed for abstract base class
+  xbt_die("Clients should not have activities");
 }
 
 void Client::operator()() { CephActor::main_loop(); }

@@ -163,8 +163,8 @@ void build_dc(SimContext &ctx, sg4::NetZone *world, int dc_config_idx) {
   auto *dc_zone = world->add_netzone_star(dc_name);
 
   // Router: DC Switch
-  // auto *dc_router = dc_zone->add_router(dc_name + "_router");
-  // dc_zone->set_gateway(dc_router);
+  auto *dc_router = dc_zone->add_router(dc_name + "_router");
+  dc_zone->set_gateway(dc_router);
 
   // Resolve DC Uplink Speed (Index 0: DC Uplink)
   std::string speed_spec = ctx.get_hierarchy_spec(ctx.speeds, dc_config_idx, 0);
@@ -175,9 +175,9 @@ void build_dc(SimContext &ctx, sg4::NetZone *world, int dc_config_idx) {
       dc_zone->add_link(dc_name + "_uplink", bw_str)->set_latency("100us");
 
   // Route: DC Switch -> Outside (DC Boundary)
-  // DISABLED: dc_zone->add_route(dc_router, nullptr, {{uplink,
-  // sg4::LinkInRoute::Direction::UP}}, true); Route: DC Switch -> World (in
-  // World Zone) DISABLED: world->add_route(dc_router, nullptr, {}, true);
+  // Route: DC Switch -> World (in World Zone)
+  world->add_route(dc_zone, nullptr,
+                   {{uplink, sg4::LinkInRoute::Direction::UP}}, true);
 
   // Rack Count (Index 0)
   std::string count_spec = ctx.get_hierarchy_spec(ctx.shapes, dc_config_idx, 0);

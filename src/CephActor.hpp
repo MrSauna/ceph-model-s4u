@@ -13,8 +13,9 @@ protected:
   simgrid::s4u::Mailbox *mb;
   simgrid::s4u::Mailbox *mon_mb;
   sg4::ActivitySet activities;
-  std::unordered_map<sg4::ActivityPtr, OpContext *> op_context_map;
-  std::unordered_map<int, OpContext *> op_contexts;
+  std::unordered_map<sg4::ActivityPtr, OpContext *>
+      op_context_map; // activity to op context map
+  std::unordered_map<int, OpContext *> op_contexts; // op id to op context map
   int last_op_id = 0;
 
   int id;

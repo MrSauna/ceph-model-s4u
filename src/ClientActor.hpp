@@ -1,15 +1,15 @@
 #include "CephActor.hpp"
 
 class Client : public CephActor {
-  long tasks_count;
-  double compute_cost;
-  double communication_cost;
-  std::vector<simgrid::s4u::Mailbox *> workers; // These are OSD mailboxes?
+  int max_concurrent_ops = 3;
+  int in_flight_ops = 0;
 
   long tasks_sent = 0;
   long tasks_acked = 0;
 
   void process_message(Message *msg) override;
+  void gen_op(OpType type);
+  void on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg);
   void process_finished_activity(sg4::ActivityPtr activity) override;
   void make_progress() override;
 

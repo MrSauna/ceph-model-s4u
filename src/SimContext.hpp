@@ -26,6 +26,8 @@ struct SimContext {
   int disk_read_bandwidth = 0;
   int disk_write_bandwidth = 0;
 
+  int clients = 0;
+
   std::vector<std::string> shapes;
   std::vector<std::string> speeds;
   std::vector<std::string> weights;

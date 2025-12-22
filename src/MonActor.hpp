@@ -6,6 +6,7 @@ class Mon {
   simgrid::s4u::Mailbox *mailbox;
   PGMap *pgmap;
   std::map<int, simgrid::s4u::Mailbox *> osd_mailboxes;
+  std::vector<std::string> client_names;
 
   void process_message(Message *msg);
   bool is_cluster_balanced();
@@ -15,7 +16,7 @@ class Mon {
   void main_loop();
 
 public:
-  explicit Mon(PGMap *pgmap);
+  explicit Mon(PGMap *pgmap, std::vector<std::string> client_names);
   void operator()();
   void on_subscribe_pgmap_change(const std::string &sender,
                                  const SubscribeToPGMapChangeMsg &payload);

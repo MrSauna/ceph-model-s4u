@@ -172,6 +172,11 @@ int main(int argc, char *argv[]) {
                                         "Output directory for artifacts");
   output_dir_opt->required()->type_name("DIR");
 
+  // --clients
+  auto *clients_opt =
+      app.add_flag("--clients", ctx.clients, "Number of clients");
+  clients_opt->default_val(0);
+
   // Do the parsing
   CLI11_PARSE(app, argc, argv);
 
@@ -204,6 +209,8 @@ int main(int argc, char *argv[]) {
 
   // Build the platform
   auto *world_star = e.get_netzone_root()->add_netzone_star("star");
+  auto *world_gw = world_star->add_router("world_gw");
+  world_star->set_gateway(world_gw);
 
   // Iterate over defined shapes and build data centers
   for (size_t i = 0; i < ctx.shapes.size(); ++i) {
@@ -239,28 +246,44 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // add client
+  std::vector<std::string> client_names;
+  if (ctx.clients > 0) {
+    for (size_t i = 1; i <= ctx.clients; i++) {
+      std::string client_name = "client." + std::to_string(i);
+      client_names.push_back(client_name);
+    }
+    sg4::Host *client = world_star->add_host("client", "100Gf");
+    auto client_link =
+        world_star->add_split_duplex_link("client_link", "25Gbps")
+            ->set_latency("500us");
+    world_star->add_route(client, nullptr,
+                          {{client_link, sg4::LinkInRoute::Direction::UP}},
+                          true);
+    e.add_actor("client.1", client, [pgmap]() {
+      Client client(pgmap, -1);
+      client();
+    });
+    zone_hosts[world_star].push_back(client);
+    host_actors["client.1"].push_back("client.1");
+  }
+
   // deploy a mon (to first rack on a new host)
   auto nz = ctx.host_zones["host-0"];
   sg4::Host *mon = nz->add_host("mon", "100Gf");
-
-  // Create Uplink for Mon (25Gbps default)
   auto mon_link =
       nz->add_split_duplex_link("mon_link", "25Gbps")->set_latency("5us");
   nz->add_route(mon, nullptr, {{mon_link, sg4::LinkInRoute::Direction::UP}},
                 true);
-
-  // Add keys to maps
   zone_hosts[nz].push_back(mon);
   host_actors["mon"].push_back("mon");
-
-  e.add_actor("mon", mon, [pgmap]() {
-    Mon mon(pgmap);
+  e.add_actor("mon", mon, [pgmap, client_names]() {
+    Mon mon(pgmap, client_names);
     mon();
   });
 
   // seal racks and data centers
   world_star->seal();
-  // seal_netzone(world_star);
 
   // Print the deployment tree
   std::string tree_str =

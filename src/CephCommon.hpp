@@ -177,11 +177,13 @@ enum class OpState {
 };
 
 struct OpContext {
-  int id;
+  int local_id;     // unique within this actor
+  int client_op_id; // id from the sender (e.g. client or peer osd)
   OpType type;
   int pgid;
   int sender; // positive is osd id, negative is client id
   size_t size;
+  double start_time = std::numeric_limits<double>::max();
 
   OpState state;
   std::set<int> pending_peers;

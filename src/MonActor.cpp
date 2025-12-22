@@ -5,7 +5,8 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim_mon,
                              "Messages specific for MonActors");
 
-Mon::Mon(PGMap *pgmap) : pgmap(pgmap) {
+Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names)
+    : pgmap(pgmap), client_names(client_names) {
 
   XBT_INFO("Initial PGMap\n%s", pgmap->to_string().c_str());
   XBT_INFO("Initial map's reverse index\n%s",
@@ -78,6 +79,12 @@ void Mon::kill_all_osds() {
   sg4::ActivitySet kill_activities;
   for (auto mb_tuple : osd_mailboxes) {
     auto mb = mb_tuple.second;
+    Message *msg = make_message<KillMsg>();
+    auto a = mb->put_async(msg, 0);
+    kill_activities.push(a);
+  }
+  for (auto client_name : client_names) {
+    auto mb = simgrid::s4u::Mailbox::by_name(client_name);
     Message *msg = make_message<KillMsg>();
     auto a = mb->put_async(msg, 0);
     kill_activities.push(a);

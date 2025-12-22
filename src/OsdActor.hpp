@@ -26,6 +26,8 @@ class Osd : public CephActor {
   void on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg);
   void on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg);
   void advance_backfill_op(OpContext *context, int peer_osd_id);
+  void advance_write_op(int op_id);
+  void advance_read_op(int op_id);
 
 public:
   explicit Osd(PGMap *pgmap, int osd_id, std::string disk_name);

@@ -65,7 +65,8 @@ void Osd::maybe_schedule_object_backfill() {
   auto a = disk->read_async(backfilling_pg->get_object_size());
   activities.push(a);
   OpContext *oc = new OpContext{
-      .id = op_id,
+      .local_id = op_id,
+      .client_op_id = op_id, // strictly internal, so it matches local_id
       .type = OpType::BACKFILL,
       .pgid = backfilling_pg->get_id(),
       .sender = id,
@@ -78,6 +79,10 @@ void Osd::maybe_schedule_object_backfill() {
   used_recovery_threads++;
 }
 
+void Osd::advance_write_op(int op_id) {}
+
+void Osd::advance_read_op(int op_id) {}
+
 // todo: make it do stuff, currently instant ack
 void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
   Op *op = osd_op_msg.op;
@@ -86,14 +91,73 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
             static_cast<int>(op->type), sender, op->pgid, op->id);
 
   switch (op->type) {
-  case OpType::REPLICA_WRITE: {
-    sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(sender);
-    Message *ack_msg = make_message<OsdOpAckMsg>(op->id);
-    target_osd_mb->put_async(ack_msg, 0).detach(); // note detached()
-    XBT_DEBUG("received replica write op %u from osd.%u. Acking immediately",
-              op->id, sender);
+
+  case OpType::CLIENT_WRITE: {
+    // todo: create replica write ops (including self); ack on
+    // => disk write and op send to peers are initiated async
+    int op_id = last_op_id++;
+    PG *pg = pgmap->get_pg(op->pgid);
+    auto acting = pg->get_acting_ids();
+    std::set<int> peers(acting.begin(), acting.end());
+    OpContext *oc = new OpContext{
+        .local_id = op_id,
+        .client_op_id = op->id,
+        .type = OpType::CLIENT_WRITE,
+        .pgid = op->pgid,
+        .sender = sender,
+        .size = op->size,
+        .state = OpState::OP_WAITING_PEER,
+        .pending_peers = peers,
+    };
+    op_contexts[op_id] = oc;
+    for (const auto &peer : peers) {
+      sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer);
+      int sub_op_id = last_op_id++;
+      Op *subop = new Op{
+          .id = sub_op_id,
+          .pgid = op->pgid,
+          .type = OpType::REPLICA_WRITE,
+          .size = op->size,
+          .recipient = peer,
+      };
+      op_contexts[sub_op_id] = oc;
+      Message *msg = make_message<OsdOpMsg>(subop);
+      peer_mb->put_async(msg, op->size).detach();
+      // XBT_INFO("sent replica write op %u to osd.%u", sub_op_id, peer);
+    }
     break;
   }
+
+  case OpType::CLIENT_READ: {
+    // todo: make this read from disk; ack on activity finished
+    int op_id = last_op_id++;
+    OpContext *oc = new OpContext{
+        .local_id = op_id,
+        .client_op_id = op->id,
+        .type = OpType::CLIENT_READ,
+        .pgid = op->pgid,
+        .sender = sender,
+        .size = op->size,
+        .state = OpState::OP_WAITING_DISK,
+    };
+    auto a = disk->read_async(op->size);
+    activities.push(a);
+    op_context_map[a] = oc;
+    op_contexts[op_id] = oc;
+    break;
+  }
+
+  case OpType::REPLICA_WRITE: {
+    // todo: make this write to disk and move ack to on activity finished
+    // XBT_INFO("received replica write op %u from sender %d", op->id, sender);
+    sg4::Mailbox *target_mb = pgmap->get_osd_mailbox(sender);
+    Message *ack_msg = make_message<OsdOpAckMsg>(op->id);
+    target_mb->put_async(ack_msg, 0).detach(); // note detached()
+    XBT_DEBUG("received op %u from sender %d. Acking immediately", op->id,
+              sender);
+    break;
+  }
+
   default:
     xbt_die("osd.%u received op message with unknown type %d", id,
             static_cast<int>(op->type));
@@ -103,12 +167,29 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
 void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   OpContext *context = op_contexts[msg.op_id];
   XBT_DEBUG("received ack for op %u", msg.op_id);
+  // fixme: I have messed up the ids.
   xbt_assert(context, "op context is null");
 
   switch (context->type) {
   case OpType::BACKFILL:
     advance_backfill_op(context, sender);
     break;
+
+  // this is the context type when we receive an ack from a peer (this is
+  // primary's op type, peer's is replica_write)
+  case OpType::CLIENT_WRITE:
+    context->pending_peers.erase(sender);
+    if (context->pending_peers.empty()) {
+      op_contexts.erase(msg.op_id);
+      // ack client
+      sg4::Mailbox *client_mb =
+          sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
+      Message *ack_msg = make_message<OsdOpAckMsg>(context->client_op_id);
+      client_mb->put_async(ack_msg, 0).detach();
+      delete context;
+    }
+    break;
+
   default:
     xbt_die("osd.%u received ack message with unknown type %d", id,
             static_cast<int>(context->type));
@@ -144,8 +225,6 @@ void Osd::process_message(Message *msg) {
 }
 
 void Osd::send_op(Op *op) {
-  // TODO: store the mailboxes somewhere always looking up by name seems like a
-  // bad idea.
   sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(op->recipient);
 
   Message *msg = make_message<OsdOpMsg>(op);
@@ -154,6 +233,7 @@ void Osd::send_op(Op *op) {
 
 void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
   // peer osd id is the sender of the ack message, used only for OP_WAITING_PEER
+  xbt_assert(context->type == OpType::BACKFILL);
   switch (context->state) {
   case OpState::OP_WAITING_DISK:
     // send to peers
@@ -164,26 +244,28 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
 
       Op *op = new Op{
           .type = OpType::REPLICA_WRITE,
-          .id = context->id,
+          .id = context->local_id,
           .recipient = peer_osd_shard->get_osd_id(),
           .pgid = backfilling_pg->get_id(),
           .size = backfilling_pg->get_object_size(),
       };
       send_op(op); // network send is not recorded in activities. I don't care
                    // when network send is done.
-      XBT_DEBUG("sending backfill op %u to osd.%u", context->id, op->recipient);
+      XBT_DEBUG("sending backfill op %u to osd.%u", context->local_id,
+                op->recipient);
       context->state = OpState::OP_WAITING_PEER;
       context->pending_peers.insert(op->recipient);
     }
     break;
+
   case OpState::OP_WAITING_PEER:
     context->pending_peers.erase(peer_osd_id);
     if (context->pending_peers.empty()) {
       backfilling_pg->on_object_recovered();
-      op_contexts.erase(context->id);
+      op_contexts.erase(context->local_id);
       delete context;
       used_recovery_threads--;
-      XBT_DEBUG("backfill op %u completed", context->id);
+      XBT_DEBUG("backfill op %u completed", context->local_id);
 
       if (!backfilling_pg->needs_backfill()) {
         XBT_INFO("Backfill complete for pg %u", backfilling_pg->get_id());
@@ -206,10 +288,26 @@ void Osd::process_finished_activity(sg4::ActivityPtr activity) {
   OpContext *context = op_context_map[activity];
 
   switch (context->type) {
+
   case OpType::BACKFILL:
     op_context_map.erase(activity);
     advance_backfill_op(context, id);
     break;
+
+  case OpType::REPLICA_WRITE:
+    // todo: implement replica write
+    xbt_die("not implemented");
+    break;
+
+  case OpType::CLIENT_READ: {
+    op_context_map.erase(activity);
+    Message *ack_msg = make_message<OsdOpAckMsg>(context->client_op_id);
+    sg4::Mailbox *target_mb =
+        sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
+    target_mb->put_async(ack_msg, 0).detach();
+    break;
+  }
+
   default:
     xbt_die("osd.%u finished activity with unknown type", id);
   }
