@@ -34,7 +34,8 @@ rule all:
         expand("results/{exp}/{i}/crushmap.txt", exp=EXPERIMENTS, i=CRUSH_SPEC_PARAMS_IDX),
         expand("results/{exp}/{i}/crushmap.json", exp=EXPERIMENTS, i=CRUSH_SPEC_PARAMS_IDX),
 
-        expand("results/{exp}/result.txt", exp=EXPERIMENTS),
+        expand("results/{exp}/metrics.csv", exp=EXPERIMENTS),
+        expand("results/{exp}/topology.json", exp=EXPERIMENTS),
 
 
 rule run_sim:
@@ -43,7 +44,9 @@ rule run_sim:
         pgdump1 = "results/{exp}/0/pgdump.txt",
         pgdump2 = "results/{exp}/1/pgdump.txt",
     output:
-        result = "results/{exp}/result.txt",
+        metrics = "results/{exp}/metrics.csv",
+        topology = "results/{exp}/topology.json",
+        output = "results/{exp}/stdout.txt",
     shell:
         """
         {input.binary} \
@@ -57,9 +60,8 @@ rule run_sim:
             "--pool-id=1" \
             "--disk-read-bandwidth=125829120" \
             "--disk-write-bandwidth=83886080" \
-            "--cfg=tracing:1" \
-            "--cfg=tracing/filename:results/{wildcards.exp}/simgrid.trace" \
-            > {output.result}
+            "--output-dir=results/{wildcards.exp}"
+            > {output.output}
         """
 
 
