@@ -57,6 +57,9 @@ void Mon::process_message(Message *msg) {
                        msg->sender,
                        std::get<SubscribeToPGMapChangeMsg>(msg->payload));
                  },
+                 [&](const KillAckMsg &) {
+                   XBT_WARN("Monitor received unexpected KillAckMsg");
+                 },
                  [&](const auto &unknown_payload) {
                    xbt_die("Monitor received unexpected message type: %s",
                            typeid(unknown_payload).name());
@@ -75,16 +78,42 @@ void Mon::on_subscribe_pgmap_change(const std::string &sender,
 }
 
 void Mon::kill_all_osds() {
-  XBT_INFO("Sending kill to all osds");
+  XBT_INFO("Killing all clients");
   sg4::ActivitySet kill_activities;
-  for (auto mb_tuple : osd_mailboxes) {
-    auto mb = mb_tuple.second;
+
+  // 1. Kill Clients
+  for (auto client_name : client_names) {
+    auto mb = simgrid::s4u::Mailbox::by_name(client_name);
     Message *msg = make_message<KillMsg>();
     auto a = mb->put_async(msg, 0);
     kill_activities.push(a);
   }
-  for (auto client_name : client_names) {
-    auto mb = simgrid::s4u::Mailbox::by_name(client_name);
+  kill_activities.wait_all(); // Wait for KillMsg to be put into mailboxes
+
+  // 2. Wait for clients to finish draining
+  int alive_clients = client_names.size();
+  while (alive_clients > 0) {
+    Message *msg = mailbox->get<Message>();
+    std::visit(
+        overloaded{[&](const KillAckMsg &) {
+                     alive_clients--;
+                     XBT_INFO("Client %s finished", msg->sender.c_str());
+                   },
+                   [&](const auto &) {
+                     XBT_WARN(
+                         "Monitor received unexpected message while waiting "
+                         "for clients to die: %s",
+                         msg->sender.c_str());
+                   }},
+        msg->payload);
+    delete msg;
+  }
+  XBT_INFO("All clients dead");
+
+  // 3. Kill OSDs
+  XBT_INFO("Sending kill to all osds");
+  for (auto mb_tuple : osd_mailboxes) {
+    auto mb = mb_tuple.second;
     Message *msg = make_message<KillMsg>();
     auto a = mb->put_async(msg, 0);
     kill_activities.push(a);

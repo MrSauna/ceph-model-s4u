@@ -12,13 +12,14 @@ CephActor::CephActor(int id, PGMap *pgmap) : id(id), pgmap(pgmap) {
 
 void CephActor::kill_self() {
   XBT_INFO("%s is killing itself", my_host->get_name().c_str());
+
   simgrid::s4u::this_actor::exit();
 }
 
 void CephActor::main_loop() {
   // start off listener
   Message *message;
-  sg4::CommPtr listener = mb->get_async(&message);
+  listener = mb->get_async(&message);
   activities.push(listener);
 
   while (true) {

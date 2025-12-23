@@ -3,6 +3,7 @@
 class Client : public CephActor {
   int max_concurrent_ops = 3;
   int in_flight_ops = 0;
+  bool shutting_down = false;
 
   long tasks_sent = 0;
   long tasks_acked = 0;

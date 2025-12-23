@@ -224,9 +224,11 @@ struct OsdOpAckMsg {
   int op_id;
 };
 
+struct KillAckMsg {};
+
 using MessagePayload =
-    std::variant<KillMsg, SubscribeToPGMapChangeMsg, PGMapNotification,
-                 PGNotification, OsdOpMsg, OsdOpAckMsg>;
+    std::variant<KillMsg, KillAckMsg, SubscribeToPGMapChangeMsg,
+                 PGMapNotification, PGNotification, OsdOpMsg, OsdOpAckMsg>;
 
 struct Message {
   std::string sender;

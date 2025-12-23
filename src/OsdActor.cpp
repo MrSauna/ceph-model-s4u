@@ -83,7 +83,6 @@ void Osd::advance_write_op(int op_id) {}
 
 void Osd::advance_read_op(int op_id) {}
 
-// todo: make it do stuff, currently instant ack
 void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
   Op *op = osd_op_msg.op;
 
@@ -148,14 +147,30 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
   }
 
   case OpType::REPLICA_WRITE: {
+    // create opcontext for replica write
+    int op_id = last_op_id++;
+    OpContext *oc = new OpContext{
+        .local_id = op_id,
+        .client_op_id = op->id,
+        .type = OpType::REPLICA_WRITE,
+        .pgid = op->pgid,
+        .sender = sender,
+        .size = op->size,
+        .state = OpState::OP_WAITING_DISK,
+    };
+    op_contexts[op_id] = oc;
+    auto a = disk->write_async(op->size);
+    activities.push(a);
+    op_context_map[a] = oc;
+    break;
     // todo: make this write to disk and move ack to on activity finished
     // XBT_INFO("received replica write op %u from sender %d", op->id, sender);
-    sg4::Mailbox *target_mb = pgmap->get_osd_mailbox(sender);
-    Message *ack_msg = make_message<OsdOpAckMsg>(op->id);
-    target_mb->put_async(ack_msg, 0).detach(); // note detached()
-    XBT_DEBUG("received op %u from sender %d. Acking immediately", op->id,
-              sender);
-    break;
+    // sg4::Mailbox *target_mb = pgmap->get_osd_mailbox(sender);
+    // Message *ack_msg = make_message<OsdOpAckMsg>(op->id);
+    // target_mb->put_async(ack_msg, 0).detach(); // note detached()
+    // XBT_DEBUG("received op %u from sender %d. Acking immediately", op->id,
+    //           sender);
+    // break;
   }
 
   default:
@@ -294,10 +309,18 @@ void Osd::process_finished_activity(sg4::ActivityPtr activity) {
     advance_backfill_op(context, id);
     break;
 
-  case OpType::REPLICA_WRITE:
-    // todo: implement replica write
-    xbt_die("not implemented");
+  case OpType::REPLICA_WRITE: {
+    // disk write finished; send ack to peer
+    sg4::Mailbox *peer_mb =
+        sg4::Mailbox::by_name("osd." + std::to_string(context->sender));
+    Message *peer_msg = make_message<OsdOpAckMsg>(context->client_op_id);
+    peer_mb->put_async(peer_msg, 0).detach();
+
+    op_contexts.erase(context->local_id);
+    op_context_map.erase(activity);
+    delete context;
     break;
+  }
 
   case OpType::CLIENT_READ: {
     op_context_map.erase(activity);

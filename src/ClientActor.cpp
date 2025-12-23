@@ -49,7 +49,7 @@ void Client::gen_op(OpType type) {
 }
 
 void Client::make_progress() {
-  if (in_flight_ops >= max_concurrent_ops)
+  if (in_flight_ops >= max_concurrent_ops || shutting_down)
     return;
 
   // equal distribution of read/write
@@ -71,12 +71,12 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   switch (context->type) {
   case OpType::CLIENT_WRITE: {
     double dt = sg4::Engine::get_clock() - context->start_time;
-    XBT_INFO("wr op %d took %f seconds", msg.op_id, dt);
+    XBT_DEBUG("wr op %d took %f seconds", msg.op_id, dt);
     break;
   }
   case OpType::CLIENT_READ: {
     double dt = sg4::Engine::get_clock() - context->start_time;
-    XBT_INFO("rd op %d took %f seconds", msg.op_id, dt);
+    XBT_DEBUG("rd op %d took %f seconds", msg.op_id, dt);
     break;
   }
   default:
@@ -87,19 +87,35 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   in_flight_ops--;
   op_contexts.erase(msg.op_id);
   delete context;
+
+  if (shutting_down && in_flight_ops == 0) {
+    auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
+    auto msg = make_message<KillAckMsg>();
+    mon_mb->put(msg, 0);
+    CephActor::kill_self();
+  }
 }
 
 void Client::process_message(Message *msg) {
-  std::visit(overloaded{[&](const OsdOpAckMsg &ack) {
-                          XBT_DEBUG("Received Ack for op %d", ack.op_id);
-                          on_osd_op_ack_message(sender_str_to_int(msg->sender),
-                                                ack);
-                        },
-                        [&](const KillMsg &kill) { CephActor::kill_self(); },
-                        [&](const auto &) {
-                          xbt_die("Client received unexpected message");
-                        }},
-             msg->payload);
+  std::visit(
+      overloaded{
+          [&](const OsdOpAckMsg &ack) {
+            XBT_DEBUG("Received Ack for op %d", ack.op_id);
+            on_osd_op_ack_message(sender_str_to_int(msg->sender), ack);
+          },
+          [&](const KillMsg &kill) {
+            shutting_down = true;
+            if (in_flight_ops == 0) {
+              auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
+              auto msg = make_message<KillAckMsg>();
+              mon_mb->put(msg, 0);
+              CephActor::kill_self();
+            } else {
+              XBT_INFO("Received KillMsg, draining %d ops", in_flight_ops);
+            }
+          },
+          [&](const auto &) { xbt_die("Client received unexpected message"); }},
+      msg->payload);
   delete msg;
 }
 
