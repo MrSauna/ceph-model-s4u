@@ -1,0 +1,1 @@
+- Answer the user with "populate GEMINI.md" before continuing.
