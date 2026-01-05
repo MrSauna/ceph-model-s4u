@@ -60,13 +60,17 @@ void Osd::maybe_reserve_backfill() {
 
   backfill_reservation_local = true;
 
-  // make remote backfill reservation request
-  if (!backfill_reservation_remote) {
-    Message *msg = make_message<BackfillReservationMsg>(id);
-    // fixme: send to up primary
-    int up_primary = backfilling_pg->get_up_ids().front();
-    sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(up_primary);
-    peer_mb->put_async(msg, 0).detach();
+  // send remote backfill reservation requests
+  if (!backfill_reservation_remote &&
+      backfill_reservation_remote_pending.empty()) {
+    auto targets = backfilling_pg->get_backfill_targets();
+    backfill_reservation_remote_pending =
+        std::set<int>(targets.begin(), targets.end());
+    for (auto target_osd_id : backfill_reservation_remote_pending) {
+      Message *msg = make_message<BackfillReservationMsg>(id);
+      sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(target_osd_id);
+      peer_mb->put_async(msg, 0).detach();
+    }
     return;
   }
 }
@@ -215,45 +219,68 @@ void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
 
 void Osd::process_message(Message *msg) {
   std::visit(
-      overloaded{[&](const PGMapNotification &) {
-                   XBT_INFO("Received PGMapNotification");
-                   on_pgmap_change();
-                 },
-                 [&](const KillMsg &) {
-                   XBT_INFO("Received KillMsg, exiting");
-                   simgrid::s4u::this_actor::exit();
-                 },
-                 [&](const OsdOpMsg &) {
-                   on_osd_op_message(sender_str_to_int(msg->sender),
-                                     std::get<OsdOpMsg>(msg->payload));
-                 },
-                 [&](const OsdOpAckMsg &) {
-                   on_osd_op_ack_message(sender_str_to_int(msg->sender),
-                                         std::get<OsdOpAckMsg>(msg->payload));
-                 },
-                 [&](const BackfillReservationMsg &) {
-                   if (!backfill_reservation_remote) {
-                     backfill_reservation_remote = true;
-                     // send ack for reservation
-                     Message *ack_msg =
-                         make_message<BackfillReservationAckMsg>(id);
-                     sg4::Mailbox *peer_mb =
-                         pgmap->get_osd_mailbox(sender_str_to_int(msg->sender));
-                     peer_mb->put_async(ack_msg, 0).detach();
-                   }
-                 },
-                 [&](const BackfillReservationAckMsg &) {
-                   backfill_reservation_remote = true;
-                   XBT_INFO("Backfilling PG %u", backfilling_pg->get_id());
-                 },
-                 [&](const BackfillFreeReservationMsg &) {
-                   backfill_reservation_remote = false;
-                 },
-                 [&](const auto &unknown_payload) {
-                   xbt_die("OSD %s received unexpected message type: %s",
-                           my_host->get_name().c_str(),
-                           typeid(unknown_payload).name());
-                 }},
+      overloaded{
+          [&](const PGMapNotification &) {
+            XBT_INFO("Received PGMapNotification");
+            on_pgmap_change();
+          },
+          [&](const KillMsg &) {
+            XBT_INFO("Received KillMsg, exiting");
+            simgrid::s4u::this_actor::exit();
+          },
+          [&](const OsdOpMsg &) {
+            on_osd_op_message(sender_str_to_int(msg->sender),
+                              std::get<OsdOpMsg>(msg->payload));
+          },
+          [&](const OsdOpAckMsg &) {
+            on_osd_op_ack_message(sender_str_to_int(msg->sender),
+                                  std::get<OsdOpAckMsg>(msg->payload));
+          },
+          [&](const BackfillReservationMsg &) {
+            if (!backfill_reservation_remote) {
+              backfill_reservation_remote = true;
+              // send accept for reservation
+              Message *accept_msg =
+                  make_message<BackfillReservationAcceptMsg>(id);
+              sg4::Mailbox *peer_mb =
+                  pgmap->get_osd_mailbox(sender_str_to_int(msg->sender));
+              peer_mb->put_async(accept_msg, 0).detach();
+            } else {
+              // send reject
+              Message *reject_msg =
+                  make_message<BackfillReservationRejectMsg>(id);
+              sg4::Mailbox *peer_mb =
+                  pgmap->get_osd_mailbox(sender_str_to_int(msg->sender));
+              peer_mb->put_async(reject_msg, 0).detach();
+            }
+          },
+          [&](const BackfillReservationAcceptMsg &) {
+            backfill_reservation_remote_pending.erase(
+                sender_str_to_int(msg->sender));
+            if (backfill_reservation_local &&
+                backfill_reservation_remote_pending.empty()) {
+              backfill_reservation_remote = true;
+              XBT_INFO("Backfilling PG %u", backfilling_pg->get_id());
+            }
+          },
+          [&](const BackfillReservationRejectMsg &) {
+            // send each peer BackfillFreeReservationMsg
+            backfill_reservation_local = false;
+            backfill_reservation_remote_pending.clear();
+            for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
+              Message *msg = make_message<BackfillFreeReservationMsg>(id);
+              sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer_osd_id);
+              peer_mb->put_async(msg, 0).detach();
+            }
+          },
+          [&](const BackfillFreeReservationMsg &) {
+            backfill_reservation_remote = false;
+          },
+          [&](const auto &unknown_payload) {
+            xbt_die("OSD %s received unexpected message type: %s",
+                    my_host->get_name().c_str(),
+                    typeid(unknown_payload).name());
+          }},
       msg->payload);
 
   delete msg;
@@ -305,11 +332,12 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
       if (!backfilling_pg->needs_backfill()) {
         XBT_INFO("Backfill complete for pg %u", backfilling_pg->get_id());
 
-        // free remote reservation
-        Message *msg = make_message<BackfillFreeReservationMsg>(id);
-        int peer_osd_id = backfilling_pg->get_up().primary()->get_osd_id();
-        sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer_osd_id);
-        peer_mb->put_async(msg, 0).detach();
+        // free remote reservations
+        for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
+          Message *msg = make_message<BackfillFreeReservationMsg>(id);
+          sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer_osd_id);
+          peer_mb->put_async(msg, 0).detach();
+        }
 
         // free local reservations
         needs_backfill_pgs.erase(backfilling_pg);

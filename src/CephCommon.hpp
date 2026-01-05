@@ -105,6 +105,8 @@ public:
   int get_primary() const { return acting.primary()->get_osd_id(); }
   int get_id() const { return id; }
   bool needs_backfill() const;
+  std::vector<int> get_backfill_targets() const;
+
   std::string to_string() const;
 };
 
@@ -229,7 +231,11 @@ struct BackfillReservationMsg {
   int osd_id;
 };
 
-struct BackfillReservationAckMsg {
+struct BackfillReservationAcceptMsg {
+  int osd_id;
+};
+
+struct BackfillReservationRejectMsg {
   int osd_id;
 };
 
@@ -240,8 +246,8 @@ struct BackfillFreeReservationMsg {
 using MessagePayload =
     std::variant<KillMsg, KillAckMsg, SubscribeToPGMapChangeMsg,
                  PGMapNotification, PGNotification, OsdOpMsg, OsdOpAckMsg,
-                 BackfillReservationMsg, BackfillReservationAckMsg,
-                 BackfillFreeReservationMsg>;
+                 BackfillReservationMsg, BackfillReservationAcceptMsg,
+                 BackfillReservationRejectMsg, BackfillFreeReservationMsg>;
 
 struct Message {
   std::string sender;

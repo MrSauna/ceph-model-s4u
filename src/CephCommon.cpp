@@ -295,6 +295,17 @@ bool PG::needs_backfill() const {
   return up.members != acting.members;
 }
 
+std::vector<int> PG::get_backfill_targets() const {
+  const std::scoped_lock lock(*mutex_);
+  std::vector<int> targets;
+  for (const auto &shard : up.members) {
+    if (!acting.contains_shard(shard)) {
+      targets.push_back(shard->get_osd_id());
+    }
+  }
+  return targets;
+}
+
 void PG::on_object_recovered() {
   const std::scoped_lock lock(*mutex_);
   objects_recovered++;

@@ -21,6 +21,7 @@ class Osd : public CephActor {
   std::set<PG *> needs_backfill_pgs;
   bool backfill_reservation_local = false;
   bool backfill_reservation_remote = false;
+  std::set<int> backfill_reservation_remote_pending;
   PG *backfilling_pg = nullptr;
   std::unordered_map<int, sg4::Mailbox *> peer_osd_mailboxes;
 
