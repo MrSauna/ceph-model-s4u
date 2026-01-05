@@ -72,26 +72,34 @@ void Osd::maybe_reserve_backfill() {
 }
 
 void Osd::maybe_schedule_object_backfill() {
+  // We check if we *can* schedule (threads, reservation, pg status),
+  // but instead of running immediately, we push to dmclock.
+
   while (used_recovery_threads < max_recovery_threads &&
          backfill_reservation_local && backfill_reservation_remote &&
          backfilling_pg->maybe_schedule_recovery()) {
 
     int op_id = last_op_id++;
-    auto a = disk->read_async(backfilling_pg->get_object_size());
-    activities.push(a);
-    OpContext *oc = new OpContext{
+    // Create OpContext immediately
+    // We allocate on heap to avoid large stack frames, but we dereference to
+    // move into queue. Ideally we would construct in place or on stack if small
+    // enough. OpContext contains a set, so it's not tiny but manageable. Let's
+    // create on stack for simplicity and move.
+
+    OpContext oc = {
         .local_id = op_id,
-        .client_op_id = op_id, // strictly internal, so it matches local_id
+        .client_op_id = op_id, // strictly internal
         .type = OpType::BACKFILL,
         .pgid = backfilling_pg->get_id(),
         .sender = id,
         .size = backfilling_pg->get_object_size(),
-        .state = OpState::OP_WAITING_DISK,
+        .state = OpState::OP_QUEUED, // New initial state
     };
-    op_context_map[a] = oc;
-    op_contexts[op_id] = oc;
+    // Do NOT add to op_contexts yet. The callback will do it with the stable
+    // address.
 
-    used_recovery_threads++;
+    dmc::ReqParams params(1, 1);
+    queue->add_request(std::move(oc), CLIENT_ID_BACKFILL, params);
   }
 }
 
@@ -114,50 +122,38 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     PG *pg = pgmap->get_pg(op->pgid);
     auto acting = pg->get_acting_ids();
     std::set<int> peers(acting.begin(), acting.end());
-    OpContext *oc = new OpContext{
+    OpContext oc = {
         .local_id = op_id,
         .client_op_id = op->id,
         .type = OpType::CLIENT_WRITE,
         .pgid = op->pgid,
         .sender = sender,
         .size = op->size,
-        .state = OpState::OP_WAITING_PEER,
+        .state = OpState::OP_QUEUED,
         .pending_peers = peers,
     };
-    op_contexts[op_id] = oc;
-    for (const auto &peer : peers) {
-      sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer);
-      int sub_op_id = last_op_id++;
-      Op *subop = new Op{
-          .type = OpType::REPLICA_WRITE,
-          .id = sub_op_id,
-          .pgid = op->pgid,
-          .size = op->size,
-          .recipient = peer,
-      };
-      op_contexts[sub_op_id] = oc;
-      Message *msg = make_message<OsdOpMsg>(subop);
-      peer_mb->put_async(msg, op->size).detach();
-      // XBT_INFO("sent replica write op %u to osd.%u", sub_op_id, peer);
-    }
+    // op_contexts[op_id] = oc; // Don't track yet
+
+    dmc::ReqParams params(1, 1);
+    queue->add_request(std::move(oc), CLIENT_ID_USER, params);
     break;
   }
 
   case OpType::CLIENT_READ: {
     int op_id = last_op_id++;
-    OpContext *oc = new OpContext{
+    OpContext oc = {
         .local_id = op_id,
         .client_op_id = op->id,
         .type = OpType::CLIENT_READ,
         .pgid = op->pgid,
         .sender = sender,
         .size = op->size,
-        .state = OpState::OP_WAITING_DISK,
+        .state = OpState::OP_QUEUED,
     };
-    auto a = disk->read_async(op->size);
-    activities.push(a);
-    op_context_map[a] = oc;
-    op_contexts[op_id] = oc;
+    // op_contexts[op_id] = oc; // Don't track yet
+
+    dmc::ReqParams params(1, 1);
+    queue->add_request(std::move(oc), CLIENT_ID_USER, params);
     break;
   }
 
@@ -388,4 +384,66 @@ Osd::Osd(PGMap *pgmap, int osd_id, std::string disk_name)
   xbt_assert(osd_id >= 0, "osd_id must be non-negative");
   disk = my_host->get_disk_by_name(disk_name);
   on_pgmap_change();
+  init_scheduler();
+}
+void Osd::init_scheduler() {
+  // Client Configurations
+  static const dmc::ClientInfo user_info(300.0, 1.0, 0.0);
+  static const dmc::ClientInfo backfill_info(0.0, 1.0, 0.0);
+
+  auto client_info_f = [](ClientId c) -> const dmc::ClientInfo * {
+    if (c == CLIENT_ID_USER)
+      return &user_info;
+    if (c == CLIENT_ID_BACKFILL)
+      return &backfill_info;
+    return nullptr;
+  };
+
+  auto server_ready_f = []() { return true; };
+
+  auto submit_req_f = [this](const ClientId &c, std::unique_ptr<OpContext> req,
+                             dmc::PhaseType phase, uint64_t cost) {
+    // dmclock gimmick, we need to use unique_ptrs for it
+    OpContext *oc = req.release();
+
+    if (oc->type == OpType::BACKFILL) {
+      oc->state = OpState::OP_WAITING_DISK;
+      auto a = disk->read_async(oc->size);
+      activities.push(a);
+      op_context_map[a] = oc;
+      // Note: op_contexts was NOT populated when we pushed valuable OpContexts
+      // to queue. We must track it now.
+      op_contexts[oc->local_id] = oc;
+      used_recovery_threads++;
+
+    } else if (oc->type == OpType::CLIENT_READ) {
+      oc->state = OpState::OP_WAITING_DISK;
+      auto a = disk->read_async(oc->size);
+      activities.push(a);
+      op_context_map[a] = oc;
+      op_contexts[oc->local_id] = oc;
+
+    } else if (oc->type == OpType::CLIENT_WRITE) {
+      oc->state = OpState::OP_WAITING_PEER;
+      for (const auto &peer : oc->pending_peers) {
+        sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer);
+        int sub_op_id = last_op_id++;
+        Op *subop = new Op{
+            .type = OpType::REPLICA_WRITE,
+            .id = sub_op_id,
+            .pgid = oc->pgid,
+            .size = oc->size,
+            .recipient = peer,
+        };
+        op_contexts[sub_op_id] = oc;
+        Message *msg = make_message<OsdOpMsg>(subop);
+        peer_mb->put_async(msg, oc->size).detach();
+      }
+      op_contexts[oc->local_id] = oc;
+    }
+  };
+
+  queue = std::make_unique<Queue>(
+      client_info_f, server_ready_f, submit_req_f, std::chrono::seconds(100),
+      std::chrono::seconds(200), std::chrono::seconds(50), dmc::AtLimit::Wait);
 }

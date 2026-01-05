@@ -1,8 +1,15 @@
 #include "CephActor.hpp"
 
+#include <memory>
 #include <simgrid/s4u.hpp>
 #include <unordered_map>
+
+// dmclock includes
+#include "dmclock_server.h"
+#include "dmclock_util.h"
+
 namespace sg4 = simgrid::s4u;
+namespace dmc = crimson::dmclock;
 
 class Osd : public CephActor {
   sg4::Disk *disk;
@@ -16,6 +23,21 @@ class Osd : public CephActor {
   bool backfill_reservation_remote = false;
   PG *backfilling_pg = nullptr;
   std::unordered_map<int, sg4::Mailbox *> peer_osd_mailboxes;
+
+  // Scheduler types
+  using ClientId = int;
+  using Queue = dmc::PushPriorityQueue<ClientId, OpContext>;
+
+  std::unique_ptr<Queue> queue;
+
+  // QoS Clients
+  // 1 = User Generic (Reservation 50%, Weight 1, Unlimited)
+  // 2 = Backfill (Reservation 0%, Weight 1, Limit 90%)
+  static constexpr ClientId CLIENT_ID_USER = 1;
+  static constexpr ClientId CLIENT_ID_BACKFILL = 2;
+
+  // Helper to init QoS
+  void init_scheduler();
 
   void send_op(Op *op);
   void process_message(Message *msg) override;
