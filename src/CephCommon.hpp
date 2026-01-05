@@ -183,18 +183,17 @@ struct OpContext {
   int pgid;
   int sender; // positive is osd id, negative is client id
   size_t size;
-  double start_time = std::numeric_limits<double>::max();
-
   OpState state;
+  double start_time = std::numeric_limits<double>::max();
   std::set<int> pending_peers;
 };
 
 struct Op {
   OpType type;
   int id; // unique only within sender
-  int recipient;
   int pgid;
   size_t size;
+  int recipient;
 };
 
 // message types

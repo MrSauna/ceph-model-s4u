@@ -27,11 +27,7 @@
                 // "--cfg=tracing/uncategorized:1", // crashes simulation
                 // "--cfg=tracing/filename:results/vscode/simgrid.trace",
             ],
-            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb",
             "preLaunchTask": "build",
             // "internalConsoleOptions": "openOnSessionStart"
         },

@@ -21,9 +21,9 @@ void Client::gen_op(OpType type) {
   Op *op = new Op{
       .type = type,
       .id = op_id,
-      .recipient = target_osd_id,
       .pgid = pg_id,
       .size = pgmap->get_object_size(),
+      .recipient = target_osd_id,
   };
 
   // Track Context

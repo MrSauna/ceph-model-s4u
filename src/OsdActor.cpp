@@ -1,6 +1,7 @@
 #include "OsdActor.hpp"
 #include "CephCommon.hpp"
 #include "MonActor.hpp"
+#include "xbt/log.h"
 #include <sstream>
 #include <variant>
 
@@ -128,9 +129,9 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
       sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer);
       int sub_op_id = last_op_id++;
       Op *subop = new Op{
+          .type = OpType::REPLICA_WRITE,
           .id = sub_op_id,
           .pgid = op->pgid,
-          .type = OpType::REPLICA_WRITE,
           .size = op->size,
           .recipient = peer,
       };
@@ -283,9 +284,9 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
       Op *op = new Op{
           .type = OpType::REPLICA_WRITE,
           .id = context->local_id,
-          .recipient = peer_osd_shard->get_osd_id(),
           .pgid = backfilling_pg->get_id(),
           .size = backfilling_pg->get_object_size(),
+          .recipient = peer_osd_shard->get_osd_id(),
       };
       send_op(op); // network send is not recorded in activities. I don't care
                    // when network send is done.
