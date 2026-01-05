@@ -29,4 +29,8 @@ add_executable(ceph-sim
     src/MetricMonitor.cpp
 )
 target_include_directories(ceph-sim PUBLIC src)
-target_link_libraries(ceph-sim ${SimGrid_LIBRARY})
+target_link_libraries(ceph-sim PRIVATE ${SimGrid_LIBRARY})
+
+# Integrate dmclock
+include(FetchDmclock)
+target_link_libraries(ceph-sim PRIVATE dmclock::dmclock)
