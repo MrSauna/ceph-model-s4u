@@ -307,7 +307,7 @@ void PG::on_object_recovered() {
   }
 }
 
-bool PG::schedule_recovery() {
+bool PG::maybe_schedule_recovery() {
   const std::scoped_lock lock(*mutex_);
   if (objects_recoveries_scheduled >= pg_objects) {
     return false;

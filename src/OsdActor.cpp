@@ -47,18 +47,33 @@ void Osd::on_pgmap_change() {
 }
 
 void Osd::maybe_reserve_backfill() {
-  if (backfilling_pg)
+  if (backfill_reservation_local && backfill_reservation_remote) {
     return;
+  }
+
   backfilling_pg =
       needs_backfill_pgs.empty() ? nullptr : *needs_backfill_pgs.begin();
+
   if (backfilling_pg == nullptr)
     return;
-  XBT_INFO("backfilling pg %u", backfilling_pg->get_id());
+
+  backfill_reservation_local = true;
+
+  // make remote backfill reservation request
+  if (!backfill_reservation_remote) {
+    Message *msg = make_message<BackfillReservationMsg>(id);
+    // fixme: send to up primary
+    int up_primary = backfilling_pg->get_up_ids().front();
+    sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(up_primary);
+    peer_mb->put_async(msg, 0).detach();
+    return;
+  }
 }
 
 void Osd::maybe_schedule_object_backfill() {
-  while (used_recovery_threads < max_recovery_threads && backfilling_pg &&
-         backfilling_pg->schedule_recovery()) {
+  while (used_recovery_threads < max_recovery_threads &&
+         backfill_reservation_local && backfill_reservation_remote &&
+         backfilling_pg->maybe_schedule_recovery()) {
 
     int op_id = last_op_id++;
     auto a = disk->read_async(backfilling_pg->get_object_size());
@@ -128,7 +143,6 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
   }
 
   case OpType::CLIENT_READ: {
-    // todo: make this read from disk; ack on activity finished
     int op_id = last_op_id++;
     OpContext *oc = new OpContext{
         .local_id = op_id,
@@ -163,14 +177,6 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     activities.push(a);
     op_context_map[a] = oc;
     break;
-    // todo: make this write to disk and move ack to on activity finished
-    // XBT_INFO("received replica write op %u from sender %d", op->id, sender);
-    // sg4::Mailbox *target_mb = pgmap->get_osd_mailbox(sender);
-    // Message *ack_msg = make_message<OsdOpAckMsg>(op->id);
-    // target_mb->put_async(ack_msg, 0).detach(); // note detached()
-    // XBT_DEBUG("received op %u from sender %d. Acking immediately", op->id,
-    //           sender);
-    // break;
   }
 
   default:
@@ -182,7 +188,6 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
 void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   OpContext *context = op_contexts[msg.op_id];
   XBT_DEBUG("received ack for op %u", msg.op_id);
-  // fixme: I have messed up the ids.
   xbt_assert(context, "op context is null");
 
   switch (context->type) {
@@ -212,29 +217,47 @@ void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
 }
 
 void Osd::process_message(Message *msg) {
-  std::visit(overloaded{[&](const PGMapNotification &) {
-                          XBT_INFO("Received PGMapNotification");
-                          on_pgmap_change();
-                        },
-                        [&](const KillMsg &) {
-                          XBT_INFO("Received KillMsg, exiting");
-                          simgrid::s4u::this_actor::exit();
-                        },
-                        [&](const OsdOpMsg &) {
-                          on_osd_op_message(sender_str_to_int(msg->sender),
-                                            std::get<OsdOpMsg>(msg->payload));
-                        },
-                        [&](const OsdOpAckMsg &) {
-                          on_osd_op_ack_message(
-                              sender_str_to_int(msg->sender),
-                              std::get<OsdOpAckMsg>(msg->payload));
-                        },
-                        [&](const auto &unknown_payload) {
-                          xbt_die("OSD %s received unexpected message type: %s",
-                                  my_host->get_name().c_str(),
-                                  typeid(unknown_payload).name());
-                        }},
-             msg->payload);
+  std::visit(
+      overloaded{[&](const PGMapNotification &) {
+                   XBT_INFO("Received PGMapNotification");
+                   on_pgmap_change();
+                 },
+                 [&](const KillMsg &) {
+                   XBT_INFO("Received KillMsg, exiting");
+                   simgrid::s4u::this_actor::exit();
+                 },
+                 [&](const OsdOpMsg &) {
+                   on_osd_op_message(sender_str_to_int(msg->sender),
+                                     std::get<OsdOpMsg>(msg->payload));
+                 },
+                 [&](const OsdOpAckMsg &) {
+                   on_osd_op_ack_message(sender_str_to_int(msg->sender),
+                                         std::get<OsdOpAckMsg>(msg->payload));
+                 },
+                 [&](const BackfillReservationMsg &) {
+                   if (!backfill_reservation_remote) {
+                     backfill_reservation_remote = true;
+                     // send ack for reservation
+                     Message *ack_msg =
+                         make_message<BackfillReservationAckMsg>(id);
+                     sg4::Mailbox *peer_mb =
+                         pgmap->get_osd_mailbox(sender_str_to_int(msg->sender));
+                     peer_mb->put_async(ack_msg, 0).detach();
+                   }
+                 },
+                 [&](const BackfillReservationAckMsg &) {
+                   backfill_reservation_remote = true;
+                   XBT_INFO("Backfilling PG %u", backfilling_pg->get_id());
+                 },
+                 [&](const BackfillFreeReservationMsg &) {
+                   backfill_reservation_remote = false;
+                 },
+                 [&](const auto &unknown_payload) {
+                   xbt_die("OSD %s received unexpected message type: %s",
+                           my_host->get_name().c_str(),
+                           typeid(unknown_payload).name());
+                 }},
+      msg->payload);
 
   delete msg;
 }
@@ -284,8 +307,18 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
 
       if (!backfilling_pg->needs_backfill()) {
         XBT_INFO("Backfill complete for pg %u", backfilling_pg->get_id());
+
+        // free remote reservation
+        Message *msg = make_message<BackfillFreeReservationMsg>(id);
+        int peer_osd_id = backfilling_pg->get_up().primary()->get_osd_id();
+        sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer_osd_id);
+        peer_mb->put_async(msg, 0).detach();
+
+        // free local reservations
         needs_backfill_pgs.erase(backfilling_pg);
         backfilling_pg = nullptr;
+        backfill_reservation_remote = false;
+        backfill_reservation_local = false;
       }
     }
     break;

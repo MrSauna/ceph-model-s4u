@@ -75,7 +75,7 @@ public:
 
   // State transitions
   void on_object_recovered();
-  bool schedule_recovery();
+  bool maybe_schedule_recovery();
 
   int get_max_osd_id() const {
     int max = 0;
@@ -226,9 +226,23 @@ struct OsdOpAckMsg {
 
 struct KillAckMsg {};
 
+struct BackfillReservationMsg {
+  int osd_id;
+};
+
+struct BackfillReservationAckMsg {
+  int osd_id;
+};
+
+struct BackfillFreeReservationMsg {
+  int osd_id;
+};
+
 using MessagePayload =
     std::variant<KillMsg, KillAckMsg, SubscribeToPGMapChangeMsg,
-                 PGMapNotification, PGNotification, OsdOpMsg, OsdOpAckMsg>;
+                 PGMapNotification, PGNotification, OsdOpMsg, OsdOpAckMsg,
+                 BackfillReservationMsg, BackfillReservationAckMsg,
+                 BackfillFreeReservationMsg>;
 
 struct Message {
   std::string sender;
