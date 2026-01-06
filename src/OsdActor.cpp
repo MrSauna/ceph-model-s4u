@@ -502,39 +502,6 @@ void Osd::init_scheduler() {
     return nullptr;
   };
 
-  // migrate this logic to dispatch_opcontext
-  auto submit_req_f = [this](const ClientId &c, std::unique_ptr<OpContext> req,
-                             dmc::PhaseType phase, uint64_t cost) {
-    // dmclock gimmick, we need to use unique_ptrs for it
-    OpContext *oc = req.release();
-
-    if (oc->type == OpType::CLIENT_READ) {
-      oc->state = OpState::OP_WAITING_DISK;
-      auto a = disk->read_async(oc->size);
-      activities.push(a);
-      op_context_map[a] = oc;
-      op_contexts[oc->local_id] = oc;
-
-    } else if (oc->type == OpType::CLIENT_WRITE) {
-      oc->state = OpState::OP_WAITING_PEER;
-      for (const auto &peer : oc->pending_peers) {
-        sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer);
-        int sub_op_id = last_op_id++;
-        Op *subop = new Op{
-            .type = OpType::REPLICA_WRITE,
-            .id = sub_op_id,
-            .pgid = oc->pgid,
-            .size = oc->size,
-            .recipient = peer,
-        };
-        op_contexts[sub_op_id] = oc;
-        Message *msg = make_message<OsdOpMsg>(subop);
-        peer_mb->put_async(msg, oc->size).detach();
-      }
-      op_contexts[oc->local_id] = oc;
-    }
-  };
-
   queue = std::make_unique<Queue>(
       client_info_f, std::chrono::seconds(100), std::chrono::seconds(200),
       std::chrono::seconds(50),
