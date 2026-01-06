@@ -6,10 +6,17 @@
 
 // dmclock includes
 #include "dmclock_server.h"
-#include "dmclock_util.h"
 
 namespace sg4 = simgrid::s4u;
 namespace dmc = crimson::dmclock;
+
+struct NoOpJob {
+  // Matches constructor signature of RunEvery from dmclock
+  template <typename... Args> NoOpJob(Args &&...args) {}
+
+  // Method called by PriorityQueueBase to update timer
+  void try_update(std::chrono::milliseconds) {}
+};
 
 class Osd : public CephActor {
   sg4::Disk *disk;
@@ -20,14 +27,15 @@ class Osd : public CephActor {
   std::set<PG *> my_primary_pgs;
   std::set<PG *> needs_backfill_pgs;
   bool backfill_reservation_local = false;
-  bool backfill_reservation_remote = false;
+  std::set<int> backfill_reservation_remote;
   std::set<int> backfill_reservation_remote_pending;
   PG *backfilling_pg = nullptr;
   std::unordered_map<int, sg4::Mailbox *> peer_osd_mailboxes;
 
   // Scheduler types
   using ClientId = int;
-  using Queue = dmc::PushPriorityQueue<ClientId, OpContext>;
+  using Queue =
+      dmc::PullPriorityQueue<ClientId, OpContext, false, false, 2, NoOpJob>;
 
   std::unique_ptr<Queue> queue;
 
@@ -50,9 +58,8 @@ class Osd : public CephActor {
   void on_pgmap_change();
   void on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg);
   void on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg);
+  void opcontext_dispatch(OpContext *context);
   void advance_backfill_op(OpContext *context, int peer_osd_id);
-  void advance_write_op(int op_id);
-  void advance_read_op(int op_id);
 
 public:
   explicit Osd(PGMap *pgmap, int osd_id, std::string disk_name);

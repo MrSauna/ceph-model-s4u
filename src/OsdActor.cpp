@@ -1,6 +1,7 @@
 #include "OsdActor.hpp"
 #include "CephCommon.hpp"
 #include "MonActor.hpp"
+#include "simgrid/s4u/Engine.hpp"
 #include "xbt/log.h"
 #include <sstream>
 #include <variant>
@@ -48,7 +49,25 @@ void Osd::on_pgmap_change() {
 }
 
 void Osd::maybe_reserve_backfill() {
-  if (backfill_reservation_local && backfill_reservation_remote) {
+
+  if (backfill_reservation_local) {
+    return;
+  }
+
+  backfilling_pg =
+      needs_backfill_pgs.empty() ? nullptr : *needs_backfill_pgs.begin();
+
+  if (backfilling_pg == nullptr)
+    return;
+
+  backfill_reservation_local = true;
+  return;
+  //
+  // todo delete temp
+  //
+
+  if (backfill_reservation_local &&
+      backfill_reservation_remote_pending.empty()) {
     return;
   }
 
@@ -60,8 +79,8 @@ void Osd::maybe_reserve_backfill() {
 
   backfill_reservation_local = true;
 
-  // send remote backfill reservation requests
-  if (!backfill_reservation_remote &&
+  // send remote backfill reservation requests and populate pending set
+  if (backfill_reservation_remote.empty() &&
       backfill_reservation_remote_pending.empty()) {
     auto targets = backfilling_pg->get_backfill_targets();
     backfill_reservation_remote_pending =
@@ -79,8 +98,14 @@ void Osd::maybe_schedule_object_backfill() {
   // We check if we *can* schedule (threads, reservation, pg status),
   // but instead of running immediately, we push to dmclock.
 
+  // while (used_recovery_threads < max_recovery_threads &&
+  //        backfill_reservation_local && !backfill_reservation_remote.empty()
+  //        && backfill_reservation_remote_pending.empty() &&
+  //        backfilling_pg->maybe_schedule_recovery()) {
+
+  // todo delete temp
   while (used_recovery_threads < max_recovery_threads &&
-         backfill_reservation_local && backfill_reservation_remote &&
+         backfill_reservation_local &&
          backfilling_pg->maybe_schedule_recovery()) {
 
     int op_id = last_op_id++;
@@ -103,13 +128,12 @@ void Osd::maybe_schedule_object_backfill() {
     // address.
 
     dmc::ReqParams params(1, 1);
-    queue->add_request(std::move(oc), CLIENT_ID_BACKFILL, params);
+    queue->add_request_time(
+        std::move(oc), CLIENT_ID_BACKFILL, params,
+        sg4::Engine::get_clock()); // todo cost is default 1u
+    used_recovery_threads++;
   }
 }
-
-void Osd::advance_write_op(int op_id) {}
-
-void Osd::advance_read_op(int op_id) {}
 
 void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
   Op *op = osd_op_msg.op;
@@ -120,8 +144,6 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
   switch (op->type) {
 
   case OpType::CLIENT_WRITE: {
-    // todo: create replica write ops (including self); ack on
-    // => disk write and op send to peers are initiated async
     int op_id = last_op_id++;
     PG *pg = pgmap->get_pg(op->pgid);
     auto acting = pg->get_acting_ids();
@@ -139,7 +161,8 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     // op_contexts[op_id] = oc; // Don't track yet
 
     dmc::ReqParams params(1, 1);
-    queue->add_request(std::move(oc), CLIENT_ID_USER, params);
+    queue->add_request_time(std::move(oc), CLIENT_ID_USER, params,
+                            sg4::Engine::get_clock());
     break;
   }
 
@@ -157,7 +180,8 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     // op_contexts[op_id] = oc; // Don't track yet
 
     dmc::ReqParams params(1, 1);
-    queue->add_request(std::move(oc), CLIENT_ID_USER, params);
+    queue->add_request_time(std::move(oc), CLIENT_ID_USER, params,
+                            sg4::Engine::get_clock());
     break;
   }
 
@@ -237,16 +261,16 @@ void Osd::process_message(Message *msg) {
                                   std::get<OsdOpAckMsg>(msg->payload));
           },
           [&](const BackfillReservationMsg &) {
-            if (!backfill_reservation_remote) {
-              backfill_reservation_remote = true;
-              // send accept for reservation
+            // Accept
+            if (backfill_reservation_remote.empty()) {
+              backfill_reservation_remote.insert(
+                  sender_str_to_int(msg->sender));
               Message *accept_msg =
                   make_message<BackfillReservationAcceptMsg>(id);
               sg4::Mailbox *peer_mb =
                   pgmap->get_osd_mailbox(sender_str_to_int(msg->sender));
               peer_mb->put_async(accept_msg, 0).detach();
-            } else {
-              // send reject
+            } else { // reject
               Message *reject_msg =
                   make_message<BackfillReservationRejectMsg>(id);
               sg4::Mailbox *peer_mb =
@@ -257,9 +281,9 @@ void Osd::process_message(Message *msg) {
           [&](const BackfillReservationAcceptMsg &) {
             backfill_reservation_remote_pending.erase(
                 sender_str_to_int(msg->sender));
+            backfill_reservation_remote.insert(sender_str_to_int(msg->sender));
             if (backfill_reservation_local &&
                 backfill_reservation_remote_pending.empty()) {
-              backfill_reservation_remote = true;
               XBT_INFO("Backfilling PG %u", backfilling_pg->get_id());
             }
           },
@@ -274,7 +298,8 @@ void Osd::process_message(Message *msg) {
             }
           },
           [&](const BackfillFreeReservationMsg &) {
-            backfill_reservation_remote = false;
+            // non-reserved peers sending free have no effect
+            backfill_reservation_remote.erase(sender_str_to_int(msg->sender));
           },
           [&](const auto &unknown_payload) {
             xbt_die("OSD %s received unexpected message type: %s",
@@ -297,19 +322,27 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
   // peer osd id is the sender of the ack message, used only for OP_WAITING_PEER
   xbt_assert(context->type == OpType::BACKFILL);
   switch (context->state) {
+
+  case OpState::OP_QUEUED: {
+    // read from disk, start disk activity
+    context->state = OpState::OP_WAITING_DISK;
+    auto a = disk->read_async(backfilling_pg->get_object_size());
+
+    activities.push(a);
+    op_context_map[a] = context;
+    break;
+  }
+
   case OpState::OP_WAITING_DISK:
     // send to peers
-    for (auto peer_osd_shard : backfilling_pg->get_up().members) {
-
-      if (peer_osd_shard->get_osd_id() == id || peer_osd_shard->is_acting())
-        continue;
+    for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
 
       Op *op = new Op{
           .type = OpType::REPLICA_WRITE,
           .id = context->local_id,
           .pgid = backfilling_pg->get_id(),
           .size = backfilling_pg->get_object_size(),
-          .recipient = peer_osd_shard->get_osd_id(),
+          .recipient = peer_osd_id,
       };
       send_op(op); // network send is not recorded in activities. I don't care
                    // when network send is done.
@@ -342,7 +375,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
         // free local reservations
         needs_backfill_pgs.erase(backfilling_pg);
         backfilling_pg = nullptr;
-        backfill_reservation_remote = false;
+        backfill_reservation_remote.clear();
         backfill_reservation_local = false;
       }
     }
@@ -394,9 +427,51 @@ void Osd::process_finished_activity(sg4::ActivityPtr activity) {
   }
 }
 
+// todo: implement
+void Osd::opcontext_dispatch(OpContext *context) {
+  switch (context->type) {
+
+  case OpType::BACKFILL:
+    advance_backfill_op(context, id);
+    break;
+
+  case OpType::CLIENT_READ: {
+    // start disk read activity, update op context state
+    auto a = disk->read_async(context->size);
+    activities.push(a);
+    op_context_map[a] = context;
+    break;
+  }
+
+  case OpType::CLIENT_WRITE:
+    // send replica write ops to peers (including self), update op context state
+    for (int peer_osd_id : pgmap->get_pg(context->pgid)->get_acting_ids()) {
+      Op *op = new Op{
+          .type = OpType::REPLICA_WRITE,
+          .id = context->local_id,
+          .pgid = context->pgid,
+          .size = context->size,
+          .recipient = peer_osd_id,
+      };
+      send_op(op);
+    }
+    break;
+
+  default:
+    xbt_die("Dispatched opcontext of unknown type %d", context->type);
+  }
+}
+
 void Osd::make_progress() {
   maybe_reserve_backfill();
   maybe_schedule_object_backfill();
+  auto result = queue->pull_request(sg4::Engine::get_clock());
+  if (result.is_retn()) {
+    auto &retn = result.get_retn();
+    OpContext *oc = retn.request.release();
+    op_contexts[oc->local_id] = oc;
+    opcontext_dispatch(oc);
+  }
 }
 
 void Osd::operator()() {
@@ -427,24 +502,13 @@ void Osd::init_scheduler() {
     return nullptr;
   };
 
-  auto server_ready_f = []() { return true; };
-
+  // migrate this logic to dispatch_opcontext
   auto submit_req_f = [this](const ClientId &c, std::unique_ptr<OpContext> req,
                              dmc::PhaseType phase, uint64_t cost) {
     // dmclock gimmick, we need to use unique_ptrs for it
     OpContext *oc = req.release();
 
-    if (oc->type == OpType::BACKFILL) {
-      oc->state = OpState::OP_WAITING_DISK;
-      auto a = disk->read_async(oc->size);
-      activities.push(a);
-      op_context_map[a] = oc;
-      // Note: op_contexts was NOT populated when we pushed valuable OpContexts
-      // to queue. We must track it now.
-      op_contexts[oc->local_id] = oc;
-      used_recovery_threads++;
-
-    } else if (oc->type == OpType::CLIENT_READ) {
+    if (oc->type == OpType::CLIENT_READ) {
       oc->state = OpState::OP_WAITING_DISK;
       auto a = disk->read_async(oc->size);
       activities.push(a);
@@ -472,6 +536,8 @@ void Osd::init_scheduler() {
   };
 
   queue = std::make_unique<Queue>(
-      client_info_f, server_ready_f, submit_req_f, std::chrono::seconds(100),
-      std::chrono::seconds(200), std::chrono::seconds(50), dmc::AtLimit::Wait);
+      client_info_f, std::chrono::seconds(100), std::chrono::seconds(200),
+      std::chrono::seconds(50),
+      dmc::AtLimit::Wait); // only second time arg means anything for the
+                           // simulation (idle age)
 }
