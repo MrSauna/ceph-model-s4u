@@ -46,6 +46,33 @@ void Mon::main_loop() {
   XBT_INFO("Monitor exiting main loop");
 }
 
+void Mon::on_pgmap_change(int pg_id) {
+  XBT_INFO("PG %d changed", pg_id);
+  PG *pg = pgmap->get_pg(pg_id);
+  xbt_assert(!pg->needs_backfill(),
+             "currently only pgs that have finished backfilling should change");
+
+  // collect everybody that should be notified
+  auto up = pg->get_up_ids();
+  auto acting = pg->get_acting_ids();
+  // create a set of them
+  std::set<int> notify(up.begin(), up.end());
+  notify.insert(acting.begin(), acting.end());
+
+  // set acting = up
+  pg->update_acting(pg->get_up_ids()); // runs prune_shards
+
+  // update the index stuff
+  pgmap->update_primary_osd_to_pg_index();
+
+  // notify
+  for (int osd_id : notify) {
+    auto mb = osd_mailboxes[osd_id];
+    Message *msg = make_message<PGMapNotification>(pgmap);
+    mb->put(msg, 0);
+  }
+}
+
 void Mon::process_message(Message *msg) {
 
   std::visit(
@@ -59,6 +86,9 @@ void Mon::process_message(Message *msg) {
                  },
                  [&](const KillAckMsg &) {
                    XBT_WARN("Monitor received unexpected KillAckMsg");
+                 },
+                 [&](const PGNotification &payload) {
+                   on_pgmap_change(payload.pg_id);
                  },
                  [&](const auto &unknown_payload) {
                    xbt_die("Monitor received unexpected message type: %s",

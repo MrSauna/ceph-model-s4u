@@ -202,9 +202,9 @@ int main(int argc, char *argv[]) {
                  ctx.pg_objects); // up
   for (size_t i = 0; i < pgmap->size(); i++) {
     std::vector<int> up_members = up_pgmap.get_pg(i)->get_up_ids();
-    pgmap->get_pg(i)->init_up(up_members);
+    pgmap->get_pg(i)->update_up(up_members);
   }
-  pgmap->_update_primary_osd_to_pg_index();
+  pgmap->update_primary_osd_to_pg_index();
   XBT_INFO("%s", pgmap->to_string().c_str());
 
   // Build the platform
@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
   auto end_time = std::chrono::steady_clock::now();
   auto duration =
       std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
-  XBT_INFO("Simulation wall time: %lld s", duration.count());
+  XBT_INFO("Simulation wall time: %ld s", duration.count());
 
   XBT_INFO("Simulation is over");
 

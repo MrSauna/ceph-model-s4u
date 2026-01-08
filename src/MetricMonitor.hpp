@@ -1,7 +1,6 @@
 #ifndef METRIC_MONITOR_HPP
 #define METRIC_MONITOR_HPP
 
-#include <mutex>
 #include <simgrid/s4u.hpp>
 #include <string>
 #include <vector>
@@ -12,7 +11,6 @@ class MetricMonitor {
 
   // Cumulative bytes transferred per link index
   std::vector<double> cumulative_load_;
-  std::mutex mutex_;
 
 public:
   explicit MetricMonitor(double interval, std::string filename);

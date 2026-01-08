@@ -4,7 +4,6 @@
 #include <simgrid/s4u.hpp>
 #include <unordered_map>
 
-// dmclock includes
 #include "dmclock_server.h"
 
 namespace sg4 = simgrid::s4u;
@@ -29,6 +28,7 @@ class Osd : public CephActor {
   bool backfill_reservation_local = false;
   std::set<int> backfill_reservation_remote;
   std::set<int> backfill_reservation_remote_pending;
+  bool pending_retry = false;
   PG *backfilling_pg = nullptr;
   std::unordered_map<int, sg4::Mailbox *> peer_osd_mailboxes;
 
@@ -58,6 +58,8 @@ class Osd : public CephActor {
   void on_pgmap_change();
   void on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg);
   void on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg);
+  void on_backfill_reservation_message(int sender,
+                                       const BackfillReservationMsg &msg);
   void opcontext_dispatch(OpContext *context);
   void advance_backfill_op(OpContext *context, int peer_osd_id);
 

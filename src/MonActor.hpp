@@ -14,6 +14,7 @@ class Mon {
   void kill_self();
   static PGMap create_initial_pgmap(std::vector<std::string> args);
   void main_loop();
+  void on_pgmap_change(int pg_id);
 
 public:
   explicit Mon(PGMap *pgmap, std::vector<std::string> client_names);

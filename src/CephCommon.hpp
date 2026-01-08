@@ -22,7 +22,7 @@ public:
       : pg(pg), osd_id(osd_id), index(index) {}
   int get_pg_id() const;
   int get_osd_id() const;
-  int get_index() const { return index; }
+  // int get_index() const { return index; }
   bool is_acting();
 };
 
@@ -31,9 +31,23 @@ struct PGShardSet {
   std::vector<PGShard *> members;
   PGShard *primary() const { return members.at(0); };
 
-  bool contains_shard(PGShard *shard) const {
-    return members.size() > shard->get_index() &&
-           members.at(shard->get_index()) == shard;
+  friend bool operator==(const PGShardSet &a, const PGShardSet &b) {
+    return a.members == b.members;
+  }
+
+  friend bool operator!=(const PGShardSet &a, const PGShardSet &b) {
+    return !(a == b);
+  }
+
+  bool contains_shard(PGShard *other) const {
+    // only valid for replicated where order doesn't matter
+    for (PGShard *shard : members) {
+      if (shard->get_osd_id() == other->get_osd_id()) {
+        xbt_assert(shard->get_pg_id() == other->get_pg_id(), "pg_id mismatch");
+        return true;
+      }
+    }
+    return false;
   }
 
   std::string to_string() const {
@@ -49,8 +63,6 @@ struct PGShardSet {
 
 // PG class
 class PG {
-  // mutex is non-recursive, actor must ensure no deadlock
-  sg4::MutexPtr mutex_ = sg4::Mutex::create();
   int id;
   // ownership
   std::set<std::unique_ptr<PGShard>> shards;
@@ -68,9 +80,7 @@ class PG {
 
 public:
   explicit PG(std::string line, size_t object_size, size_t pg_objects);
-  void init_up(const std::vector<int> &set);
   void update_up(const std::vector<int> &set);
-  void init_acting(const std::vector<int> &set);
   void update_acting(const std::vector<int> &set);
 
   // State transitions
@@ -112,8 +122,6 @@ public:
 
 // PGMap
 class PGMap {
-  // mutex is non-recursive, actor must ensure no deadlock
-  sg4::MutexPtr mutex_ = sg4::Mutex::create();
   std::vector<std::unique_ptr<PG>> pgs;
   std::map<int, std::set<PG *>> primary_osd_to_pg_index;
   int max_osd_id;
@@ -137,7 +145,6 @@ public:
 
   // primary osd to pgs
   const std::set<PG *> primary_osd_get_pgs(int osd_id) const {
-    const std::scoped_lock lock(*mutex_);
     std::set<PG *> result;
     auto pg_set = primary_osd_to_pg_index.at(osd_id);
     for (auto pg : pg_set) {
@@ -154,9 +161,8 @@ public:
   }
 
   // refreshers
-  void _update_primary_osd_to_pg_index();
   void update_primary_osd_to_pg_index();
-  void refresh_primary_osd_to_pg_index_for_pg(int pg_id);
+  // void refresh_primary_osd_to_pg_index_for_pg(int pg_id);
 
   std::string primary_osds_to_pgs_string() const;
   std::string to_string() const;
@@ -214,7 +220,6 @@ struct PGMapNotification {
 
 struct PGNotification {
   int pg_id;
-  int acting;
 };
 
 struct OsdOpMsg {
@@ -227,27 +232,29 @@ struct OsdOpAckMsg {
 
 struct KillAckMsg {};
 
+enum class BackfillReservationOpType {
+  REQUEST_SLAVE,
+  RELEASE_SLAVE,
+  ACCEPT,
+  REJECT,
+  RETRY, // for backoff mechanism
+};
+
+struct BackfillReservationOp {
+  int primary_osd_id = -1;
+  int target_osd_id = -1;
+  int pg_id = -1;
+  BackfillReservationOpType type;
+};
+
 struct BackfillReservationMsg {
-  int osd_id;
-};
-
-struct BackfillReservationAcceptMsg {
-  int osd_id;
-};
-
-struct BackfillReservationRejectMsg {
-  int osd_id;
-};
-
-struct BackfillFreeReservationMsg {
-  int osd_id;
+  BackfillReservationOp *op;
 };
 
 using MessagePayload =
     std::variant<KillMsg, KillAckMsg, SubscribeToPGMapChangeMsg,
                  PGMapNotification, PGNotification, OsdOpMsg, OsdOpAckMsg,
-                 BackfillReservationMsg, BackfillReservationAcceptMsg,
-                 BackfillReservationRejectMsg, BackfillFreeReservationMsg>;
+                 BackfillReservationMsg>;
 
 struct Message {
   std::string sender;

@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <mutex> // for std::scoped_lock
 #include <sstream>
 #include <string>
 
@@ -104,15 +103,15 @@ PG::PG(std::string line, size_t object_size, size_t pg_objects)
   // "up ([123,73,98], p123)"
   ss >> temp;
   ss >> members;
-  init_up(members);
+  update_up(members);
 
   // "acting ([123,73,98], p123)""
   ss >> temp;
   ss >> members;
-  init_acting(members);
+  update_acting(members);
 }
 
-void PG::init_up(const std::vector<int> &v) {
+void PG::update_up(const std::vector<int> &v) {
   xbt_assert(v.size() >= 1);
 
   PGShardSet new_up;
@@ -130,12 +129,7 @@ void PG::init_up(const std::vector<int> &v) {
   prune_shards();
 }
 
-void PG::update_up(const std::vector<int> &v) {
-  const std::scoped_lock lock(*mutex_);
-  init_up(v);
-}
-
-void PG::init_acting(const std::vector<int> &v) {
+void PG::update_acting(const std::vector<int> &v) {
   xbt_assert(v.size() >= 1);
   PGShardSet new_acting;
   // if up[i] == v[i], we reuse the shard
@@ -150,11 +144,6 @@ void PG::init_acting(const std::vector<int> &v) {
   }
   acting = new_acting;
   prune_shards();
-}
-
-void PG::update_acting(const std::vector<int> &v) {
-  const std::scoped_lock lock(*mutex_);
-  init_acting(v);
 }
 
 void PG::prune_shards() {
@@ -211,7 +200,6 @@ PGMap::PGMap(int pool_id, std::string path, size_t object_size,
 }
 
 const std::vector<PGShardSet> PGMap::get_up() const {
-  const std::scoped_lock lock(*mutex_);
   std::vector<PGShardSet> up_set;
   for (const auto &pg_ptr : pgs) {
     up_set.push_back(pg_ptr.get()->get_up());
@@ -220,7 +208,6 @@ const std::vector<PGShardSet> PGMap::get_up() const {
 }
 
 const std::vector<PGShardSet> PGMap::get_acting() const {
-  const std::scoped_lock lock(*mutex_);
   std::vector<PGShardSet> acting_set;
   for (const auto &pg_ptr : pgs) {
     acting_set.push_back(pg_ptr->get_acting());
@@ -228,7 +215,7 @@ const std::vector<PGShardSet> PGMap::get_acting() const {
   return acting_set;
 }
 
-void PGMap::_update_primary_osd_to_pg_index() {
+void PGMap::update_primary_osd_to_pg_index() {
   primary_osd_to_pg_index.clear();
 
   // find max osd id
@@ -256,13 +243,7 @@ void PGMap::_update_primary_osd_to_pg_index() {
   }
 }
 
-void PGMap::update_primary_osd_to_pg_index() {
-  const std::scoped_lock lock(*mutex_);
-  _update_primary_osd_to_pg_index();
-}
-
 std::vector<int> PGMap::get_osds() const {
-  const std::scoped_lock lock(*mutex_);
   std::vector<int> osds;
   for (const auto &pair : primary_osd_to_pg_index) {
     osds.push_back(pair.first);
@@ -272,7 +253,6 @@ std::vector<int> PGMap::get_osds() const {
 }
 
 bool PGMap::needs_backfill() const {
-  const std::scoped_lock lock(*mutex_);
   for (const auto &pg_ptr : pgs) {
     if (pg_ptr->needs_backfill()) {
       return true;
@@ -281,22 +261,21 @@ bool PGMap::needs_backfill() const {
   return false;
 }
 
-size_t PGMap::size() const {
-  // just assume it doesn't change  const std::scoped_lock lock(*mutex_);
-  return pgs.size();
-}
+size_t PGMap::size() const { return pgs.size(); }
 
 size_t PGMap::get_object_size() const { return object_size; }
 
 size_t PGMap::get_objects_per_pg() const { return pg_objects; }
 
 bool PG::needs_backfill() const {
-  const std::scoped_lock lock(*mutex_);
-  return up.members != acting.members;
+  // this is called when defining the needs_backfill_pgs set in
+  // Osd::on_pgmap_change it breaks because pg 22 doesn't need backfill this
+  // function says that everything needs backfill
+
+  return up != acting && objects_recovered != pg_objects;
 }
 
 std::vector<int> PG::get_backfill_targets() const {
-  const std::scoped_lock lock(*mutex_);
   std::vector<int> targets;
   for (const auto &shard : up.members) {
     if (!acting.contains_shard(shard)) {
@@ -306,20 +285,9 @@ std::vector<int> PG::get_backfill_targets() const {
   return targets;
 }
 
-void PG::on_object_recovered() {
-  const std::scoped_lock lock(*mutex_);
-  objects_recovered++;
-  // lazy simplified logic: if we recovered enough, we are done
-  if (objects_recovered >= pg_objects) {
-    acting = up;
-    prune_shards();
-    XBT_INFO("PG %d backfill complete (recovered %d objects)", id,
-             objects_recovered);
-  }
-}
+void PG::on_object_recovered() { objects_recovered++; }
 
 bool PG::maybe_schedule_recovery() {
-  const std::scoped_lock lock(*mutex_);
   if (objects_recoveries_scheduled >= pg_objects) {
     return false;
   }
@@ -328,13 +296,13 @@ bool PG::maybe_schedule_recovery() {
 }
 
 std::string PGMap::primary_osds_to_pgs_string() const {
-  const std::scoped_lock lock(*mutex_);
   std::ostringstream ss;
   for (const auto &pair : primary_osd_to_pg_index) {
     const char *sep = "";
     ss << "osd." << pair.first << " -> pg ";
     for (const auto &pg : pair.second) {
-      ss << sep << pg->get_id() << "(" << std::hex << pg->get_id() << ")";
+      ss << sep << pg->get_id() << "(" << std::hex << pg->get_id() << std::dec
+         << ")";
       sep = ", ";
     }
     ss << "\n";
