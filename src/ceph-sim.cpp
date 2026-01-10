@@ -155,6 +155,16 @@ int main(int argc, char *argv[]) {
       ->expected(1)
       ->type_name("INT");
 
+  // --iops
+  auto *iops_opt = app.add_option("--iops", ctx.iops, "IOPS");
+  iops_opt->default_val(100)->expected(1)->type_name("INT");
+
+  // --profile
+  auto *profile_opt = app.add_option("--profile", ctx.profile, "Profile");
+  profile_opt->default_val(SchedulerProfile::BALANCED)
+      ->expected(1)
+      ->type_name("PROFILE");
+
   // --cfg (passthrough to simgrid engine)
   auto *cfg_opt = app.add_option("--cfg", ctx.cfg, "Simgrid configuration");
   cfg_opt->type_name("CFG");
@@ -239,8 +249,8 @@ int main(int argc, char *argv[]) {
       // Store info for tree view
       host_actors[host->get_name()].push_back(osd_name + ", " +
                                               disk->get_name());
-      e.add_actor(osd_name, host, [pgmap, osd_id, disk]() {
-        Osd osd(pgmap, osd_id, disk->get_name());
+      e.add_actor(osd_name, host, [pgmap, osd_id, disk, ctx]() {
+        Osd osd(pgmap, osd_id, disk->get_name(), ctx.iops, ctx.profile);
         osd();
       });
     }

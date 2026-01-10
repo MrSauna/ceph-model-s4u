@@ -1,3 +1,4 @@
+#pragma once
 #include "CephActor.hpp"
 
 #include <memory>
@@ -8,6 +9,12 @@
 
 namespace sg4 = simgrid::s4u;
 namespace dmc = crimson::dmclock;
+
+enum struct SchedulerProfile {
+  BALANCED,
+  HIGH_CLIENT_OPS,
+  HIGH_RECOVERY_OPS,
+};
 
 struct NoOpJob {
   // Matches constructor signature of RunEvery from dmclock
@@ -23,6 +30,8 @@ class Osd : public CephActor {
   int max_recovery_threads = 3; // real hdd default
   int used_recovery_threads = 0;
 
+  double base_cost;
+
   std::set<PG *> my_primary_pgs;
   std::set<PG *> needs_backfill_pgs;
   bool backfill_reservation_local = false;
@@ -37,16 +46,17 @@ class Osd : public CephActor {
   using Queue =
       dmc::PullPriorityQueue<ClientId, OpContext, false, false, 2, NoOpJob>;
 
+  std::unique_ptr<dmc::ClientInfo> user_info;
+  std::unique_ptr<dmc::ClientInfo> backfill_info;
+
   std::unique_ptr<Queue> queue;
 
   // QoS Clients
-  // 1 = User Generic (Reservation 50%, Weight 1, Unlimited)
-  // 2 = Backfill (Reservation 0%, Weight 1, Limit 90%)
   static constexpr ClientId CLIENT_ID_USER = 1;
   static constexpr ClientId CLIENT_ID_BACKFILL = 2;
 
   // Helper to init QoS
-  void init_scheduler();
+  void init_scheduler(double iops, SchedulerProfile profile);
 
   void send_op(Op *op);
   void process_message(Message *msg) override;
@@ -64,7 +74,8 @@ class Osd : public CephActor {
   void advance_backfill_op(OpContext *context, int peer_osd_id);
 
 public:
-  explicit Osd(PGMap *pgmap, int osd_id, std::string disk_name);
+  explicit Osd(PGMap *pgmap, int osd_id, std::string disk_name, double iops,
+               SchedulerProfile profile);
   void operator()();
 
   std::string primary_pgs_to_string() const;

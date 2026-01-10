@@ -556,24 +556,52 @@ void Osd::operator()() {
   xbt_die("should never reach here");
 }
 
-Osd::Osd(PGMap *pgmap, int osd_id, std::string disk_name)
+Osd::Osd(PGMap *pgmap, int osd_id, std::string disk_name, double iops,
+         SchedulerProfile profile)
     : CephActor(osd_id, pgmap) {
 
   xbt_assert(osd_id >= 0, "osd_id must be non-negative");
   disk = my_host->get_disk_by_name(disk_name);
   on_pgmap_change();
-  init_scheduler();
+  init_scheduler(iops, profile);
 }
-void Osd::init_scheduler() {
-  // Client Configurations
-  static const dmc::ClientInfo user_info(300.0, 1.0, 0.0);
-  static const dmc::ClientInfo backfill_info(0.0, 1.0, 0.0);
 
-  auto client_info_f = [](ClientId c) -> const dmc::ClientInfo * {
+void Osd::init_scheduler(double iops, SchedulerProfile profile) {
+  // following ceph implementation where bytes are used as the unit
+  // the cost is calcuated as: base_cost + io_size, where base_cost =
+  // bandwidth/random_iops
+  double avg_bandwidth =
+      (disk->get_read_bandwidth() + disk->get_write_bandwidth()) / 2;
+  base_cost = avg_bandwidth / iops;
+  double limit = base_cost + avg_bandwidth;
+
+  // Client Configurations (reservation, weight, limit)
+  user_info = std::make_unique<dmc::ClientInfo>(0, 0, 0);
+  backfill_info = std::make_unique<dmc::ClientInfo>(0, 0, 0);
+  // profiles copied from
+  // https://docs.ceph.com/en/latest/rados/configuration/mclock-config-ref/
+  switch (profile) {
+  case SchedulerProfile::BALANCED:
+    user_info->update(limit * 0.5, 1, limit);
+    backfill_info->update(0, 1, limit * 0.9);
+    break;
+  case SchedulerProfile::HIGH_CLIENT_OPS:
+    user_info->update(limit * 0.6, 2, limit);
+    backfill_info->update(0, 1, limit * 0.7);
+    break;
+  case SchedulerProfile::HIGH_RECOVERY_OPS:
+    user_info->update(limit * 0.3, 1, limit);
+    backfill_info->update(0, 1, limit);
+    break;
+  default:
+    xbt_die("Unknown scheduler profile %d", profile);
+  }
+
+  auto client_info_f = [this](ClientId c) -> const dmc::ClientInfo * {
     if (c == CLIENT_ID_USER)
-      return &user_info;
+      return user_info.get();
     if (c == CLIENT_ID_BACKFILL)
-      return &backfill_info;
+      return backfill_info.get();
     return nullptr;
   };
 

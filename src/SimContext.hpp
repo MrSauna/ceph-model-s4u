@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CLI11.hpp"
+#include "OsdActor.hpp"
 #include <simgrid/s4u.hpp>
 #include <string>
 #include <vector>
@@ -25,6 +26,8 @@ struct SimContext {
 
   int disk_read_bandwidth = 0;
   int disk_write_bandwidth = 0;
+  int iops = 0;
+  SchedulerProfile profile = SchedulerProfile::BALANCED;
 
   int clients = 0;
 
