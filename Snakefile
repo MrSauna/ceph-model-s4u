@@ -37,6 +37,16 @@ rule all:
         expand("results/{exp}/metrics.csv", exp=EXPERIMENTS),
         expand("results/{exp}/topology.json", exp=EXPERIMENTS),
 
+        expand("results/{exp}/figures/pgmap_plot.png", exp=EXPERIMENTS),
+
+
+rule viz_pgmap:
+    input:
+        "results/{exp}/mon_metrics.csv",
+    output:
+        "results/{exp}/figures/pgmap_plot.png",
+    script: 
+        "tools/visualize.py"
 
 rule run_sim:
     input:

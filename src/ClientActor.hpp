@@ -1,14 +1,19 @@
 #include "CephActor.hpp"
 #include <fstream>
 #include <mutex>
+#include <xbt/random.hpp>
 
 class Client : public CephActor {
-  int max_concurrent_ops = 3;
-  int in_flight_ops = 0;
+  int max_concurrent_reads = 3;
+  int max_concurrent_writes = 3;
+  int in_flight_reads = 0;
+  int in_flight_writes = 0;
   bool shutting_down = false;
 
   long tasks_sent = 0;
   long tasks_acked = 0;
+
+  simgrid::xbt::random::XbtRandom random;
 
   void process_message(Message *msg) override;
   void gen_op(OpType type);

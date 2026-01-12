@@ -32,12 +32,17 @@
             // "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "Python Debugger: Current File with Arguments",
+            "name": "Run Snakemake",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "module": "snakemake",
+            "args": [
+                "--cores",
+                "1"
+            ],
+            "subProcess": true,
             "console": "integratedTerminal",
-            "args": "${command:pickArgs}"
+            "python": "${workspaceFolder}/.venv/bin/python"
         }
     ]
 }

@@ -12,7 +12,7 @@ std::mutex Client::metrics_mutex;
 void Client::set_metrics_output(const std::string &filename) {
   metrics_stream.open(filename);
   if (metrics_stream.is_open()) {
-    metrics_stream << "time,client_id,op_size,duration\n";
+    metrics_stream << "time,client_id,op_type,op_size,duration\n";
   } else {
     XBT_ERROR("Failed to open client metrics file: %s", filename.c_str());
   }
@@ -20,11 +20,16 @@ void Client::set_metrics_output(const std::string &filename) {
 
 Client::Client(PGMap *pgmap, int client_id) : CephActor(client_id, pgmap) {
   xbt_assert(client_id < 0, "client_id must be negative");
+  random.set_seed(client_id);
 }
 
 void Client::gen_op(OpType type) {
 
-  in_flight_ops++;
+  if (type == OpType::CLIENT_READ) {
+    in_flight_reads++;
+  } else if (type == OpType::CLIENT_WRITE) {
+    in_flight_writes++;
+  }
   // Create Op
   int op_id = last_op_id++;
   int pg_id = last_op_pg++ % pgmap->size();
@@ -61,16 +66,17 @@ void Client::gen_op(OpType type) {
 }
 
 void Client::make_progress() {
-  if (in_flight_ops >= max_concurrent_ops || shutting_down)
+  if ((in_flight_reads >= max_concurrent_reads &&
+       in_flight_writes >= max_concurrent_writes) ||
+      shutting_down)
     return;
 
-  // equal distribution of read/write
-  while (in_flight_ops < max_concurrent_ops) {
-    if (last_op_id % 2 == 0) {
-      gen_op(OpType::CLIENT_WRITE);
-    } else {
-      gen_op(OpType::CLIENT_READ);
-    }
+  // Fill both pipelines
+  while (in_flight_reads < max_concurrent_reads) {
+    gen_op(OpType::CLIENT_READ);
+  }
+  while (in_flight_writes < max_concurrent_writes) {
+    gen_op(OpType::CLIENT_WRITE);
   }
 }
 
@@ -88,7 +94,7 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
       std::lock_guard<std::mutex> lock(metrics_mutex);
       if (metrics_stream.is_open()) {
         metrics_stream << context->start_time << "," << id << ","
-                       << context->size << "," << dt << "\n";
+                       << "write" << "," << context->size << "," << dt << "\n";
       }
     }
     break;
@@ -100,7 +106,7 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
       std::lock_guard<std::mutex> lock(metrics_mutex);
       if (metrics_stream.is_open()) {
         metrics_stream << context->start_time << "," << id << ","
-                       << context->size << "," << dt << "\n";
+                       << "read" << "," << context->size << "," << dt << "\n";
       }
     }
     break;
@@ -110,11 +116,15 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
             static_cast<int>(context->type));
   }
 
-  in_flight_ops--;
+  if (context->type == OpType::CLIENT_READ) {
+    in_flight_reads--;
+  } else if (context->type == OpType::CLIENT_WRITE) {
+    in_flight_writes--;
+  }
   op_contexts.erase(msg.op_id);
   delete context;
 
-  if (shutting_down && in_flight_ops == 0) {
+  if (shutting_down && (in_flight_reads + in_flight_writes) == 0) {
     auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
     auto msg = make_message<KillAckMsg>();
     mon_mb->put(msg, 0);
@@ -131,13 +141,15 @@ void Client::process_message(Message *msg) {
           },
           [&](const KillMsg &kill) {
             shutting_down = true;
-            if (in_flight_ops == 0) {
+            if ((in_flight_reads + in_flight_writes) == 0) {
               auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
               auto msg = make_message<KillAckMsg>();
               mon_mb->put(msg, 0);
               CephActor::kill_self();
             } else {
-              XBT_INFO("Received KillMsg, draining %d ops", in_flight_ops);
+              XBT_INFO("Received KillMsg, draining %d ops (%d read, %d write)",
+                       in_flight_reads + in_flight_writes, in_flight_reads,
+                       in_flight_writes);
             }
           },
           [&](const auto &) { xbt_die("Client received unexpected message"); }},
