@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
   // Start Metric Monitor
   // Start Metric Monitor
   std::string metrics_path =
-      (fs::path(ctx.output_dir) / "metrics.csv").string();
+      (fs::path(ctx.output_dir) / "net_metrics.csv").string();
 
   e.add_actor("metric_monitor", e.get_all_hosts()[0], [metrics_path]() {
     sg4::Actor::self()->daemonize();

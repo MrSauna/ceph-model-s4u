@@ -46,7 +46,17 @@ Here is a quick guide on how to run the simulator:
 
 - Use --output-dir vscode to output the results to the vscode directory.
 
+## Reading outputs (if necessary)
+
+Most of the artifacts produced by the simulation are files. The files are in the `results/vscode` directory.
+
+- `topology.json` describes the topology of the cluster. including network links and their properties.
+- `mon_metrics.csv` describes the mon metrics.
+- `net_metrics.csv` describes the network metrics.
+- `client_metrics.csv` describes the client metrics.
+
 
 ## Running python scripts
 
 - The python scripts are in the `tools` directory. The `visualize.py` script can be run using `.venv/bin/python tools/visualize.py`. The output will go in `results/vscode/figures/`
+

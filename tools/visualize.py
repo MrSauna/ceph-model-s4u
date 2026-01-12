@@ -92,16 +92,20 @@ def viz_client_metrics(client_metrics_df):
     print(f"Saved plot to {output_path}")
     plt.close()
 
+def viz_net_metrics(net_metrics_df):
+    ...
+
 def main():
     mon_metrics_df = pd.read_csv(mon_metrics_file)
     client_metrics_df = pd.read_csv(client_metrics_file)
+    net_metrics_df = pd.read_csv(net_metrics_file)
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
 
     viz_mon_metrics(mon_metrics_df)
     viz_client_metrics(client_metrics_df)
-
+    viz_net_metrics(net_metrics_df)
 
 if __name__ == "__main__":
     main()
