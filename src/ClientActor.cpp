@@ -6,6 +6,18 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim_client,
 
 namespace sg4 = simgrid::s4u;
 
+std::ofstream Client::metrics_stream;
+std::mutex Client::metrics_mutex;
+
+void Client::set_metrics_output(const std::string &filename) {
+  metrics_stream.open(filename);
+  if (metrics_stream.is_open()) {
+    metrics_stream << "time,client_id,op_size,duration\n";
+  } else {
+    XBT_ERROR("Failed to open client metrics file: %s", filename.c_str());
+  }
+}
+
 Client::Client(PGMap *pgmap, int client_id) : CephActor(client_id, pgmap) {
   xbt_assert(client_id < 0, "client_id must be negative");
 }
@@ -72,11 +84,25 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   case OpType::CLIENT_WRITE: {
     double dt = sg4::Engine::get_clock() - context->start_time;
     XBT_DEBUG("wr op %d took %f seconds", msg.op_id, dt);
+    {
+      std::lock_guard<std::mutex> lock(metrics_mutex);
+      if (metrics_stream.is_open()) {
+        metrics_stream << context->start_time << "," << id << ","
+                       << context->size << "," << dt << "\n";
+      }
+    }
     break;
   }
   case OpType::CLIENT_READ: {
     double dt = sg4::Engine::get_clock() - context->start_time;
     XBT_DEBUG("rd op %d took %f seconds", msg.op_id, dt);
+    {
+      std::lock_guard<std::mutex> lock(metrics_mutex);
+      if (metrics_stream.is_open()) {
+        metrics_stream << context->start_time << "," << id << ","
+                       << context->size << "," << dt << "\n";
+      }
+    }
     break;
   }
   default:

@@ -1,4 +1,6 @@
 #include "CephActor.hpp"
+#include <fstream>
+#include <mutex>
 
 class Client : public CephActor {
   int max_concurrent_ops = 3;
@@ -16,7 +18,12 @@ class Client : public CephActor {
 
   int last_op_pg = 0;
 
+  static std::ofstream metrics_stream;
+  static std::mutex metrics_mutex;
+
 public:
   explicit Client(PGMap *pgmap, int client_id);
   void operator()();
+
+  static void set_metrics_output(const std::string &filename);
 };

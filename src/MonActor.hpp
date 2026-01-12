@@ -1,4 +1,6 @@
 #include "CephCommon.hpp"
+#include <fstream>
+#include <mutex>
 
 #include <simgrid/s4u.hpp>
 
@@ -21,4 +23,10 @@ public:
   void operator()();
   void on_subscribe_pgmap_change(const std::string &sender,
                                  const SubscribeToPGMapChangeMsg &payload);
+
+  static void set_metrics_output(const std::string &filename);
+
+private:
+  static std::ofstream metrics_stream;
+  static std::mutex metrics_mutex;
 };

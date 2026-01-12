@@ -5,6 +5,18 @@
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim_mon,
                              "Messages specific for MonActors");
 
+std::ofstream Mon::metrics_stream;
+std::mutex Mon::metrics_mutex;
+
+void Mon::set_metrics_output(const std::string &filename) {
+  metrics_stream.open(filename);
+  if (metrics_stream.is_open()) {
+    metrics_stream << "time,pg_id\n";
+  } else {
+    XBT_ERROR("Failed to open mon metrics file: %s", filename.c_str());
+  }
+}
+
 Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names)
     : pgmap(pgmap), client_names(client_names) {
 
@@ -51,6 +63,13 @@ void Mon::on_pgmap_change(int pg_id) {
   PG *pg = pgmap->get_pg(pg_id);
   xbt_assert(!pg->needs_backfill(),
              "currently only pgs that have finished backfilling should change");
+
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+    if (metrics_stream.is_open()) {
+      metrics_stream << sg4::Engine::get_clock() << "," << pg_id << "\n";
+    }
+  }
 
   // collect everybody that should be notified
   auto up = pg->get_up_ids();

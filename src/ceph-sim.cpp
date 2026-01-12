@@ -270,6 +270,11 @@ int main(int argc, char *argv[]) {
     world_star->add_route(client, nullptr,
                           {{client_link, sg4::LinkInRoute::Direction::UP}},
                           true);
+    // Configure ClientMetrics
+    std::string client_metrics_path =
+        (fs::path(ctx.output_dir) / "client_metrics.csv").string();
+    Client::set_metrics_output(client_metrics_path);
+
     e.add_actor("client.1", client, [pgmap]() {
       Client client(pgmap, -1);
       client();
@@ -287,6 +292,12 @@ int main(int argc, char *argv[]) {
                 true);
   zone_hosts[nz].push_back(mon);
   host_actors["mon"].push_back("mon");
+
+  // Configure MonMetrics
+  std::string mon_metrics_path =
+      (fs::path(ctx.output_dir) / "mon_metrics.csv").string();
+  Mon::set_metrics_output(mon_metrics_path);
+
   e.add_actor("mon", mon, [pgmap, client_names]() {
     Mon mon(pgmap, client_names);
     mon();
