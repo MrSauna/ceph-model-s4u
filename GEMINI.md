@@ -45,3 +45,8 @@ Here is a quick guide on how to run the simulator:
 - The --pg-objects=1000 says that 1000 objects exist per pg. The --object-size=4194304 says that each object is 4MB. This practically means the whole simulation that should run in about 5 seconds wall time.
 
 - Use --output-dir vscode to output the results to the vscode directory.
+
+
+## Running python scripts
+
+- The python scripts are in the `tools` directory. The `visualize.py` script can be run using `.venv/bin/python tools/visualize.py`. The output will go in `results/vscode/figures/`

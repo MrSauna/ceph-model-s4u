@@ -54,8 +54,9 @@ void MetricMonitor::operator()() {
 
         // Log if non-zero (or all to match user request)
         if (avg_bw > 1.0) { // Filter extremely small noise
+          std::string name = all_links[i]->get_cname();
           file << std::fixed << std::setprecision(2) << next_report << ",link,"
-               << all_links[i]->get_cname() << "," << avg_bw << "\n";
+               << name << "," << avg_bw << "\n";
         }
         cumulative_load_[i] = 0.0; // Reset
       }

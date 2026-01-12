@@ -263,9 +263,9 @@ int main(int argc, char *argv[]) {
       std::string client_name = "client." + std::to_string(i);
       client_names.push_back(client_name);
     }
-    sg4::Host *client = world_star->add_host("client", "100Gf");
+    sg4::Host *client = world_star->add_host("client.1", "100Gf");
     auto client_link =
-        world_star->add_split_duplex_link("client_link", "25Gbps")
+        world_star->add_split_duplex_link("client.1_link", "25Gbps")
             ->set_latency("500us");
     world_star->add_route(client, nullptr,
                           {{client_link, sg4::LinkInRoute::Direction::UP}},
@@ -281,6 +281,8 @@ int main(int argc, char *argv[]) {
     });
     zone_hosts[world_star].push_back(client);
     host_actors["client.1"].push_back("client.1");
+    // Register for topology export
+    ctx.host_zones["client.1"] = world_star;
   }
 
   // deploy a mon (to first rack on a new host)
@@ -292,6 +294,8 @@ int main(int argc, char *argv[]) {
                 true);
   zone_hosts[nz].push_back(mon);
   host_actors["mon"].push_back("mon");
+  // Register for topology export
+  ctx.host_zones["mon"] = nz;
 
   // Configure MonMetrics
   std::string mon_metrics_path =
@@ -312,12 +316,15 @@ int main(int argc, char *argv[]) {
   XBT_INFO("Deployment Tree:\n%s", tree_str.c_str());
 
   // Export Topology
+  XBT_INFO("Exporting topology...");
   std::string topo_path = (fs::path(ctx.output_dir) / "topology.json").string();
-  ctx.serialize_topology(topo_path);
+  ctx.serialize_topology(topo_path, host_actors);
 
+  // Start Metric Monitor
   // Start Metric Monitor
   std::string metrics_path =
       (fs::path(ctx.output_dir) / "metrics.csv").string();
+
   e.add_actor("metric_monitor", e.get_all_hosts()[0], [metrics_path]() {
     sg4::Actor::self()->daemonize();
     MetricMonitor monitor(1.0, metrics_path);

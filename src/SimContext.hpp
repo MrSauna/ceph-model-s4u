@@ -47,7 +47,9 @@ struct SimContext {
   std::string to_string();
 
   // Topology Export
-  void serialize_topology(const std::string &filename);
+  void serialize_topology(
+      const std::string &filename,
+      const std::map<std::string, std::vector<std::string>> &host_actors);
 };
 
 // --- Top-Level Builder ---

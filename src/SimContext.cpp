@@ -225,7 +225,9 @@ std::string SimContext::to_string() {
 
 // --- Topology Export ---
 
-void SimContext::serialize_topology(const std::string &filename) {
+void SimContext::serialize_topology(
+    const std::string &filename,
+    const std::map<std::string, std::vector<std::string>> &host_actors) {
   std::ofstream file(filename);
   if (!file.is_open()) {
     XBT_ERROR("Failed to open topology file: %s", filename.c_str());
@@ -241,33 +243,144 @@ void SimContext::serialize_topology(const std::string &filename) {
     zone_to_hosts[zone_ptr].push_back(hostname);
   }
 
+  // Helper to strip parent prefix from name
+  auto get_short_name = [](const std::string &full_name,
+                           const std::string &parent_name) {
+    if (full_name.rfind(parent_name + "_", 0) == 0) {
+      return full_name.substr(parent_name.length() + 1);
+    }
+    return full_name;
+  };
+
   // Recursive Lambda
   std::function<void(simgrid::s4u::NetZone *, int)> dump_zone;
   dump_zone = [&](simgrid::s4u::NetZone *zone, int depth) {
+    if (!zone)
+      return;
+    XBT_INFO("Dumping zone: %s", zone->get_name().c_str());
     std::string indent(depth * 2, ' ');
-    file << indent << "{\n";
-    file << indent << "  \"name\": \"" << zone->get_name() << "\",\n";
 
-    file << indent << "  \"hosts\": [";
-    if (zone_to_hosts.count(zone)) {
-      const auto &hosts = zone_to_hosts[zone];
-      for (size_t i = 0; i < hosts.size(); ++i) {
-        if (i > 0)
-          file << ", ";
-        file << "\"" << hosts[i] << "\"";
+    std::string parent_name = "";
+    if (zone->get_name() != "_world_") {
+      if (auto *parent = zone->get_parent()) {
+        parent_name = parent->get_name();
       }
     }
-    file << "],\n";
+    std::string short_name = get_short_name(zone->get_name(), parent_name);
+
+    // Special case for root/star
+    if (zone->get_name() == "star" && parent_name == "_world_")
+      short_name = "star";
+
+    file << indent << "{\n";
+    file << indent << "  \"id\": \"" << zone->get_name() << "\",\n";
+    file << indent << "  \"name\": \"" << short_name << "\",\n";
+    file << indent << "  \"type\": \"zone\",\n";
+
+    // Try to find an uplink for this zone
+    std::string uplink_name = "";
+    double bandwidth = 0.0;
+
+    // Convention: zone_name + "_uplink"
+    std::string uplink_base = zone->get_name() + "_uplink";
+    // Check for simple link or split-duplex _UP
+    auto *uplink_link = simgrid::s4u::Link::by_name_or_null(uplink_base);
+    if (!uplink_link) {
+      uplink_link = simgrid::s4u::Link::by_name_or_null(uplink_base + "_UP");
+    }
+
+    if (uplink_link) {
+      uplink_name = uplink_base; // Use base name for cleaner topology? Or the
+                                 // actual link name found?
+      // Use base name if it was split, or the name found? User wants to match
+      // metrics. Metrics use "base_UP" and "base_DOWN". If we found "base_UP",
+      // we should probably report "base" as the uplink ID and maybe specify it
+      // is split duplex? Or just report the "uplink" as a logical object. Let's
+      // stick to the base name if possible, or the one found if simple.
+
+      // If we found _UP, implies split duplex.
+      // Bandwidth: get_bandwidth() returns bytes/sec.
+      bandwidth = uplink_link->get_bandwidth();
+      // Wait, Link::get_latency() returns double.
+    }
+
+    file << indent << "  \"uplink\": \"" << uplink_name << "\",\n";
+    file << indent << "  \"bandwidth\": " << bandwidth << ",\n";
+    file << indent << "  \"latency\": "
+         << (uplink_link ? uplink_link->get_latency() : 0.0)
+         << ",\n"; // in seconds
 
     file << indent << "  \"children\": [\n";
+
+    bool first_child = true;
+
+    // 1. Sub-zones
     auto children_vec = zone->get_children();
-    bool first = true;
     for (auto *child : children_vec) {
-      if (!first)
+      if (!first_child)
         file << ",\n";
       dump_zone(child, depth + 1);
-      first = false;
+      first_child = false;
     }
+
+    // 2. Hosts in this zone
+    if (zone_to_hosts.count(zone)) {
+      const auto &hosts = zone_to_hosts[zone];
+      for (const auto &hostname : hosts) {
+        if (!first_child)
+          file << ",\n";
+        first_child = false;
+
+        std::string host_indent = indent + "  ";
+        file << host_indent << "{\n";
+        file << host_indent << "  \"id\": \"" << hostname << "\",\n";
+        file << host_indent << "  \"name\": \"" << hostname << "\",\n";
+        file << host_indent << "  \"type\": \"host\",\n";
+
+        // Host link
+        std::string host_link_name = "";
+        double h_bw = 0.0;
+        double h_lat = 0.0;
+
+        std::string h_link_base = hostname + "_link";
+        auto *host_link = simgrid::s4u::Link::by_name_or_null(h_link_base);
+        if (!host_link) {
+          host_link = simgrid::s4u::Link::by_name_or_null(h_link_base + "_UP");
+        }
+
+        if (host_link) {
+          host_link_name = h_link_base;
+          h_bw = host_link->get_bandwidth();
+          h_lat = host_link->get_latency();
+        }
+
+        file << host_indent << "  \"uplink\": \"" << host_link_name << "\",\n";
+        file << host_indent << "  \"bandwidth\": " << h_bw << ",\n";
+        file << host_indent << "  \"latency\": " << h_lat << ",\n";
+
+        // Actors on this host
+        file << host_indent << "  \"children\": [\n";
+        if (host_actors.count(hostname)) {
+          const auto &actors = host_actors.at(hostname);
+          for (size_t k = 0; k < actors.size(); ++k) {
+            if (k > 0)
+              file << ",\n";
+            file << host_indent << "    {\n";
+            // Actor entry in map is currently "name, disk" or just "name"
+            // Let's parse it if needed, or just use it as name.
+            // valid JSON string
+            file << host_indent << "      \"id\": \"" << hostname << "_" << k
+                 << "\",\n"; // Synthetic ID
+            file << host_indent << "      \"name\": \"" << actors[k] << "\",\n";
+            file << host_indent << "      \"type\": \"actor\"\n";
+            file << host_indent << "    }";
+          }
+        }
+        file << "\n" << host_indent << "  ]\n";
+        file << host_indent << "}";
+      }
+    }
+
     file << "\n" << indent << "  ]\n";
     file << indent << "}";
   };

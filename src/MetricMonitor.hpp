@@ -8,8 +8,6 @@
 class MetricMonitor {
   double interval_;
   std::string filename_;
-
-  // Cumulative bytes transferred per link index
   std::vector<double> cumulative_load_;
 
 public:
