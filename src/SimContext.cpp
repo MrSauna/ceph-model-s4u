@@ -171,8 +171,8 @@ void build_dc(SimContext &ctx, sg4::NetZone *world, int dc_config_idx) {
   double speed_val = resolve_val(speed_spec, dc_config_idx, 0, 1000.0);
   std::string bw_str = std::to_string(speed_val) + "Gbps";
 
-  auto *uplink =
-      dc_zone->add_link(dc_name + "_uplink", bw_str)->set_latency("100us");
+  auto *uplink = dc_zone->add_split_duplex_link(dc_name + "_uplink", bw_str)
+                     ->set_latency("100us");
 
   // Route: DC Switch -> Outside (DC Boundary)
   // Route: DC Switch -> World (in World Zone)
@@ -299,8 +299,8 @@ void SimContext::serialize_topology(
       // stick to the base name if possible, or the one found if simple.
 
       // If we found _UP, implies split duplex.
-      // Bandwidth: get_bandwidth() returns bytes/sec.
-      bandwidth = uplink_link->get_bandwidth();
+      // Bandwidth: get_bandwidth() returns bytes/sec. Convert to bits/sec.
+      bandwidth = uplink_link->get_bandwidth() * 8.0;
       // Wait, Link::get_latency() returns double.
     }
 
@@ -350,7 +350,7 @@ void SimContext::serialize_topology(
 
         if (host_link) {
           host_link_name = h_link_base;
-          h_bw = host_link->get_bandwidth();
+          h_bw = host_link->get_bandwidth() * 8.0;
           h_lat = host_link->get_latency();
         }
 

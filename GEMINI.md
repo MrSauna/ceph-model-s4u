@@ -20,7 +20,7 @@
 
 ## Running the simulator
 
-Here is a quick guide on how to run the simulator:
+Here is a quick guide on how to run the simulator. Remember to wait at least 10 seconds for the simulation to finish.
 
 ```
 ./build/ceph-sim \
@@ -48,7 +48,7 @@ Here is a quick guide on how to run the simulator:
 
 ## Reading outputs (if necessary)
 
-Most of the artifacts produced by the simulation are files. The files are in the `results/vscode` directory.
+Most of the artifacts produced by the simulation are files. The files are in the `results/vscode` directory which is gitignored.
 
 - `topology.json` describes the topology of the cluster. including network links and their properties.
 - `mon_metrics.csv` describes the mon metrics.
@@ -58,5 +58,6 @@ Most of the artifacts produced by the simulation are files. The files are in the
 
 ## Running python scripts
 
-- The python scripts are in the `tools` directory. The `visualize.py` script can be run using `.venv/bin/python tools/visualize.py`. The output will go in `results/vscode/figures/`
+- The python scripts are in the `tools` directory. The `visualize.py` script can be run using `.venv/bin/python tools/visualize.py`. The output will go in `results/vscode/figures/`.
+- If running other python commands do it in the `.venv` virtual environment.
 

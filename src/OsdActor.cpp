@@ -494,7 +494,7 @@ void Osd::process_finished_activity(sg4::ActivityPtr activity) {
     Message *ack_msg = make_message<OsdOpAckMsg>(context->client_op_id);
     sg4::Mailbox *target_mb =
         sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
-    target_mb->put_async(ack_msg, 0).detach();
+    target_mb->put_async(ack_msg, context->size).detach();
     break;
   }
 

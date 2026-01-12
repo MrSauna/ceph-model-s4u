@@ -60,7 +60,10 @@ void Client::gen_op(OpType type) {
   sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(target_osd_id);
   Message *msg = make_message<OsdOpMsg>(op);
 
-  target_osd_mb->put_async(msg, pgmap->get_object_size()).detach();
+  target_osd_mb
+      ->put_async(msg,
+                  type == OpType::CLIENT_READ ? 0 : pgmap->get_object_size())
+      .detach();
 
   // XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
 }
