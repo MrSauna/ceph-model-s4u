@@ -13,7 +13,7 @@ else:
     mon_metrics_file = snakemake.input.mon_metrics
     net_metrics_file = snakemake.input.net_metrics
     client_metrics_file = snakemake.input.client_metrics
-    output_dir = snakemake.output
+    output_dir = snakemake.params.output_dir
 
 
 def viz_mon_metrics(mon_metrics_df):
@@ -38,7 +38,7 @@ def viz_mon_metrics(mon_metrics_df):
     plt.title("PG Completion Over Time")
     plt.grid(True)
     
-    output_path = os.path.join(output_dir, "mon_plot.svg")
+    output_path = os.path.join(output_dir, "pgmap_plot.svg")
     plt.savefig(output_path)
     print(f"Saved plot to {output_path}")
     plt.close()
@@ -46,7 +46,15 @@ def viz_mon_metrics(mon_metrics_df):
 
 def viz_client_metrics(client_metrics_df):
     if client_metrics_df.empty:
-        print("Client metrics empty, skipping viz_client_metrics")
+        print("Client metrics empty, creating empty plot")
+        plt.figure(figsize=(10, 6))
+        plt.xlabel("Time (s)")
+        plt.ylabel("Throughput (MiB/s)")
+        plt.title("Client Throughput (No Data)")
+        plt.grid(True)
+        output_path = os.path.join(output_dir, "client_throughput.svg")
+        plt.savefig(output_path)
+        plt.close()
         return
 
     # Sort by time

@@ -270,31 +270,34 @@ int main(int argc, char *argv[]) {
 
   // add client
   std::vector<std::string> client_names;
+  // Configure ClientMetrics
+  std::string client_metrics_path =
+      (fs::path(ctx.output_dir) / "client_metrics.csv").string();
+  Client::set_metrics_output(client_metrics_path);
+
   if (ctx.clients > 0) {
     for (size_t i = 1; i <= ctx.clients; i++) {
       std::string client_name = "client." + std::to_string(i);
       client_names.push_back(client_name);
-    }
-    sg4::Host *client = world_star->add_host("client.1", "100Gf");
-    auto client_link =
-        world_star->add_split_duplex_link("client.1_link", "25Gbps")
-            ->set_latency("500us");
-    world_star->add_route(client, nullptr,
-                          {{client_link, sg4::LinkInRoute::Direction::UP}},
-                          true);
-    // Configure ClientMetrics
-    std::string client_metrics_path =
-        (fs::path(ctx.output_dir) / "client_metrics.csv").string();
-    Client::set_metrics_output(client_metrics_path);
+      sg4::Host *client = world_star->add_host(client_name, "100Gf");
+      auto client_link =
+          world_star->add_split_duplex_link(client_name + "_link", "25Gbps")
+              ->set_latency("500us");
+      world_star->add_route(client, nullptr,
+                            {{client_link, sg4::LinkInRoute::Direction::UP}},
+                            true);
 
-    e.add_actor("client.1", client, [pgmap, ctx]() {
-      Client client(pgmap, -1, ctx.client_read_queue, ctx.client_write_queue);
-      client();
-    });
-    zone_hosts[world_star].push_back(client);
-    host_actors["client.1"].push_back("client.1");
-    // Register for topology export
-    ctx.host_zones["client.1"] = world_star;
+      int client_id = -static_cast<int>(i);
+      e.add_actor(client_name, client, [pgmap, ctx, client_id]() {
+        Client client(pgmap, client_id, ctx.client_read_queue,
+                      ctx.client_write_queue);
+        client();
+      });
+      zone_hosts[world_star].push_back(client);
+      host_actors[client_name].push_back(client_name);
+      // Register for topology export
+      ctx.host_zones[client_name] = world_star;
+    }
   }
 
   // deploy a mon (to first rack on a new host)

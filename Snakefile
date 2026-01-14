@@ -34,17 +34,27 @@ rule all:
         expand("results/{exp}/{i}/crushmap.txt", exp=EXPERIMENTS, i=CRUSH_SPEC_PARAMS_IDX),
         expand("results/{exp}/{i}/crushmap.json", exp=EXPERIMENTS, i=CRUSH_SPEC_PARAMS_IDX),
 
-        expand("results/{exp}/metrics.csv", exp=EXPERIMENTS),
+        expand("results/{exp}/net_metrics.csv", exp=EXPERIMENTS),
+        expand("results/{exp}/mon_metrics.csv", exp=EXPERIMENTS),
+        expand("results/{exp}/client_metrics.csv", exp=EXPERIMENTS),
         expand("results/{exp}/topology.json", exp=EXPERIMENTS),
 
-        expand("results/{exp}/figures/pgmap_plot.png", exp=EXPERIMENTS),
+        expand("results/{exp}/figures/pgmap_plot.svg", exp=EXPERIMENTS),
+        expand("results/{exp}/figures/client_throughput.svg", exp=EXPERIMENTS),
+        expand("results/{exp}/figures/network_topology.svg", exp=EXPERIMENTS),
 
 
 rule viz_pgmap:
     input:
-        "results/{exp}/mon_metrics.csv",
+        net_metrics = "results/{exp}/net_metrics.csv",
+        mon_metrics = "results/{exp}/mon_metrics.csv",
+        client_metrics = "results/{exp}/client_metrics.csv",
     output:
-        "results/{exp}/figures/pgmap_plot.png",
+        client_throughput = "results/{exp}/figures/client_throughput.svg",
+        pgmap_plot = "results/{exp}/figures/pgmap_plot.svg",
+        network_topology = "results/{exp}/figures/network_topology.svg",
+    params:
+        output_dir = "results/{exp}/figures",
     script: 
         "tools/visualize.py"
 
@@ -54,11 +64,15 @@ rule run_sim:
         pgdump1 = "results/{exp}/0/pgdump.txt",
         pgdump2 = "results/{exp}/1/pgdump.txt",
     output:
-        metrics = "results/{exp}/metrics.csv",
+        net_metrics = "results/{exp}/net_metrics.csv",
+        mon_metrics = "results/{exp}/mon_metrics.csv",
+        client_metrics = "results/{exp}/client_metrics.csv",
         topology = "results/{exp}/topology.json",
         output = "results/{exp}/stdout.txt",
     params:
         clients_num = lambda w: config["experiments"][w.exp]["clients_num"],
+        client_read_queue_depth = lambda w: config["experiments"][w.exp].get("client_read_queue_depth", 1),
+        client_write_queue_depth = lambda w: config["experiments"][w.exp].get("client_write_queue_depth", 1),
     shell:
         """
         {input.binary} \
@@ -67,14 +81,14 @@ rule run_sim:
             "--dc-weight=10::" \
             "--pgdump={input.pgdump1}" \
             "--pgdump={input.pgdump2}" \
-            "--pg-objects=10000" \
+            "--pg-objects=1000" \
             "--object-size=4194304" \
             "--pool-id=1" \
             "--disk-read-bandwidth=125829120" \
             "--disk-write-bandwidth=83886080" \
             "--clients={params.clients_num}" \
-            "--client-read-queue-depth=32" \
-            "--client-write-queue-depth=32" \
+            "--client-read-queue-depth={params.client_read_queue_depth}" \
+            "--client-write-queue-depth={params.client_write_queue_depth}" \
             "--output-dir=results/{wildcards.exp}"
             > {output.output}
         """
