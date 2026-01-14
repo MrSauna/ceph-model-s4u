@@ -8,15 +8,55 @@ experiments:
     osd_num: 8
     pg_num: 32
     "crush_spec_params":
-      - osds_per_host_num: 1
-        hosts_per_rack_table: [2, 2]
-        racks_per_dc_table: [2]
-        osd_weight_per_dc_table: [14.0]
-      - osds_per_host_num: 1
-        hosts_per_rack_table: [2, 2]
-        racks_per_dc_table: [2,2]
-        osd_weight_per_dc_table: [14.0, 20.0]
+      - dc_shape: "2:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["2:2:1", "2:2:1"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["10:10:10", "10:10:10"]
+    clients_num: 0
 
-  # "real":
-  #   recipe: "inputs/recipes/topo_inject.sh"
-  #   base_map: "inputs/real_osdmaps/osdmap-1234567890.bin"
+  "small_cluster_c1":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 8
+    pg_num: 32
+    "crush_spec_params":
+      - dc_shape: "2:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: "4:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+    clients_num: 1
+    client_read_queue_depth: 4
+    client_write_queue_depth: 4
+
+  "small_cluster_c2":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 8
+    pg_num: 32
+    "crush_spec_params":
+      - dc_shape: "2:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: "4:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+    clients_num: 2
+    client_read_queue_depth: 16
+    client_write_queue_depth: 16
+
+  "medium_cluster":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 16
+    pg_num: 128
+    "crush_spec_params":
+      - dc_shape: "2:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: "4:2:2"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+    clients_num: 0
+    client_read_queue_depth: 16
+    client_write_queue_depth: 16

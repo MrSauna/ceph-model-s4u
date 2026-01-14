@@ -1,6 +1,18 @@
 from jinja2 import Environment, FileSystemLoader
 import os
 
+# --- Snakemake Mocking ---
+if "snakemake" not in globals():
+    class MockSnakemake:
+        def __init__(self):
+            self.input = type('Input', (), {})()
+            self.input.template = "inputs/templates/cm_simple.j2"
+            self.output = ["results/vscode/crushmap.txt"]
+            self.params = type('Params', (), {})()
+            self.params.dc_shape = ["2:2:2"]
+            self.params.dc_weight = ["14.0::"]
+    snakemake = MockSnakemake()
+
 template_dir = os.path.dirname(snakemake.input.template)
 template_file = os.path.basename(snakemake.input.template)
 environment = Environment(loader=FileSystemLoader(template_dir))
@@ -60,47 +72,116 @@ def get_osd_id():
     osd_id += 1
     return previous_id
 
+# --- Helper Functions (Ported from SimContext.cpp) ---
 
-osds_per_host_num = snakemake.params.osds_per_host_num
-hosts_per_rack_table = snakemake.params.num_hosts_per_rack_table
-racks_per_dc_table = snakemake.params.num_racks_per_dc_table
-osd_weight_dc_table = snakemake.params.osd_weight_dc_table
+def split_str(s: str, delim: str) -> list[str]:
+    if not s:
+        return [""]
+    return s.split(delim)
+
+def resolve_val(spec: str, self_id: int, parent_id: int, fallback: float) -> float:
+    if not spec:
+        return fallback
+    
+    spec_val = spec
+    use_parent = False
+    if spec_val.startswith('@'):
+        use_parent = True
+        spec_val = spec_val[1:]
+    
+    values = []
+    try:
+        parts = spec_val.split(',')
+        for part in parts:
+            if part:
+                values.append(float(part))
+    except ValueError:
+        return fallback
+
+    if not values:
+        return fallback
+    
+    idx = parent_id if use_parent else self_id
+    return values[idx % len(values)]
+
+def get_hierarchy_spec(vec: list[str], dc_idx: int, level: int) -> str:
+    if dc_idx >= len(vec):
+        return ""
+    parts = split_str(vec[dc_idx], ':')
+    if level >= len(parts):
+        return ""
+    return parts[level]
 
 
 def gen_crushmap():
     root = Node("root", 0)
-    for dc_i in range(len(racks_per_dc_table)):
+    
+    # Ensure params are lists
+    shapes = snakemake.params.dc_shape
+    if isinstance(shapes, str):
+        shapes = [shapes]
+        
+    weights = snakemake.params.dc_weight
+    if isinstance(weights, str):
+        weights = [weights]
+        
+    # Iterate over defined shapes (Datacenters)
+    for dc_i in range(len(shapes)):
         dc_str = f"dc{dc_i}"
         dc = Node("dc", 0)
-        osd_weight = osd_weight_dc_table[dc_i]
-
-        for rack_i in range(racks_per_dc_table[dc_i]):
-            rack_str = f"rack{rack_i}"
+        
+        # Level 0: Datacenter -> Rack Count
+        count_spec_dc = get_hierarchy_spec(shapes, dc_i, 0)
+        rack_count = int(count_spec_dc) if count_spec_dc else 0
+        
+        weight_spec_dc = get_hierarchy_spec(weights, dc_i, 0)
+        dc_weight = resolve_val(weight_spec_dc, dc_i, 0, 4.0)
+        
+        for rack_i in range(rack_count):
             rack = Node("rack", 0)
-
-            for host_i in range(hosts_per_rack_table[rack_i]):
-                host_str = f"host{host_i}"
+            
+            # Level 1: Rack -> Host Count
+            count_spec_rack = get_hierarchy_spec(shapes, dc_i, 1)
+            host_count = int(count_spec_rack) if count_spec_rack else 0
+            
+            weight_spec_rack = get_hierarchy_spec(weights, dc_i, 1)
+            rack_weight = resolve_val(weight_spec_rack, rack_i, dc_i, dc_weight)
+            
+            for host_i in range(host_count):
                 host = Node("host", 0)
-
-                for osd_i in range(osds_per_host_num):
-                    osd_str = f"osd.{osd_i}"
+                
+                # Level 2: Host -> OSD Count
+                count_spec_host = get_hierarchy_spec(shapes, dc_i, 2)
+                osd_count = int(count_spec_host) if count_spec_host else 0
+                
+                weight_spec_host = get_hierarchy_spec(weights, dc_i, 2)
+                host_weight = resolve_val(weight_spec_host, host_i, rack_i, rack_weight)
+                
+                for osd_i in range(osd_count):
+                    # Resolve OSD weight
+                    osd_weight = resolve_val(weight_spec_host, osd_i, host_i, host_weight)
+                    
                     osd = Node("osd.", osd_weight)
                     host.add_child(osd)
-
+                
                 rack.add_child(host)
-
+            
             dc.add_child(rack)
-
+        
         root.add_child(dc)
-
 
     ctx = {"roots": [root]}
 
     content = template.render(ctx)
 
-    with open(snakemake.output[0], "w") as f:
+    output_file = snakemake.output[0]
+    output_dir = os.path.dirname(output_file)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    with open(output_file, "w") as f:
         f.write(content)
 
-    print("hello from gen_crushmap.py")
+    print(f"Generated crushmap at {output_file}")
 
 gen_crushmap()

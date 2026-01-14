@@ -240,7 +240,7 @@ void Osd::on_backfill_reservation_message(int sender,
   switch (msg.op->type) {
 
   case BackfillReservationOpType::REQUEST_SLAVE: {
-    if (backfill_reservation_remote.empty()) {
+    if (!backfill_reservation_local && backfill_reservation_remote.empty()) {
       backfill_reservation_remote.insert(sender);
       // send accept
       BackfillReservationOp *accept_op = new BackfillReservationOp{
@@ -261,7 +261,7 @@ void Osd::on_backfill_reservation_message(int sender,
   }
 
   case BackfillReservationOpType::RELEASE_SLAVE:
-    xbt_assert(!backfill_reservation_local);
+    // xbt_assert(!backfill_reservation_local); wrong assumption
     // this can arrive after non peered primary fails to fully reserve.
     // in that case, we should not do anything
     if (backfill_reservation_remote.find(sender) !=

@@ -73,12 +73,15 @@ rule run_sim:
         clients_num = lambda w: config["experiments"][w.exp]["clients_num"],
         client_read_queue_depth = lambda w: config["experiments"][w.exp].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["experiments"][w.exp].get("client_write_queue_depth", 1),
+        dc_shape = lambda w: config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_shape", "2:2:2"),
+        dc_speed = lambda w: config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_speed", "10:10:10"),
+        dc_weight = lambda w: config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_weight", "10::"),
     shell:
         """
         {input.binary} \
-            "--dc-shape=2:2:2" \
-            "--dc-speed=10:10:10" \
-            "--dc-weight=10::" \
+            "--dc-shape={params.dc_shape}" \
+            "--dc-speed={params.dc_speed}" \
+            "--dc-weight={params.dc_weight}" \
             "--pgdump={input.pgdump1}" \
             "--pgdump={input.pgdump2}" \
             "--pg-objects=1000" \
@@ -140,9 +143,7 @@ rule gen_crushmap:
     output:
         crushmap_txt = "results/{exp}/{i}/crushmap.txt",
     params:
-        osds_per_host_num = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["osds_per_host_num"],
-        num_hosts_per_rack_table = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["hosts_per_rack_table"],
-        num_racks_per_dc_table = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["racks_per_dc_table"],
-        osd_weight_dc_table = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["osd_weight_per_dc_table"],
+        dc_shape = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["dc_shape"],
+        dc_weight = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["dc_weight"],
     script:
         "tools/gen_crushmap.py"

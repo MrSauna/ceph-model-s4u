@@ -35,7 +35,9 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
     --pool-id=1 \
     --disk-read-bandwidth=125829120 \
     --disk-write-bandwidth=83886080 \
-    --clients=1 
+    --clients=1 \
+    --client-read-queue-depth=4 \
+    --client-write-queue-depth=4
 ```
 
 - The --dc-shape is a toplogoy descriptor, you don't need to modify unless specifically asked to. The --dc-speed is the speed of the links, you don't need to modify unless specifically asked to. The --dc-weight is the weight of the links, you don't need to modify unless specifically asked to.
