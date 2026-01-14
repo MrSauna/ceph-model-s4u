@@ -4,8 +4,8 @@
 #include <xbt/random.hpp>
 
 class Client : public CephActor {
-  int max_concurrent_reads = 3;
-  int max_concurrent_writes = 3;
+  int max_concurrent_reads;
+  int max_concurrent_writes;
   int in_flight_reads = 0;
   int in_flight_writes = 0;
   bool shutting_down = false;
@@ -27,7 +27,7 @@ class Client : public CephActor {
   static std::mutex metrics_mutex;
 
 public:
-  explicit Client(PGMap *pgmap, int client_id);
+  explicit Client(PGMap *pgmap, int client_id, int read_queue, int write_queue);
   void operator()();
 
   static void set_metrics_output(const std::string &filename);

@@ -57,6 +57,8 @@ rule run_sim:
         metrics = "results/{exp}/metrics.csv",
         topology = "results/{exp}/topology.json",
         output = "results/{exp}/stdout.txt",
+    params:
+        clients_num = lambda w: config["experiments"][w.exp]["clients_num"],
     shell:
         """
         {input.binary} \
@@ -70,6 +72,9 @@ rule run_sim:
             "--pool-id=1" \
             "--disk-read-bandwidth=125829120" \
             "--disk-write-bandwidth=83886080" \
+            "--clients={params.clients_num}" \
+            "--client-read-queue-depth=32" \
+            "--client-write-queue-depth=32" \
             "--output-dir=results/{wildcards.exp}"
             > {output.output}
         """

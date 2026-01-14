@@ -18,7 +18,9 @@ void Client::set_metrics_output(const std::string &filename) {
   }
 }
 
-Client::Client(PGMap *pgmap, int client_id) : CephActor(client_id, pgmap) {
+Client::Client(PGMap *pgmap, int client_id, int read_queue, int write_queue)
+    : CephActor(client_id, pgmap), max_concurrent_reads(read_queue),
+      max_concurrent_writes(write_queue) {
   xbt_assert(client_id < 0, "client_id must be negative");
   random.set_seed(client_id);
 }

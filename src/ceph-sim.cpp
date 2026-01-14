@@ -184,8 +184,20 @@ int main(int argc, char *argv[]) {
 
   // --clients
   auto *clients_opt =
-      app.add_flag("--clients", ctx.clients, "Number of clients");
+      app.add_option("--clients", ctx.clients, "Number of clients");
   clients_opt->default_val(0);
+
+  // --client-read-queue-depth
+  auto *client_read_queue_opt =
+      app.add_option("--client-read-queue-depth", ctx.client_read_queue,
+                     "Client read queue depth");
+  client_read_queue_opt->default_val(1);
+
+  // --client-write-queue-depth
+  auto *client_write_queue_opt =
+      app.add_option("--client-write-queue-depth", ctx.client_write_queue,
+                     "Client write queue depth");
+  client_write_queue_opt->default_val(1);
 
   // Do the parsing
   CLI11_PARSE(app, argc, argv);
@@ -275,8 +287,8 @@ int main(int argc, char *argv[]) {
         (fs::path(ctx.output_dir) / "client_metrics.csv").string();
     Client::set_metrics_output(client_metrics_path);
 
-    e.add_actor("client.1", client, [pgmap]() {
-      Client client(pgmap, -1);
+    e.add_actor("client.1", client, [pgmap, ctx]() {
+      Client client(pgmap, -1, ctx.client_read_queue, ctx.client_write_queue);
       client();
     });
     zone_hosts[world_star].push_back(client);

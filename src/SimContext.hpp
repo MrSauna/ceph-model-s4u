@@ -30,6 +30,8 @@ struct SimContext {
   SchedulerProfile profile = SchedulerProfile::BALANCED;
 
   int clients = 0;
+  int client_read_queue = 1;
+  int client_write_queue = 1;
 
   std::vector<std::string> shapes;
   std::vector<std::string> speeds;

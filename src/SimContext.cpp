@@ -204,6 +204,9 @@ std::string SimContext::to_string() {
   ss << "  Pool ID: " << pool_id << std::endl;
   ss << "  PG Objects: " << pg_objects << std::endl;
   ss << "  Object Size: " << object_size << std::endl;
+  ss << "  Clients: " << clients << std::endl;
+  ss << "  Client Read Queue: " << client_read_queue << std::endl;
+  ss << "  Client Write Queue: " << client_write_queue << std::endl;
   ss << "  Engine Config: ";
   for (const auto &s : cfg)
     ss << s << " ";
