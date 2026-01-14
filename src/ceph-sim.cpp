@@ -228,6 +228,8 @@ int main(int argc, char *argv[]) {
   }
   pgmap->update_primary_osd_to_pg_index();
   XBT_INFO("%s", pgmap->to_string().c_str());
+  XBT_INFO("Initial map's reverse index\n%s",
+           pgmap->primary_osds_to_pgs_string().c_str());
 
   // Build the platform
   auto *world_star = e.get_netzone_root()->add_netzone_star("star");

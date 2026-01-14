@@ -20,10 +20,6 @@ void Mon::set_metrics_output(const std::string &filename) {
 Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names)
     : pgmap(pgmap), client_names(client_names) {
 
-  XBT_INFO("Initial PGMap\n%s", pgmap->to_string().c_str());
-  XBT_INFO("Initial map's reverse index\n%s",
-           pgmap->primary_osds_to_pgs_string().c_str());
-
   mailbox = simgrid::s4u::Mailbox::by_name("mon");
 
   // dynamically discover osds
