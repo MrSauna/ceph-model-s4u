@@ -1,0 +1,12 @@
+{
+    "title": "Ceph PG backfill simulator",
+    "description": "Simgrid S4U based C++ model of Ceph backfill process. Source code for Master's Thesis.",
+    "upload_type": "software",
+    "creators": [
+        {
+            "name": "Welling, Eemeli",
+            "affiliation": "Aalto University",
+            "orcid": "0009-0004-6044-5762"
+        }
+    ]
+}
