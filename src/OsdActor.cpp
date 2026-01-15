@@ -54,6 +54,9 @@ void Osd::on_pgmap_change() {
 
 void Osd::maybe_reserve_backfill() {
 
+  if (pending_retry) {
+    return;
+  }
   if (backfill_reservation_local &&
       backfill_reservation_remote_pending.empty()) {
     return;
@@ -261,11 +264,10 @@ void Osd::on_backfill_reservation_message(int sender,
   }
 
   case BackfillReservationOpType::RELEASE_SLAVE:
-    // xbt_assert(!backfill_reservation_local); wrong assumption
-    // this can arrive after non peered primary fails to fully reserve.
-    // in that case, we should not do anything
-    if (backfill_reservation_remote.find(sender) !=
-        backfill_reservation_remote.end()) {
+
+    if (!backfill_reservation_local &&
+        backfill_reservation_remote.find(sender) !=
+            backfill_reservation_remote.end()) {
       backfill_reservation_remote.erase(sender);
     }
     break;
@@ -287,6 +289,7 @@ void Osd::on_backfill_reservation_message(int sender,
 
     backfill_reservation_remote.clear();
     backfill_reservation_remote_pending.clear();
+    backfill_reservation_local = false;
 
     // immediately release all slaves
     for (int peer_osd_id : backfilling_pg->get_backfill_targets()) {
@@ -304,19 +307,21 @@ void Osd::on_backfill_reservation_message(int sender,
     }
 
     // retry to self
+    pending_retry = true;
     sg4::Mailbox *return_mb = mb;
     std::string sender_str = "osd." + std::to_string(id);
-    my_host->add_actor("backfill_reservation", [return_mb, sender_str]() {
-      sg4::this_actor::sleep_for(1); // todo: some randomness?
-      // create retry op
-      BackfillReservationOp *retry_op = new BackfillReservationOp{
-          .type = BackfillReservationOpType::RETRY,
-      };
-      Message *retry_msg = make_message<BackfillReservationMsg>(retry_op);
-      retry_msg->sender = sender_str;
-      return_mb->put(retry_msg, 0);
-    });
-    pending_retry = true;
+    double random_delay = random.uniform_real(0L, 1L);
+    my_host->add_actor(
+        "backfill_reservation", [return_mb, sender_str, random_delay]() {
+          sg4::this_actor::sleep_for(random_delay);
+          // create retry op
+          BackfillReservationOp *retry_op = new BackfillReservationOp{
+              .type = BackfillReservationOpType::RETRY,
+          };
+          Message *retry_msg = make_message<BackfillReservationMsg>(retry_op);
+          retry_msg->sender = sender_str;
+          return_mb->put(retry_msg, 0);
+        });
 
     break;
   }
@@ -325,6 +330,7 @@ void Osd::on_backfill_reservation_message(int sender,
   case BackfillReservationOpType::RETRY:
     backfill_reservation_local = false;
     pending_retry = false;
+    XBT_DEBUG("retrying backfill for pg %i", backfilling_pg->get_id());
     maybe_reserve_backfill();
     break;
 
@@ -435,7 +441,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
         Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
         mon_mb->put_async(msg, 0).detach();
 
-        // free remote reservations
+        // free remote reservations, comment is wrong???
         for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
           BackfillReservationOp *reservation_op = new BackfillReservationOp{
               .primary_osd_id = id,

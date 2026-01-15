@@ -24,8 +24,11 @@ struct NoOpJob {
   void try_update(std::chrono::milliseconds) {}
 };
 
+#include <xbt/random.hpp>
+
 class Osd : public CephActor {
   sg4::Disk *disk;
+  simgrid::xbt::random::XbtRandom random;
 
   int max_recovery_threads = 3; // real hdd default
   int used_recovery_threads = 0;
