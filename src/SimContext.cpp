@@ -77,8 +77,7 @@ std::string SimContext::get_hierarchy_spec(const std::vector<std::string> &vec,
 
 // Level 3: Host (Index 2)
 static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
-                       int rack_idx, int host_idx, double parent_speed,
-                       double parent_weight) {
+                       int rack_idx, int host_idx, double parent_speed) {
 
   std::string hostname = "host-" + std::to_string(ctx.global_host_id++);
 
@@ -103,17 +102,7 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
   std::string count_spec = ctx.get_hierarchy_spec(ctx.shapes, dc_idx, 2);
   int osd_count = std::stoi(count_spec.empty() ? "0" : count_spec);
 
-  std::string osd_w_spec = ctx.get_hierarchy_spec(ctx.weights, dc_idx, 2);
-
-  // Resolve Host Weight to use as parent for OSDs
-  // Note: We use the same index (2) for weight inheritance base here
-  double host_weight =
-      resolve_val(osd_w_spec, host_idx, rack_idx, parent_weight);
-
   for (int o = 0; o < osd_count; ++o) {
-    // Resolve final OSD weight
-    double osd_weight = resolve_val(osd_w_spec, o, host_idx, host_weight);
-    (void)osd_weight; // Unused for now, but resolved
     host->add_disk("disk" + std::to_string(o), ctx.disk_read_bandwidth,
                    ctx.disk_write_bandwidth);
   }
@@ -121,8 +110,7 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
 
 // Level 2: Rack (Index 1)
 static void build_rack(SimContext &ctx, sg4::NetZone *dc_zone, int dc_idx,
-                       int rack_idx, double parent_speed,
-                       double parent_weight) {
+                       int rack_idx, double parent_speed) {
 
   std::string rack_name = dc_zone->get_name() + "_r" + std::to_string(rack_idx);
   auto *rack_zone = dc_zone->add_netzone_star(rack_name);
@@ -146,12 +134,8 @@ static void build_rack(SimContext &ctx, sg4::NetZone *dc_zone, int dc_idx,
   int host_count = std::stoi(count_spec.empty() ? "0" : count_spec);
 
   // Weight (Index 1)
-  std::string weight_spec = ctx.get_hierarchy_spec(ctx.weights, dc_idx, 1);
-  double rack_weight =
-      resolve_val(weight_spec, rack_idx, dc_idx, parent_weight);
-
   for (int h = 0; h < host_count; ++h) {
-    build_host(ctx, rack_zone, dc_idx, rack_idx, h, speed_val, rack_weight);
+    build_host(ctx, rack_zone, dc_idx, rack_idx, h, speed_val);
   }
 }
 
@@ -184,12 +168,8 @@ void build_dc(SimContext &ctx, sg4::NetZone *world, int dc_config_idx) {
   int rack_count = std::stoi(count_spec.empty() ? "0" : count_spec);
 
   // Weight (Index 0)
-  std::string weight_spec =
-      ctx.get_hierarchy_spec(ctx.weights, dc_config_idx, 0);
-  double dc_weight = resolve_val(weight_spec, dc_config_idx, 0, 4.0);
-
   for (int r = 0; r < rack_count; ++r) {
-    build_rack(ctx, dc_zone, dc_config_idx, r, speed_val, dc_weight);
+    build_rack(ctx, dc_zone, dc_config_idx, r, speed_val);
   }
 }
 
@@ -204,7 +184,10 @@ std::string SimContext::to_string() {
   ss << "  Pool ID: " << pool_id << std::endl;
   ss << "  PG Objects: " << pg_objects << std::endl;
   ss << "  Object Size: " << object_size << std::endl;
-  ss << "  Clients: " << clients << std::endl;
+  ss << "  Clients: ";
+  for (const auto &c : clients)
+    ss << c << " ";
+  ss << std::endl;
   ss << "  Client Read Queue: " << client_read_queue << std::endl;
   ss << "  Client Write Queue: " << client_write_queue << std::endl;
   ss << "  Engine Config: ";
@@ -219,10 +202,7 @@ std::string SimContext::to_string() {
   for (const auto &s : speeds)
     ss << s << " ";
   ss << std::endl;
-  ss << "  Weights: ";
-  for (const auto &s : weights)
-    ss << s << " ";
-  ss << std::endl;
+
   return ss.str();
 }
 

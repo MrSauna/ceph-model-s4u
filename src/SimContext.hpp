@@ -29,13 +29,12 @@ struct SimContext {
   int iops = 0;
   SchedulerProfile profile = SchedulerProfile::BALANCED;
 
-  int clients = 0;
+  std::vector<int> clients;
   int client_read_queue = 1;
   int client_write_queue = 1;
 
   std::vector<std::string> shapes;
   std::vector<std::string> speeds;
-  std::vector<std::string> weights;
 
   int pg_objects = 1000;
   int object_size = 4 * 1024 * 1024;

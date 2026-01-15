@@ -107,18 +107,12 @@ int main(int argc, char *argv[]) {
   // --dc-shape
   auto *dc_shape_opt =
       app.add_option("--dc-shape", ctx.shapes, "Add a data center");
-  dc_shape_opt->required()->expected(1)->type_name("SHAPE");
+  dc_shape_opt->required()->type_name("SHAPE");
 
   // --dc-speed
   auto *dc_speed_opt = app.add_option("--dc-speed", ctx.speeds,
                                       "Configure data center link speeds");
-  dc_speed_opt->required()->expected(1)->type_name("SHAPE");
-
-  // --dc-weight
-  std::vector<std::string> dc_weights;
-  auto *dc_weight_opt = app.add_option("--dc-weight", ctx.weights,
-                                       "Configure data center link speeds");
-  dc_weight_opt->required()->expected(1)->type_name("SHAPE");
+  dc_speed_opt->required()->type_name("SHAPE");
 
   // --pgdump
   std::vector<std::string> pgdump_files;
@@ -182,10 +176,9 @@ int main(int argc, char *argv[]) {
                                         "Output directory for artifacts");
   output_dir_opt->required()->type_name("DIR");
 
-  // --clients
-  auto *clients_opt =
-      app.add_option("--clients", ctx.clients, "Number of clients");
-  clients_opt->default_val(0);
+  // --dc-clients
+  auto *clients_opt = app.add_option("--dc-clients", ctx.clients,
+                                     "Number of clients (repeatable)");
 
   // --client-read-queue-depth
   auto *client_read_queue_opt =
@@ -277,28 +270,84 @@ int main(int argc, char *argv[]) {
       (fs::path(ctx.output_dir) / "client_metrics.csv").string();
   Client::set_metrics_output(client_metrics_path);
 
-  if (ctx.clients > 0) {
-    for (size_t i = 1; i <= ctx.clients; i++) {
-      std::string client_name = "client." + std::to_string(i);
-      client_names.push_back(client_name);
-      sg4::Host *client = world_star->add_host(client_name, "100Gf");
-      auto client_link =
-          world_star->add_split_duplex_link(client_name + "_link", "25Gbps")
-              ->set_latency("500us");
-      world_star->add_route(client, nullptr,
-                            {{client_link, sg4::LinkInRoute::Direction::UP}},
-                            true);
+  if (!ctx.clients.empty()) {
+    int client_global_counter = 1;
+    for (size_t dc_idx = 0; dc_idx < ctx.clients.size(); ++dc_idx) {
+      int count = ctx.clients[dc_idx];
+      std::string dc_name = "dc-" + std::to_string(dc_idx);
+      // Attempt to find the DC zone
+      simgrid::s4u::NetZone *dc_zone = nullptr;
+      for (auto *child : world_star->get_children()) {
+        if (child->get_name() == dc_name) {
+          dc_zone = child;
+          break;
+        }
+      }
+      // Fallback to world_star if DC doesn't exist (e.g. more client args than
+      // DCs)
+      if (!dc_zone) {
+        XBT_WARN(
+            "DC %s not found for client group %lu. Attaching to star zone.",
+            dc_name.c_str(), dc_idx);
+      }
 
-      int client_id = -static_cast<int>(i);
-      e.add_actor(client_name, client, [pgmap, ctx, client_id]() {
-        Client client(pgmap, client_id, ctx.client_read_queue,
-                      ctx.client_write_queue);
-        client();
-      });
-      zone_hosts[world_star].push_back(client);
-      host_actors[client_name].push_back(client_name);
-      // Register for topology export
-      ctx.host_zones[client_name] = world_star;
+      // Create or find client rack if we have a valid DC zone
+      simgrid::s4u::NetZone *client_rack_zone = nullptr;
+      if (dc_zone) {
+        std::string client_rack_name = dc_name + "_client_rack";
+        // Check if it exists
+        for (auto *child : dc_zone->get_children()) {
+          if (child->get_name() == client_rack_name) {
+            client_rack_zone = child;
+            break;
+          }
+        }
+
+        // Create if not exists
+        if (!client_rack_zone) {
+          client_rack_zone = dc_zone->add_netzone_star(client_rack_name);
+          auto *router =
+              client_rack_zone->add_router(client_rack_name + "_router");
+          client_rack_zone->set_gateway(router);
+
+          auto *uplink = dc_zone
+                             ->add_split_duplex_link(
+                                 client_rack_name + "_uplink", "100Gbps")
+                             ->set_latency("10us");
+          dc_zone->add_route(client_rack_zone, nullptr,
+                             {{uplink, sg4::LinkInRoute::Direction::UP}}, true);
+        }
+      }
+
+      auto *target_zone = client_rack_zone ? client_rack_zone
+                                           : (dc_zone ? dc_zone : world_star);
+
+      for (int i = 0; i < count; ++i) {
+        std::string client_name =
+            "client." + std::to_string(client_global_counter);
+        client_names.push_back(client_name);
+
+        sg4::Host *client = target_zone->add_host(client_name, "100Gf");
+        auto client_link =
+            target_zone->add_split_duplex_link(client_name + "_link", "25Gbps")
+                ->set_latency("500us");
+        target_zone->add_route(client, nullptr,
+                               {{client_link, sg4::LinkInRoute::Direction::UP}},
+                               true);
+
+        int client_id = -client_global_counter;
+        e.add_actor(client_name, client, [pgmap, ctx, client_id]() {
+          Client client(pgmap, client_id, ctx.client_read_queue,
+                        ctx.client_write_queue);
+          client();
+        });
+        zone_hosts[target_zone].push_back(client);
+        host_actors[client_name].push_back(client_name);
+        // Register for topology export
+        ctx.host_zones[client_name] = target_zone;
+
+        client_global_counter++;
+      }
     }
   }
 

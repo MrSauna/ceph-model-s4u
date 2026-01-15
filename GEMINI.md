@@ -26,7 +26,6 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
 ./build/ceph-sim \
     --dc-shape=2:2:2 \
     --dc-speed=10:10:10 \
-    --dc-weight=10:: \
     --pgdump=results/small_cluster/0/pgdump.txt \
     --pgdump=results/small_cluster/1/pgdump.txt \
     --output-dir=results/vscode \
@@ -35,7 +34,7 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
     --pool-id=1 \
     --disk-read-bandwidth=125829120 \
     --disk-write-bandwidth=83886080 \
-    --clients=1 \
+    --dc-clients=1 \
     --client-read-queue-depth=4 \
     --client-write-queue-depth=4
 ```

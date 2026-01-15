@@ -31,7 +31,13 @@ std::string Osd::primary_pgs_to_string() const {
 }
 
 void Osd::on_pgmap_change() {
-  auto my_pgs = pgmap->primary_osd_get_pgs(id);
+  std::set<PG *> my_pgs;
+  try {
+    my_pgs = pgmap->primary_osd_get_pgs(id);
+  } catch (const std::out_of_range &) {
+    XBT_WARN("OSD %d not in pgmap (likely extra OSD from topology)", id);
+    return;
+  }
   my_primary_pgs.clear();
   needs_backfill_pgs.clear();
 

@@ -73,15 +73,17 @@ rule run_sim:
         clients_num = lambda w: config["experiments"][w.exp]["clients_num"],
         client_read_queue_depth = lambda w: config["experiments"][w.exp].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["experiments"][w.exp].get("client_write_queue_depth", 1),
-        dc_shape = lambda w: config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_shape", "2:2:2"),
-        dc_speed = lambda w: config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_speed", "10:10:10"),
-        dc_weight = lambda w: config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_weight", "10::"),
+        dc_shape_csv = lambda w: ",".join(
+            ensure_list(config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_shape", ["2:2:2"]))
+        ),
+        dc_speed_csv = lambda w: ",".join(
+            ensure_list(config["experiments"][w.exp]["crush_spec_params"][-1].get("dc_speed", ["10:10:10"]))
+        ),
     shell:
         """
         {input.binary} \
-            "--dc-shape={params.dc_shape}" \
-            "--dc-speed={params.dc_speed}" \
-            "--dc-weight={params.dc_weight}" \
+            "--dc-shape={params.dc_shape_csv}" \
+            "--dc-speed={params.dc_speed_csv}" \
             "--pgdump={input.pgdump1}" \
             "--pgdump={input.pgdump2}" \
             "--pg-objects=1000" \
