@@ -96,7 +96,7 @@ rule run_sim:
             "--pool-id=1" \
             "--disk-read-bandwidth=125829120" \
             "--disk-write-bandwidth=83886080" \
-            "--clients={params.clients_num}" \
+            "--dc-clients={params.clients_num}" \
             "--client-read-queue-depth={params.client_read_queue_depth}" \
             "--client-write-queue-depth={params.client_write_queue_depth}" \
             "--output-dir=results/{wildcards.exp}"
