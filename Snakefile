@@ -9,6 +9,11 @@ CRUSH_SPEC_PARAMS_IDX = [0,1]
 
 
 # Helpers
+def ensure_list(obj):
+    if isinstance(obj, list):
+        return obj
+    return [obj]
+
 def get_recipe_for_exp(wildcards):
     return config["experiments"][wildcards.exp]["recipe"]
 
