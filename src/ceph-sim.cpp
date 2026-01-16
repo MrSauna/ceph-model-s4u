@@ -239,6 +239,16 @@ int main(int argc, char *argv[]) {
   std::map<simgrid::s4u::NetZone *, std::vector<simgrid::s4u::Host *>>
       zone_hosts;
 
+  // Calculate total OSDs for validation
+  int total_osds = 0;
+  for (auto host : e.get_all_hosts()) {
+    total_osds += host->get_disks().size();
+  }
+  xbt_assert(pgmap->get_max_osd_id() < total_osds,
+             "PGMap expects OSD %d, but only %d OSDs are configured in the "
+             "simulation (meaning max_id %d)! Deadlock inevitable.",
+             pgmap->get_max_osd_id(), total_osds, total_osds - 1);
+
   // deploy the osds
   for (auto host : e.get_all_hosts()) {
     // Populate zone map

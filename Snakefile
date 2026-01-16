@@ -152,5 +152,6 @@ rule gen_crushmap:
     params:
         dc_shape = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["dc_shape"],
         dc_weight = lambda w: config["experiments"][w.exp]["crush_spec_params"][int(w.i)]["dc_weight"],
+        osd_num = lambda w: config["experiments"][w.exp]["osd_num"],
     script:
         "tools/gen_crushmap.py"

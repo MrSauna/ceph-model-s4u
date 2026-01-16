@@ -125,11 +125,14 @@ class PGMap {
   std::vector<std::unique_ptr<PG>> pgs;
   std::map<int, std::set<PG *>> primary_osd_to_pg_index;
   int max_osd_id;
+
   size_t object_size;
   size_t pg_objects;
 
 public:
   PGMap(int pool_id, std::string path, size_t object_size, size_t pg_objects);
+
+  int get_max_osd_id() const { return max_osd_id; }
 
   // getters
   size_t size() const;

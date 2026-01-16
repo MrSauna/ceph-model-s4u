@@ -8,7 +8,7 @@ experiments:
     osd_num: 8
     pg_num: 32
     "crush_spec_params":
-      - dc_shape: "2:2:2"
+      - dc_shape: "2:2:1"
         dc_weight: "14.0::"
         dc_speed: "10:10:10"
       - dc_shape: ["2:2:1", "2:2:1"]

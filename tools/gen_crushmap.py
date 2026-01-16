@@ -11,6 +11,7 @@ if "snakemake" not in globals():
             self.params = type('Params', (), {})()
             self.params.dc_shape = ["2:2:2"]
             self.params.dc_weight = ["14.0::"]
+            self.params.osd_num = 8
     snakemake = MockSnakemake()
 
 template_dir = os.path.dirname(snakemake.input.template)
@@ -112,6 +113,38 @@ def get_hierarchy_spec(vec: list[str], dc_idx: int, level: int) -> str:
         return ""
     return parts[level]
 
+def calculate_osd_requirements(shapes: list[str]) -> int:
+    total_osds = 0
+    for shape in shapes:
+        parts = split_str(shape, ':')
+        if not parts:
+            continue
+        
+        # Default to 1 if component unspecified, e.g. "2:2" implies 2 racks, 2 hosts, 1 osd?
+        # Actually, let's look at the loop logic in gen_crushmap.
+        # It iterates ranges (rack_count, host_count, osd_count).
+        # count_spec = get_hierarchy_spec... int(spec)
+        
+        # Level 0 (DC -> Racks)
+        racks = int(parts[0]) if len(parts) > 0 and parts[0] else 0
+        # Level 1 (Rack -> Hosts)
+        hosts = int(parts[1]) if len(parts) > 1 and parts[1] else 0
+        # Level 2 (Host -> OSDs)
+        osds = int(parts[2]) if len(parts) > 2 and parts[2] else 0
+        
+        total_osds += racks * hosts * osds
+        
+    return total_osds
+
+def validate_osd_count(shapes: list[str], osd_num: int):
+    required_osds = calculate_osd_requirements(shapes)
+    if osd_num < required_osds:
+        raise ValueError(
+            f"Insufficient OSDs: Configured osd_num={osd_num} but topology requires {required_osds} "
+            f"(shapes={shapes})"
+        )
+
+
 
 def gen_crushmap():
     root = Node("root", 0)
@@ -125,6 +158,10 @@ def gen_crushmap():
     if isinstance(weights, str):
         weights = [weights]
         
+    # Validate OSD count
+    osd_num = int(snakemake.params.osd_num)
+    validate_osd_count(shapes, osd_num)
+
     # Iterate over defined shapes (Datacenters)
     for dc_i in range(len(shapes)):
         dc_str = f"dc{dc_i}"

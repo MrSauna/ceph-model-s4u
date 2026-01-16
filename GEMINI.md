@@ -24,7 +24,9 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
 
 ```
 ./build/ceph-sim \
-    --dc-shape=2:2:2 \
+    --dc-shape=2:2:1 \
+    --dc-speed=10:10:10 \
+    --dc-shape=2:2:1 \
     --dc-speed=10:10:10 \
     --pgdump=results/small_cluster/0/pgdump.txt \
     --pgdump=results/small_cluster/1/pgdump.txt \
@@ -57,8 +59,9 @@ Most of the artifacts produced by the simulation are files. The files are in the
 - `client_metrics.csv` describes the client metrics.
 
 
-## Running python scripts
+## Running python scripts (mandatory prerequisites)
 
+- You must run python scripts with `.venv/bin/python` otherwise the command will fail.
 - The python scripts are in the `tools` directory. The `visualize.py` script can be run using `.venv/bin/python tools/visualize.py`. The output will go in `results/vscode/figures/`.
 - If running other python commands do it in the `.venv` virtual environment.
 
