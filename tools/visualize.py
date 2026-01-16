@@ -21,21 +21,18 @@ def viz_mon_metrics(mon_metrics_df):
     if mon_metrics_df is None:
         return
 
-    total_pgs = len(mon_metrics_df)
-    
-    times = [0] + mon_metrics_df["time"].tolist()
-    pgs_left = [total_pgs]
-    
-    current_pgs = total_pgs
-    for _ in range(len(mon_metrics_df)):
-        current_pgs -= 1
-        pgs_left.append(current_pgs)
-        
     plt.figure(figsize=(10, 6))
-    plt.plot(times, pgs_left, marker='o', linestyle='-', markersize=2)
+    
+    # Plot all columns except 'time'
+    for column in mon_metrics_df.columns:
+        if column == "time":
+            continue
+        plt.plot(mon_metrics_df["time"], mon_metrics_df[column], label=column, marker='o', linestyle='-', markersize=2)
+
     plt.xlabel("Time (s)")
-    plt.ylabel("PGs Left")
-    plt.title("PG Completion Over Time")
+    plt.ylabel("Number of PGs")
+    plt.title("PG States Over Time")
+    plt.legend()
     plt.grid(True)
     
     output_path = os.path.join(output_dir, "pgmap_plot.svg")

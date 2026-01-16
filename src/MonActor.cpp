@@ -11,7 +11,7 @@ std::mutex Mon::metrics_mutex;
 void Mon::set_metrics_output(const std::string &filename) {
   metrics_stream.open(filename);
   if (metrics_stream.is_open()) {
-    metrics_stream << "time,pg_id\n";
+    metrics_stream << "time,active_clean,backfill,backfill_wait\n";
   } else {
     XBT_ERROR("Failed to open mon metrics file: %s", filename.c_str());
   }
@@ -57,34 +57,51 @@ void Mon::main_loop() {
 void Mon::on_pgmap_change(int pg_id) {
   XBT_INFO("PG %d changed", pg_id);
   PG *pg = pgmap->get_pg(pg_id);
-  xbt_assert(!pg->needs_backfill(),
-             "currently only pgs that have finished backfilling should change");
 
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     if (metrics_stream.is_open()) {
-      metrics_stream << sg4::Engine::get_clock() << "," << pg_id << "\n";
+      int active_clean = 0;
+      int backfill = 0;
+      int backfill_wait = 0;
+      for (size_t i = 0; i < pgmap->size(); i++) {
+        switch (pgmap->get_pg(i)->get_state()) {
+        case PGState::ACTIVE_CLEAN:
+          active_clean++;
+          break;
+        case PGState::BACKFILL:
+          backfill++;
+          break;
+        case PGState::BACKFILL_WAIT:
+          backfill_wait++;
+          break;
+        }
+      }
+      metrics_stream << sg4::Engine::get_clock() << "," << active_clean << ","
+                     << backfill << "," << backfill_wait << "\n";
     }
   }
 
-  // collect everybody that should be notified
-  auto up = pg->get_up_ids();
-  auto acting = pg->get_acting_ids();
-  // create a set of them
-  std::set<int> notify(up.begin(), up.end());
-  notify.insert(acting.begin(), acting.end());
+  if (pg->get_state() == PGState::ACTIVE_CLEAN) {
+    // collect everybody that should be notified
+    auto up = pg->get_up_ids();
+    auto acting = pg->get_acting_ids();
+    // create a set of them
+    std::set<int> notify(up.begin(), up.end());
+    notify.insert(acting.begin(), acting.end());
 
-  // set acting = up
-  pg->update_acting(pg->get_up_ids()); // runs prune_shards
+    // set acting = up
+    pg->update_acting(pg->get_up_ids()); // runs prune_shards
 
-  // update the index stuff
-  pgmap->update_primary_osd_to_pg_index();
+    // update the index stuff
+    pgmap->update_primary_osd_to_pg_index();
 
-  // notify
-  for (int osd_id : notify) {
-    auto mb = osd_mailboxes[osd_id];
-    Message *msg = make_message<PGMapNotification>(pgmap);
-    mb->put(msg, 0);
+    // notify
+    for (int osd_id : notify) {
+      auto mb = osd_mailboxes[osd_id];
+      Message *msg = make_message<PGMapNotification>(pgmap);
+      mb->put(msg, 0);
+    }
   }
 }
 

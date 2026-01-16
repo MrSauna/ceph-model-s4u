@@ -283,8 +283,12 @@ void Osd::on_backfill_reservation_message(int sender,
     if (!pending_retry) {
       backfill_reservation_remote.insert(sender);
       backfill_reservation_remote_pending.erase(sender);
-      if (backfill_reservation_remote_pending.empty())
+      if (backfill_reservation_remote_pending.empty()) {
         XBT_INFO("Starting backfill for pg %i", backfilling_pg->get_id());
+        backfilling_pg->set_state(PGState::BACKFILL);
+        Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
+        mon_mb->put_async(msg, 0).detach();
+      }
     }
     break;
 
@@ -442,6 +446,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
 
       if (!backfilling_pg->needs_backfill()) {
         XBT_INFO("Backfill complete for pg %u", backfilling_pg->get_id());
+        backfilling_pg->set_state(PGState::ACTIVE_CLEAN);
 
         // notify monitor of backfill completion
         Message *msg = make_message<PGNotification>(backfilling_pg->get_id());

@@ -109,6 +109,8 @@ PG::PG(std::string line, size_t object_size, size_t pg_objects)
   ss >> temp;
   ss >> members;
   update_acting(members);
+
+  update_state();
 }
 
 void PG::update_up(const std::vector<int> &v) {
@@ -127,6 +129,7 @@ void PG::update_up(const std::vector<int> &v) {
   }
   up = new_up;
   prune_shards();
+  update_state();
 }
 
 void PG::update_acting(const std::vector<int> &v) {
@@ -144,6 +147,7 @@ void PG::update_acting(const std::vector<int> &v) {
   }
   acting = new_acting;
   prune_shards();
+  update_state();
 }
 
 void PG::prune_shards() {

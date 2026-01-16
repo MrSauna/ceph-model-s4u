@@ -61,14 +61,29 @@ struct PGShardSet {
   }
 };
 
+enum class PGState {
+  ACTIVE_CLEAN,
+  BACKFILL,
+  BACKFILL_WAIT,
+};
+
 // PG class
 class PG {
   int id;
+  PGState state;
   // ownership
   std::set<std::unique_ptr<PGShard>> shards;
   // current state of those shards
   PGShardSet up;
   PGShardSet acting;
+
+  void update_state() {
+    if (needs_backfill()) {
+      state = PGState::BACKFILL_WAIT;
+    } else {
+      state = PGState::ACTIVE_CLEAN;
+    }
+  }
 
   // Backfill state
   int pg_objects;
@@ -116,6 +131,9 @@ public:
   int get_id() const { return id; }
   bool needs_backfill() const;
   std::vector<int> get_backfill_targets() const;
+
+  PGState get_state() const { return state; }
+  void set_state(PGState s) { state = s; }
 
   std::string to_string() const;
 };
