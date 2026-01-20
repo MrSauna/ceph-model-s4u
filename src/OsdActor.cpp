@@ -68,8 +68,13 @@ void Osd::maybe_reserve_backfill() {
     return;
   }
 
-  backfilling_pg =
-      needs_backfill_pgs.empty() ? nullptr : *needs_backfill_pgs.begin();
+  if (needs_backfill_pgs.empty()) {
+    backfilling_pg = nullptr;
+  } else {
+    auto it = needs_backfill_pgs.begin();
+    std::advance(it, random.uniform_int(0, needs_backfill_pgs.size() - 1));
+    backfilling_pg = *it;
+  }
 
   if (backfilling_pg == nullptr)
     return;
