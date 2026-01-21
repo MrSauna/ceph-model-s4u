@@ -41,6 +41,7 @@ class Osd : public CephActor {
   std::set<int> backfill_reservation_remote;
   std::set<int> backfill_reservation_remote_pending;
   bool pending_retry = false;
+  int remote_reservation_retry_count = 0;
   PG *backfilling_pg = nullptr;
   std::unordered_map<int, sg4::Mailbox *> peer_osd_mailboxes;
 

@@ -67,17 +67,23 @@ void Osd::maybe_reserve_backfill() {
       backfill_reservation_remote_pending.empty()) {
     return;
   }
+  if (backfilling_pg != nullptr) {
+    return;
+  }
 
   if (needs_backfill_pgs.empty()) {
     backfilling_pg = nullptr;
-  } else {
-    auto it = needs_backfill_pgs.begin();
-    std::advance(it, random.uniform_int(0, needs_backfill_pgs.size() - 1));
-    backfilling_pg = *it;
+    return;
   }
 
-  if (backfilling_pg == nullptr)
-    return;
+  auto it = needs_backfill_pgs.begin();
+  std::advance(it, random.uniform_int(0, needs_backfill_pgs.size() - 1));
+  backfilling_pg = *it;
+
+  if (remote_reservation_retry_count > 1000) {
+    XBT_INFO("OSD %d retrying remote reservation for pg %d", id,
+             backfilling_pg->get_id());
+  }
 
   xbt_assert(!(backfill_reservation_local && !pending_retry &&
                backfill_reservation_remote.size() == 0 &&
@@ -322,10 +328,12 @@ void Osd::on_backfill_reservation_message(int sender,
     }
 
     // retry to self
+    backfilling_pg = nullptr;
     pending_retry = true;
+    remote_reservation_retry_count++;
     sg4::Mailbox *return_mb = mb;
     std::string sender_str = "osd." + std::to_string(id);
-    double random_delay = random.uniform_real(0L, 1L);
+    double random_delay = random.uniform_real(0L, 5L);
     my_host->add_actor(
         "backfill_reservation", [return_mb, sender_str, random_delay]() {
           sg4::this_actor::sleep_for(random_delay);
@@ -343,6 +351,8 @@ void Osd::on_backfill_reservation_message(int sender,
 
   // for async backoff workaround
   case BackfillReservationOpType::RETRY:
+    xbt_assert(backfilling_pg == nullptr);
+    xbt_assert(pending_retry);
     backfill_reservation_local = false;
     pending_retry = false;
     XBT_DEBUG("retrying backfill for pg %i", backfilling_pg->get_id());
@@ -475,6 +485,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
         backfilling_pg = nullptr;
         backfill_reservation_remote.clear();
         backfill_reservation_local = false;
+        remote_reservation_retry_count = 0;
       }
     }
     break;
