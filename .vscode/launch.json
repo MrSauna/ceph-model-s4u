@@ -59,17 +59,17 @@
             // "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "sim two DCs",
+            "name": "sim big cluster",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/ceph-sim",
             "args": [
-                "--dc-shape=1:2:2",
+                "--dc-shape=2:10:24",
                 "--dc-speed=10:10:10",
-                "--dc-shape=1:2:2",
+                "--dc-shape=2:5:24",
                 "--dc-speed=10:10:10",
-                "--pgdump=results/small_cluster/0/pgdump.txt",
-                "--pgdump=results/small_cluster/1/pgdump.txt",
+                "--pgdump=results/big_cluster/0/pgdump.txt",
+                "--pgdump=results/big_cluster/1/pgdump.txt",
                 "--output-dir=results/vscode",
                 "--pg-objects=1000",
                 "--object-size=4194304",

@@ -55,8 +55,8 @@ void Mon::main_loop() {
 }
 
 void Mon::on_pgmap_change(int pg_id) {
-  XBT_INFO("PG %d changed", pg_id);
   PG *pg = pgmap->get_pg(pg_id);
+  XBT_INFO("PG %d state changed to %d", pg_id, pg->get_state());
 
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);

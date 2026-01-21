@@ -60,57 +60,55 @@ void Osd::on_pgmap_change() {
 
 void Osd::maybe_reserve_backfill() {
 
-  if (pending_retry) {
-    return;
-  }
-  if (backfill_reservation_local &&
-      backfill_reservation_remote_pending.empty()) {
-    return;
-  }
-  if (backfilling_pg != nullptr) {
+  if (pending_retry || backfill_reservation_local ||
+      !backfill_reservation_remote.empty() || needs_backfill_pgs.empty()) {
     return;
   }
 
-  if (needs_backfill_pgs.empty()) {
-    backfilling_pg = nullptr;
-    return;
-  }
+  backfill_reservation_local = true;
 
+  // choose random pg to backfill
   auto it = needs_backfill_pgs.begin();
   std::advance(it, random.uniform_int(0, needs_backfill_pgs.size() - 1));
   backfilling_pg = *it;
 
+  // Show a message if we retry remote reservation for a pg a lot
   if (remote_reservation_retry_count > 1000) {
-    XBT_INFO("OSD %d retrying remote reservation for pg %d", id,
+    XBT_INFO("OSD %d retried remote reservation for pg %d a 1000 times", id,
              backfilling_pg->get_id());
+    remote_reservation_retry_count = 0;
   }
-
-  xbt_assert(!(backfill_reservation_local && !pending_retry &&
-               backfill_reservation_remote.size() == 0 &&
-               backfill_reservation_remote_pending.size() == 0));
-  backfill_reservation_local = true;
 
   // start greedy remote backfill slot reservation algorithm
-  if (backfill_reservation_remote.empty() &&
-      backfill_reservation_remote_pending.empty()) {
 
-    std::vector<int> targets = backfilling_pg->get_backfill_targets();
-    backfill_reservation_remote_pending =
-        std::set<int>(targets.begin(), targets.end());
+  std::vector<int> targets = backfilling_pg->get_backfill_targets();
+  // std::stringstream ss;
+  // ss << "trying to reserve backfill for pg " << backfilling_pg->get_id()
+  //    << " to osds ";
+  // for (int target : targets) {
+  //   ss << target << " ";
+  // }
+  // XBT_INFO("%s", ss.str().c_str());
 
-    for (int pending_osd_id : backfill_reservation_remote_pending) {
-      BackfillReservationOp *op = new BackfillReservationOp{
-          id, pending_osd_id, backfilling_pg->get_id(),
-          BackfillReservationOpType::REQUEST_SLAVE};
+  backfill_reservation_remote_pending =
+      std::set<int>(targets.begin(), targets.end());
 
-      Message *msg = make_message<BackfillReservationMsg>(op);
-      sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(pending_osd_id);
-      peer_mb->put_async(msg, 0).detach();
-    }
-    xbt_assert(!(backfill_reservation_local && !pending_retry &&
-                 backfill_reservation_remote.empty() &&
-                 backfill_reservation_remote_pending.empty()));
+  for (int pending_osd_id : backfill_reservation_remote_pending) {
+    BackfillReservationOp *op =
+        new BackfillReservationOp{id, pending_osd_id, backfilling_pg->get_id(),
+                                  BackfillReservationOpType::REQUEST_SLAVE};
+
+    Message *msg = make_message<BackfillReservationMsg>(op);
+    sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(pending_osd_id);
+    peer_mb->put_async(msg, 0).detach();
   }
+  xbt_assert(!(backfill_reservation_local && !pending_retry &&
+               backfill_reservation_remote.empty() &&
+               backfill_reservation_remote_pending.empty()));
+  xbt_assert(!backfilling_pg ||
+             backfilling_pg->get_backfill_targets().size() ==
+                 backfill_reservation_remote.size() +
+                     backfill_reservation_remote_pending.size());
 }
 
 void Osd::maybe_schedule_object_backfill() {
@@ -260,7 +258,8 @@ void Osd::on_backfill_reservation_message(int sender,
   switch (msg.op->type) {
 
   case BackfillReservationOpType::REQUEST_SLAVE: {
-    if (!backfill_reservation_local && backfill_reservation_remote.empty()) {
+    if (!pending_retry && !backfill_reservation_local &&
+        backfill_reservation_remote.empty()) {
       backfill_reservation_remote.insert(sender);
       // send accept
       BackfillReservationOp *accept_op = new BackfillReservationOp{
@@ -272,6 +271,9 @@ void Osd::on_backfill_reservation_message(int sender,
     } else {
       // send reject
       BackfillReservationOp *reject_op = new BackfillReservationOp{
+          .primary_osd_id = sender,
+          .target_osd_id = id,
+          .pg_id = msg.op->pg_id,
           .type = BackfillReservationOpType::REJECT,
       };
       Message *reject_msg = make_message<BackfillReservationMsg>(reject_op);
@@ -305,7 +307,8 @@ void Osd::on_backfill_reservation_message(int sender,
 
   case BackfillReservationOpType::REJECT: {
     // triggers retry to self, if no retry is scheduled
-    if (pending_retry)
+    // ignore if pg_id doesn't match (stale message)
+    if (pending_retry || msg.op->pg_id != backfilling_pg->get_id())
       break;
 
     backfill_reservation_remote.clear();
@@ -333,7 +336,7 @@ void Osd::on_backfill_reservation_message(int sender,
     remote_reservation_retry_count++;
     sg4::Mailbox *return_mb = mb;
     std::string sender_str = "osd." + std::to_string(id);
-    double random_delay = random.uniform_real(0L, 5L);
+    double random_delay = random.uniform_real(0L, 5L); // fixme -> faster
     my_host->add_actor(
         "backfill_reservation", [return_mb, sender_str, random_delay]() {
           sg4::this_actor::sleep_for(random_delay);
@@ -346,6 +349,10 @@ void Osd::on_backfill_reservation_message(int sender,
           return_mb->put(retry_msg, 0);
         });
 
+    xbt_assert(!backfilling_pg ||
+               backfilling_pg->get_backfill_targets().size() ==
+                   backfill_reservation_remote.size() +
+                       backfill_reservation_remote_pending.size());
     break;
   }
 
@@ -353,10 +360,12 @@ void Osd::on_backfill_reservation_message(int sender,
   case BackfillReservationOpType::RETRY:
     xbt_assert(backfilling_pg == nullptr);
     xbt_assert(pending_retry);
-    backfill_reservation_local = false;
     pending_retry = false;
-    XBT_DEBUG("retrying backfill for pg %i", backfilling_pg->get_id());
     maybe_reserve_backfill();
+    xbt_assert(!backfilling_pg ||
+               backfilling_pg->get_backfill_targets().size() ==
+                   backfill_reservation_remote.size() +
+                       backfill_reservation_remote_pending.size());
     break;
 
   default:
@@ -365,6 +374,15 @@ void Osd::on_backfill_reservation_message(int sender,
   xbt_assert(!(backfill_reservation_local && !pending_retry &&
                backfill_reservation_remote.size() == 0 &&
                backfill_reservation_remote_pending.size() == 0));
+
+  xbt_assert(!backfill_reservation_local ||
+             backfilling_pg->get_backfill_targets().size() ==
+                 backfill_reservation_remote.size() +
+                     backfill_reservation_remote_pending.size());
+  xbt_assert(!backfilling_pg ||
+             backfilling_pg->get_backfill_targets().size() ==
+                 backfill_reservation_remote.size() +
+                     backfill_reservation_remote_pending.size());
   delete msg.op;
 }
 
@@ -417,6 +435,7 @@ void Osd::send_op(Op *op) {
 void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
   // peer osd id is the sender of the ack message, used only for OP_WAITING_PEER
   xbt_assert(context->type == OpType::BACKFILL);
+  xbt_assert(backfilling_pg != nullptr);
   switch (context->state) {
 
   case OpState::OP_QUEUED: {

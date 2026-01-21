@@ -60,3 +60,18 @@ experiments:
     clients_num: 0
     client_read_queue_depth: 16
     client_write_queue_depth: 16
+
+  "big_cluster":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 720
+    pg_num: 4096
+    "crush_spec_params":
+      - dc_shape: "2:10:24"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["2:10:24", "2:5:24"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["10:10:10", "10:10:10"]
+    clients_num: 0
+    client_read_queue_depth: 16
+    client_write_queue_depth: 16
