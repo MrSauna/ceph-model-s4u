@@ -286,6 +286,128 @@ def viz_net_metrics(net_metrics_df):
     print(f"Saved plot to {output_path}")
     plt.close()
 
+def viz_star_link_utilization(net_metrics_df):
+    if net_metrics_df.empty:
+        print("Net metrics empty, skipping viz_star_link_utilization")
+        return
+
+    # Infer topology path relative to net_metrics_file or default
+    metrics_dir = os.path.dirname(net_metrics_file)
+    topo_path = os.path.join(metrics_dir, "topology.json")
+
+    if not os.path.exists(topo_path):
+        print(f"Topology file not found: {topo_path}")
+        return
+
+    try:
+        with open(topo_path, "r") as f:
+            topology = json.load(f)
+    except Exception as e:
+        print(f"Error loading topology: {e}")
+        return
+
+    # Find star node and its children (data centers)
+    # The topology structure is usually _world_ -> star -> dc-X
+    
+    star_node = None
+    
+    # Helper to find node by id recursively
+    def find_node(root, target_id):
+        if root.get("id") == target_id:
+            return root
+        for child in root.get("children", []):
+            res = find_node(child, target_id)
+            if res:
+                return res
+        return None
+
+    star_node = find_node(topology, "star")
+    
+    if not star_node:
+        print("Star node not found in topology, skipping star link viz")
+        return
+        
+    # Identify links to monitor
+    # child["uplink"] is the link name. child["bandwidth"] is the link capacity (bits/s)
+    links = [] # (link_name, bandwidth, display_name)
+    
+    for child in star_node.get("children", []):
+        uplink = child.get("uplink")
+        bw = child.get("bandwidth", 0)
+        name = child.get("name", child.get("id"))
+        
+        if uplink and bw > 0:
+            links.append((uplink, bw, name))
+            
+    if not links:
+        print("No star links found")
+        return
+
+    # If exactly two data centers (links) are connected, only draw the first one.
+    if len(links) == 2:
+        print("Exactly 2 star links found, visualizing only the first one.")
+        links = links[:1]
+
+    plt.figure(figsize=(12, 8))
+    
+    # Prepare data for plotting
+    # net_metrics_df has columns: timestamp, resource_type, resource_name, value
+    # value is in bytes/s (utilization)
+    
+    # Sort by time
+    df = net_metrics_df.sort_values(by="timestamp")
+    time_vals = df["timestamp"].unique()
+    time_vals.sort()
+    
+    has_data = False
+    
+    # Define colors/linestyles for clarity
+    # We might have UP and DOWN for each link
+    
+    for link_name, bw_bps, display_name in links:
+        # Filter for this link
+        # Look for _UP and _DOWN suffixes
+        
+        for direction in ["UP", "DOWN"]:
+            resource_name = f"{link_name}_{direction}"
+            link_data = df[df["resource_name"] == resource_name]
+            
+            if link_data.empty:
+                continue
+                
+            has_data = True
+            
+            # Reindex to ensure we have values for all timestamps (fill missing with 0)
+            # Use pivot or set_index to align with time_vals
+            s = link_data.set_index("timestamp")["value"]
+            s = s.reindex(time_vals, fill_value=0)
+            
+            # Convert values (bytes/s) to utilization % of bandwidth (bits/s)
+            # value * 8 / bw_bps * 100
+            utilization = (s * 8.0 / bw_bps) * 100.0
+            
+            label = f"{display_name} {direction}"
+            linestyle = '-' if direction == 'UP' else '--'
+            
+            plt.plot(time_vals, utilization, label=label, linestyle=linestyle)
+
+    if not has_data:
+        print("No metrics found for star links")
+        plt.close()
+        return
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("Bandwidth Utilization (%)")
+    plt.title("Star Link Utilization Over Time")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True)
+    plt.tight_layout()
+    
+    output_path = os.path.join(output_dir, "star_link_utilization.svg")
+    plt.savefig(output_path)
+    print(f"Saved plot to {output_path}")
+    plt.close()
+
 def main():
     mon_metrics_df = pd.read_csv(mon_metrics_file)
     client_metrics_df = pd.read_csv(client_metrics_file)
@@ -297,6 +419,7 @@ def main():
     viz_mon_metrics(mon_metrics_df)
     viz_client_metrics(client_metrics_df)
     viz_net_metrics(net_metrics_df)
+    viz_star_link_utilization(net_metrics_df)
 
 if __name__ == "__main__":
     main()
