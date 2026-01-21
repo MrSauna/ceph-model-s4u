@@ -9,7 +9,7 @@ def setup_monitor(*, container_runtime, ceph_image, c_name, volumes, mon_bootstr
 
     abs_bootstrap = os.path.abspath(mon_bootstrap_script)
     volumes.extend([
-        "-v", f"{abs_bootstrap}:/mon_bootstrap.sh"
+        "-v", f"{abs_bootstrap}:/mon_bootstrap.sh:z"
     ])
 
     print(f"--- Starting Container {c_name} ---")
@@ -62,8 +62,8 @@ def gen_osdmap():
     
     # Build volume bindings
     volumes = [
-        "-v", f"{abs_out}:/out",
-        "-v", f"{abs_crushmap_txt}:/cm.txt",
+        "-v", f"{abs_out}:/out:z",
+        "-v", f"{abs_crushmap_txt}:/cm.txt:z",
     ]
     
     # If we have a base map, mount it to a known location
