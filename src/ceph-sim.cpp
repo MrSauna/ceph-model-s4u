@@ -107,12 +107,12 @@ int main(int argc, char *argv[]) {
   // --dc-shape
   auto *dc_shape_opt =
       app.add_option("--dc-shape", ctx.shapes, "Add a data center");
-  dc_shape_opt->required()->type_name("SHAPE");
+  dc_shape_opt->required()->type_name("SHAPE")->delimiter(',');
 
   // --dc-speed
   auto *dc_speed_opt = app.add_option("--dc-speed", ctx.speeds,
                                       "Configure data center link speeds");
-  dc_speed_opt->required()->type_name("SHAPE");
+  dc_speed_opt->required()->type_name("SHAPE")->delimiter(',');
 
   // --pgdump
   std::vector<std::string> pgdump_files;
