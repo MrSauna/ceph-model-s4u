@@ -159,7 +159,20 @@ def viz_net_metrics(net_metrics_df):
         name_str = node.get("name", node_id)
         if actor_children:
             # Sort for consistency
-            actor_names = [c.get("name", c["id"]) for c in actor_children]
+            actor_names = []
+            for c in actor_children:
+                raw_name = c.get("name", c["id"])
+                # Remove ", disk..." if present
+                if "," in raw_name:
+                    clean_name = raw_name.split(",")[0].strip()
+                else:
+                    clean_name = raw_name
+                
+                if clean_name.startswith("osd."):
+                    clean_name = clean_name[4:]
+                    
+                actor_names.append(clean_name)
+
             formatted_actors = [f"({n})" for n in actor_names]
             name_str += "\n" + "\n".join(formatted_actors)
             
