@@ -239,11 +239,13 @@ void PGMap::update_primary_osd_to_pg_index() {
     primary_osd_to_pg_index[primary_osd].insert(pg_ptr.get());
   }
 
-  // populate mailboxes
-  osd_mailboxes.clear();
-  osd_mailboxes.reserve(max_osd_id + 1);
-  for (int i = 0; i <= max_osd_id; i++) {
-    osd_mailboxes.push_back(sg4::Mailbox::by_name("osd." + std::to_string(i)));
+  // populate mailboxes (additive only)
+  if (osd_mailboxes.size() <= max_osd_id) {
+    int start_id = osd_mailboxes.size();
+    for (int i = start_id; i <= max_osd_id; i++) {
+      osd_mailboxes.push_back(
+          sg4::Mailbox::by_name("osd." + std::to_string(i)));
+    }
   }
 }
 

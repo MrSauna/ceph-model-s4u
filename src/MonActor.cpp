@@ -18,9 +18,7 @@ void Mon::set_metrics_output(const std::string &filename) {
 }
 
 Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names)
-    : pgmap(pgmap), client_names(client_names) {
-
-  mailbox = simgrid::s4u::Mailbox::by_name("mon");
+    : CephActor(-1, pgmap), client_names(client_names) {
 
   // dynamically discover osds
   std::vector<int> osds = pgmap->get_osds();
@@ -34,24 +32,6 @@ Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names)
   engine->get_filtered_actors([](const sg4::ActorPtr &actor) {
     return actor->get_name().find("osd.") != std::string::npos;
   });
-}
-
-void Mon::main_loop() {
-  XBT_INFO("Monitor entered main loop");
-  while (true) {
-    // subscriptions and migration updates
-    if (!mailbox->empty()) {
-      Message *msg = mailbox->get<Message>();
-      process_message(msg);
-    }
-    // stop condition for simulation
-    if (!pgmap->needs_backfill()) {
-      XBT_INFO("Cluster does not need backfill, exiting main loop");
-      break;
-    }
-    simgrid::s4u::this_actor::sleep_for(0.1);
-  }
-  XBT_INFO("Monitor exiting main loop");
 }
 
 void Mon::on_pgmap_change(int pg_id) {
@@ -103,6 +83,13 @@ void Mon::on_pgmap_change(int pg_id) {
       mb->put(msg, 0);
     }
   }
+
+  // Check if backfill is complete
+  if (!pgmap->needs_backfill()) {
+    XBT_INFO("Cluster does not need backfill, shutting down");
+    kill_all_osds();
+    kill_self();
+  }
 }
 
 void Mon::process_message(Message *msg) {
@@ -131,6 +118,10 @@ void Mon::process_message(Message *msg) {
   delete msg;
 }
 
+void Mon::process_finished_activity(sg4::ActivityPtr activity) {
+  // Mon currently doesn't track background activities in the main loop
+}
+
 void Mon::on_subscribe_pgmap_change(const std::string &sender,
                                     const SubscribeToPGMapChangeMsg &payload) {
   XBT_INFO("%s subscribed to pg map changes", sender.c_str());
@@ -155,7 +146,7 @@ void Mon::kill_all_osds() {
   // 2. Wait for clients to finish draining
   int alive_clients = client_names.size();
   while (alive_clients > 0) {
-    Message *msg = mailbox->get<Message>();
+    Message *msg = mb->get<Message>();
     std::visit(
         overloaded{[&](const KillAckMsg &) {
                      alive_clients--;
@@ -185,12 +176,13 @@ void Mon::kill_all_osds() {
 
 void Mon::kill_self() {
   XBT_INFO("Monitor is killing itself");
+  // CephActor::kill_self(); // This calls exit(), but we want to log first as
+  // above
   simgrid::s4u::this_actor::exit();
 }
 
 void Mon::operator()() {
   XBT_INFO("Monitor was created");
-  main_loop();
-  kill_all_osds();
-  kill_self();
+  // Calls the base class main_loop which is event driven
+  CephActor::main_loop();
 }
