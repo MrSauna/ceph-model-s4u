@@ -26,43 +26,18 @@ void MetricMonitor::operator()() {
 
   file << "timestamp,resource_type,resource_name,value\n";
 
-  // Initialize vector
   auto all_links = sg4::Engine::get_instance()->get_all_links();
-  cumulative_load_.assign(all_links.size(), 0.0);
-
-  double polling_period = 0.001; // 1ms polling for high resolution
-  double last_time = sg4::Engine::get_clock();
-  double next_report = last_time + interval_;
 
   while (true) {
-    sg4::this_actor::sleep_for(polling_period);
+    sg4::this_actor::sleep_for(interval_);
     double now = sg4::Engine::get_clock();
-    double dt = now - last_time;
 
-    // Integrate Load: Bytes = Bps * seconds
-    for (size_t i = 0; i < all_links.size(); ++i) {
-      cumulative_load_[i] += all_links[i]->get_load() * dt;
+    for (const auto *link : all_links) {
+      double current_load = link->get_load();
+
+      // Log if non-zero
+      std::string name = link->get_cname();
+      file << now << ",link," << name << "," << current_load << "\n";
     }
-
-    // Report if interval passed
-    if (now >= next_report) {
-      for (size_t i = 0; i < all_links.size(); ++i) {
-        double bytes = cumulative_load_[i];
-
-        // Average Bandwidth = Total Bytes / Interval
-        double avg_bw = bytes / interval_;
-
-        // Log if non-zero (or all to match user request)
-        if (avg_bw > 1.0) { // Filter extremely small noise
-          std::string name = all_links[i]->get_cname();
-          file << std::fixed << std::setprecision(2) << next_report << ",link,"
-               << name << "," << avg_bw << "\n";
-        }
-        cumulative_load_[i] = 0.0; // Reset
-      }
-      next_report += interval_;
-    }
-
-    last_time = now;
   }
 }
