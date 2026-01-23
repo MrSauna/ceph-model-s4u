@@ -258,11 +258,13 @@ void Osd::on_backfill_reservation_message(int sender,
   switch (msg.op->type) {
 
   case BackfillReservationOpType::REQUEST_SLAVE: {
-    if (!pending_retry && !backfill_reservation_local &&
-        backfill_reservation_remote.empty()) {
+    if (!backfill_reservation_local && backfill_reservation_remote.empty()) {
       backfill_reservation_remote.insert(sender);
       // send accept
       BackfillReservationOp *accept_op = new BackfillReservationOp{
+          .primary_osd_id = sender,
+          .target_osd_id = id,
+          .pg_id = msg.op->pg_id,
           .type = BackfillReservationOpType::ACCEPT,
       };
       Message *accept_msg = make_message<BackfillReservationMsg>(accept_op);
@@ -308,7 +310,8 @@ void Osd::on_backfill_reservation_message(int sender,
   case BackfillReservationOpType::REJECT: {
     // triggers retry to self, if no retry is scheduled
     // ignore if pg_id doesn't match (stale message)
-    if (pending_retry || msg.op->pg_id != backfilling_pg->get_id())
+    if (pending_retry || !backfilling_pg ||
+        msg.op->pg_id != backfilling_pg->get_id())
       break;
 
     backfill_reservation_remote.clear();
