@@ -10,3 +10,4 @@ maps/
 .snakemake/
 results/
 .cache/
+perfdumps/
