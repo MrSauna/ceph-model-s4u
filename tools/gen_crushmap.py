@@ -22,7 +22,7 @@ template = environment.get_template(template_file)
 class Node:
     """A node class for a tree structure"""
 
-    def __init__(self, prefix: str, weight: float, children: list['Node'] | None = None):
+    def __init__(self, prefix: str, weight: float, children: list['Node'] | None = None, name: str | None = None):
         self.weight_ = weight
         self.children = children or []
         if weight > 0:
@@ -30,7 +30,8 @@ class Node:
         else:
             self.id = get_bucket_id()
             self.hdd_id = get_bucket_id()
-        self.name = f"{prefix}{self.id}"
+        
+        self.name = name if name else f"{prefix}{self.id}"
     
     def _calculate_weight(self):
         total = self.weight_
@@ -163,9 +164,11 @@ def gen_crushmap():
     validate_osd_count(shapes, osd_num)
 
     # Iterate over defined shapes (Datacenters)
+    global_host_id = 0
+    
     for dc_i in range(len(shapes)):
-        dc_str = f"dc{dc_i}"
-        dc = Node("dc", 0)
+        dc_str = f"dc-{dc_i}"
+        dc = Node("dc", 0, name=dc_str)
         
         # Level 0: Datacenter -> Rack Count
         count_spec_dc = get_hierarchy_spec(shapes, dc_i, 0)
@@ -175,7 +178,8 @@ def gen_crushmap():
         dc_weight = resolve_val(weight_spec_dc, dc_i, 0, 4.0)
         
         for rack_i in range(rack_count):
-            rack = Node("rack", 0)
+            rack_str = f"{dc_str}_r{rack_i}"
+            rack = Node("rack", 0, name=rack_str)
             
             # Level 1: Rack -> Host Count
             count_spec_rack = get_hierarchy_spec(shapes, dc_i, 1)
@@ -185,7 +189,10 @@ def gen_crushmap():
             rack_weight = resolve_val(weight_spec_rack, rack_i, dc_i, dc_weight)
             
             for host_i in range(host_count):
-                host = Node("host", 0)
+                host_str = f"host-{global_host_id}"
+                global_host_id += 1
+                
+                host = Node("host", 0, name=host_str)
                 
                 # Level 2: Host -> OSD Count
                 count_spec_host = get_hierarchy_spec(shapes, dc_i, 2)

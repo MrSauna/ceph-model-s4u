@@ -250,7 +250,8 @@ int main(int argc, char *argv[]) {
              pgmap->get_max_osd_id(), total_osds, total_osds - 1);
 
   // deploy the osds
-  for (auto host : e.get_all_hosts()) {
+  for (const auto &host_name : ctx.ordered_host_names) {
+    auto *host = e.host_by_name(host_name);
     // Populate zone map
     if (ctx.host_zones.count(host->get_name())) {
       zone_hosts[ctx.host_zones[host->get_name()]].push_back(host);

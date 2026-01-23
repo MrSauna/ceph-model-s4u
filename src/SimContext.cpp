@@ -84,6 +84,7 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
   // Create Host
   auto *host = rack_zone->add_host(hostname, "100Gf");
   ctx.host_zones[hostname] = rack_zone;
+  ctx.ordered_host_names.push_back(hostname);
 
   // Resolve Link Speed (Index 2: Host Link)
   std::string speed_spec = ctx.get_hierarchy_spec(ctx.speeds, dc_idx, 2);
