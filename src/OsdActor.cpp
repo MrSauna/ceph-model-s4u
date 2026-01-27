@@ -577,8 +577,10 @@ void Osd::opcontext_dispatch(OpContext *context) {
   }
 
   case OpType::CLIENT_WRITE:
-    // send replica write ops to peers (including self), update op context state
-    for (int peer_osd_id : pgmap->get_pg(context->pgid)->get_acting_ids()) {
+    // send replica write ops to peers (including self)
+    // important: use acting ids from op context instead of looking them up
+    // again because the pgmap might have changed since the op was enqueued.
+    for (int peer_osd_id : context->pending_peers) {
       Op *op = new Op{
           .type = OpType::REPLICA_WRITE,
           .id = context->local_id,
