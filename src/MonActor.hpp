@@ -10,7 +10,7 @@ class Mon : public CephActor {
   std::vector<std::string> client_names;
 
   void process_message(Message *msg) override;
-  void process_finished_activity(sg4::ActivityPtr activity) override;
+  void on_finished_activity(sg4::ActivityPtr activity) override;
   bool is_cluster_balanced();
   void kill_all_osds();
   void kill_self() override;

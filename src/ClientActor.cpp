@@ -179,7 +179,7 @@ void Client::process_message(Message *msg) {
   delete msg;
 }
 
-void Client::process_finished_activity(sg4::ActivityPtr activity) {
+void Client::on_finished_activity(sg4::ActivityPtr activity) {
   xbt_die("Clients should not have activities");
 }
 

@@ -118,7 +118,7 @@ void Mon::process_message(Message *msg) {
   delete msg;
 }
 
-void Mon::process_finished_activity(sg4::ActivityPtr activity) {
+void Mon::on_finished_activity(sg4::ActivityPtr activity) {
   // Mon currently doesn't track background activities in the main loop
 }
 

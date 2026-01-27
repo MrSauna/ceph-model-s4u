@@ -519,7 +519,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
   }
 }
 
-void Osd::process_finished_activity(sg4::ActivityPtr activity) {
+void Osd::on_finished_activity(sg4::ActivityPtr activity) {
 
   if (op_context_map.find(activity) == op_context_map.end()) {
     xbt_die("osd.%u finished unknown activity", id);

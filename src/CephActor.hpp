@@ -29,7 +29,7 @@ public:
   virtual ~CephActor() = default;
   virtual void main_loop();
   virtual void process_message(Message *msg) = 0;
-  virtual void process_finished_activity(sg4::ActivityPtr activity) = 0;
+  virtual void on_finished_activity(sg4::ActivityPtr activity) = 0;
   virtual void kill_self();
   virtual std::optional<double> make_progress() { return std::nullopt; }
 };

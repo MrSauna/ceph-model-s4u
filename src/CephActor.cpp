@@ -57,7 +57,7 @@ void CephActor::main_loop() {
 
     // something else finished
     else if (finished != nullptr) {
-      process_finished_activity(finished);
+      on_finished_activity(finished);
     }
 
     // timeout

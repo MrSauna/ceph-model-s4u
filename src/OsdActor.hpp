@@ -67,7 +67,7 @@ class Osd : public CephActor {
   void process_message(Message *msg) override;
   void maybe_reserve_backfill();
   void maybe_schedule_object_backfill();
-  void process_finished_activity(sg4::ActivityPtr activity) override;
+  void on_finished_activity(sg4::ActivityPtr activity) override;
   std::optional<double> make_progress() override;
 
   void on_pgmap_change();
