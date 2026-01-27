@@ -553,6 +553,9 @@ void Osd::on_finished_activity(sg4::ActivityPtr activity) {
     sg4::Mailbox *target_mb =
         sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
     target_mb->put_async(ack_msg, context->size).detach();
+    op_context_map.erase(activity);
+    op_contexts.erase(context->local_id);
+    delete context;
     break;
   }
 
