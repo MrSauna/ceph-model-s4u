@@ -23,10 +23,27 @@ void CephActor::main_loop() {
   activities.push(listener);
 
   while (true) {
-    make_progress();
+    std::optional<double> next_event = make_progress();
+    double timeout = 1000000.0; // Default large timeout (infinity)
+
+    if (next_event.has_value()) {
+      timeout = next_event.value() - sg4::Engine::get_clock();
+      if (timeout < 0)
+        timeout = 0;
+    }
 
     // wait any activity
-    sg4::ActivityPtr finished = activities.wait_any();
+    sg4::ActivityPtr finished = nullptr;
+    try {
+      if (next_event.has_value()) {
+        finished = activities.wait_any_for(timeout);
+      } else {
+        finished = activities.wait_any();
+      }
+    } catch (const simgrid::TimeoutException &) {
+      // Timeout occurred, just loop back to make_progress
+      continue;
+    }
 
     // new message arrived
     if (finished == listener) {
@@ -39,8 +56,13 @@ void CephActor::main_loop() {
     }
 
     // something else finished
-    else {
+    else if (finished != nullptr) {
       process_finished_activity(finished);
+    }
+
+    // timeout
+    else {
+      continue;
     }
   }
 }

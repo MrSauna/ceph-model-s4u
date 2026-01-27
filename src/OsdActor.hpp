@@ -61,13 +61,14 @@ class Osd : public CephActor {
 
   // Helper to init QoS
   void init_scheduler(double iops, SchedulerProfile profile);
+  double calc_cost(double size) { return base_cost + size; }
 
   void send_op(Op *op);
   void process_message(Message *msg) override;
   void maybe_reserve_backfill();
   void maybe_schedule_object_backfill();
   void process_finished_activity(sg4::ActivityPtr activity) override;
-  void make_progress() override;
+  std::optional<double> make_progress() override;
 
   void on_pgmap_change();
   void on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg);

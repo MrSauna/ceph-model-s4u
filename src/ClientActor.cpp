@@ -70,11 +70,11 @@ void Client::gen_op(OpType type) {
   // XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
 }
 
-void Client::make_progress() {
+std::optional<double> Client::make_progress() {
   if ((in_flight_reads >= max_concurrent_reads &&
        in_flight_writes >= max_concurrent_writes) ||
       shutting_down)
-    return;
+    return std::nullopt;
 
   // Fill both pipelines
   while (in_flight_reads < max_concurrent_reads) {
@@ -83,6 +83,8 @@ void Client::make_progress() {
   while (in_flight_writes < max_concurrent_writes) {
     gen_op(OpType::CLIENT_WRITE);
   }
+
+  return std::nullopt;
 }
 
 void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
@@ -129,10 +131,24 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   op_contexts.erase(msg.op_id);
   delete context;
 
+  xbt_assert(in_flight_reads + in_flight_writes == op_contexts.size());
+
+  if (shutting_down) {
+    XBT_INFO("Shutting down, %d read ops and %d write ops remaining",
+             in_flight_reads, in_flight_writes);
+    // print op contexts with field names
+    for (auto const &[key, val] : op_contexts) {
+      XBT_INFO("Op %d: local_id=%d, client_op_id=%d, type=%d, pgid=%d, "
+               "sender=%d, size=%zu",
+               key, val->local_id, val->client_op_id, val->type, val->pgid,
+               val->sender, val->size);
+    }
+  }
   if (shutting_down && (in_flight_reads + in_flight_writes) == 0) {
     auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
     auto msg = make_message<KillAckMsg>();
     mon_mb->put(msg, 0);
+    XBT_INFO("Shutting down now");
     CephActor::kill_self();
   }
 }
@@ -150,6 +166,7 @@ void Client::process_message(Message *msg) {
               auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
               auto msg = make_message<KillAckMsg>();
               mon_mb->put(msg, 0);
+              XBT_INFO("Shutting down now");
               CephActor::kill_self();
             } else {
               XBT_INFO("Received KillMsg, draining %d ops (%d read, %d write)",

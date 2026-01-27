@@ -19,7 +19,7 @@ class Client : public CephActor {
   void gen_op(OpType type);
   void on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg);
   void process_finished_activity(sg4::ActivityPtr activity) override;
-  void make_progress() override;
+  std::optional<double> make_progress() override;
 
   int last_op_pg = 0;
 

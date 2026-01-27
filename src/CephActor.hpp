@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CephCommon.hpp"
+#include <optional>
 #include <simgrid/s4u.hpp>
 #include <unordered_map>
 
@@ -30,5 +31,5 @@ public:
   virtual void process_message(Message *msg) = 0;
   virtual void process_finished_activity(sg4::ActivityPtr activity) = 0;
   virtual void kill_self();
-  virtual void make_progress() {}
+  virtual std::optional<double> make_progress() { return std::nullopt; }
 };

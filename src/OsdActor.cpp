@@ -592,7 +592,7 @@ void Osd::opcontext_dispatch(OpContext *context) {
   }
 }
 
-void Osd::make_progress() {
+std::optional<double> Osd::make_progress() {
   maybe_reserve_backfill();
   maybe_schedule_object_backfill();
   auto result = queue->pull_request(sg4::Engine::get_clock());
@@ -601,7 +601,12 @@ void Osd::make_progress() {
     OpContext *oc = retn.request.release();
     op_contexts[oc->local_id] = oc;
     opcontext_dispatch(oc);
+    return 0.0;
+  } else if (result.is_future()) {
+    return result.getTime();
   }
+
+  return std::nullopt;
 }
 
 void Osd::operator()() {
