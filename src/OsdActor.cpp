@@ -139,10 +139,10 @@ void Osd::maybe_schedule_object_backfill() {
     // Do NOT add to op_contexts yet. The callback will do it with the stable
     // address.
 
-    dmc::ReqParams params(1, 1);
-    queue->add_request_time(
-        std::move(oc), CLIENT_ID_BACKFILL, params,
-        sg4::Engine::get_clock()); // todo cost is default 1u
+    dmc::ReqParams null_req_params;
+    queue->add_request_time(std::move(oc), CLIENT_ID_BACKFILL, null_req_params,
+                            sg4::Engine::get_clock(),
+                            calc_cost(backfilling_pg->get_object_size()));
     used_recovery_threads++;
   }
 }
@@ -172,14 +172,16 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     };
     // op_contexts[op_id] = oc; // Don't track yet
 
-    dmc::ReqParams params(1, 1);
-    queue->add_request_time(std::move(oc), CLIENT_ID_USER, params,
-                            sg4::Engine::get_clock());
+    dmc::ReqParams null_req_params;
+    queue->add_request_time(std::move(oc), CLIENT_ID_USER, null_req_params,
+                            sg4::Engine::get_clock(),
+                            calc_cost(pg->get_object_size()));
     break;
   }
 
   case OpType::CLIENT_READ: {
     int op_id = last_op_id++;
+    PG *pg = pgmap->get_pg(op->pgid);
     OpContext oc = {
         .local_id = op_id,
         .client_op_id = op->id,
@@ -191,9 +193,10 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     };
     // op_contexts[op_id] = oc; // Don't track yet
 
-    dmc::ReqParams params(1, 1);
-    queue->add_request_time(std::move(oc), CLIENT_ID_USER, params,
-                            sg4::Engine::get_clock());
+    dmc::ReqParams null_req_params;
+    queue->add_request_time(std::move(oc), CLIENT_ID_USER, null_req_params,
+                            sg4::Engine::get_clock(),
+                            calc_cost(pg->get_object_size()));
     break;
   }
 
