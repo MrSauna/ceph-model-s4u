@@ -2,6 +2,12 @@ ceph_image: "quay.io/ceph/ceph:v17.2.8"
 container_runtime: "podman"
 mon_bootstrap_script: "inputs/mon_bootstrap.sh"
 
+active_experiments:
+  - "small_cluster"
+  - "small_cluster_clients_high_recovery_ops"
+  - "small_cluster_clients_balanced"
+  - "small_cluster_clients_high_client_ops"
+
 experiments:
   "small_cluster":
     template: "inputs/templates/cm_simple.j2"
@@ -16,10 +22,11 @@ experiments:
         dc_speed: ["10:10:10", "10:10:10"]
     clients_num: 0
 
-  "small_cluster_c1":
+  "small_cluster_clients_high_recovery_ops":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 8
     pg_num: 32
+    profile: "high_recovery_ops"
     "crush_spec_params":
       - dc_shape: "2:2:1"
         dc_weight: "14.0::"
@@ -27,14 +34,31 @@ experiments:
       - dc_shape: ["2:2:1", "2:2:1"]
         dc_weight: ["14.0::", "20.0::"]
         dc_speed: ["10:10:10", "10:10:10"]
-    clients_num: 1
-    client_read_queue_depth: 4
-    client_write_queue_depth: 4
+    clients_num: 2
+    client_read_queue_depth: 16
+    client_write_queue_depth: 16
 
-  "small_cluster_c2":
+  "small_cluster_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 8
     pg_num: 32
+    profile: "balanced"
+    "crush_spec_params":
+      - dc_shape: "2:2:1"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["2:2:1", "2:2:1"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["10:10:10", "10:10:10"]
+    clients_num: 2
+    client_read_queue_depth: 16
+    client_write_queue_depth: 16
+
+  "small_cluster_clients_high_client_ops":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 8
+    pg_num: 32
+    profile: "high_client_ops"
     "crush_spec_params":
       - dc_shape: "2:2:1"
         dc_weight: "14.0::"

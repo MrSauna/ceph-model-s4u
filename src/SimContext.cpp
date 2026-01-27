@@ -180,6 +180,19 @@ std::string SimContext::to_string() {
   ss << "  Racks: " << global_rack_id << std::endl;
   ss << "  Hosts: " << global_host_id << std::endl;
   ss << "  OSDs: " << global_osd_id << std::endl;
+  std::string profile_str = "unknown";
+  switch (profile) {
+  case SchedulerProfile::BALANCED:
+    profile_str = "balanced";
+    break;
+  case SchedulerProfile::HIGH_CLIENT_OPS:
+    profile_str = "high_client_ops";
+    break;
+  case SchedulerProfile::HIGH_RECOVERY_OPS:
+    profile_str = "high_recovery_ops";
+    break;
+  }
+  ss << "  Profile: " << profile_str << std::endl;
   ss << "  Disk Read Bandwidth: " << disk_read_bandwidth << std::endl;
   ss << "  Disk Write Bandwidth: " << disk_write_bandwidth << std::endl;
   ss << "  Pool ID: " << pool_id << std::endl;

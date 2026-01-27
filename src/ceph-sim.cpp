@@ -154,8 +154,14 @@ int main(int argc, char *argv[]) {
   iops_opt->default_val(100)->expected(1)->type_name("INT");
 
   // --profile
+  std::map<std::string, SchedulerProfile> profile_map{
+      {"balanced", SchedulerProfile::BALANCED},
+      {"high_client_ops", SchedulerProfile::HIGH_CLIENT_OPS},
+      {"high_recovery_ops", SchedulerProfile::HIGH_RECOVERY_OPS}};
+
   auto *profile_opt = app.add_option("--profile", ctx.profile, "Profile");
-  profile_opt->default_val(SchedulerProfile::BALANCED)
+  profile_opt->transform(CLI::CheckedTransformer(profile_map, CLI::ignore_case))
+      ->default_val(SchedulerProfile::BALANCED)
       ->expected(1)
       ->type_name("PROFILE");
 
@@ -194,6 +200,7 @@ int main(int argc, char *argv[]) {
 
   // Do the parsing
   CLI11_PARSE(app, argc, argv);
+  XBT_INFO("Context:\n%s", ctx.to_string().c_str());
 
   // Create output directory
   try {

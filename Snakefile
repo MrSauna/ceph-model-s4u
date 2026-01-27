@@ -3,7 +3,10 @@ import glob
 
 configfile: "inputs/config.yaml"
 
-EXPERIMENTS = list(config["experiments"].keys())
+if "active_experiments" in config and config["active_experiments"]:
+    EXPERIMENTS = [e for e in config["active_experiments"] if e in config["experiments"]]
+else:
+    EXPERIMENTS = list(config["experiments"].keys())
 CRUSH_SPEC_PARAMS_IDX = [0,1]
 # RESULT_ARTIFACTS = ["osdmap.bin", "osdmap.txt", "crushmap.bin", "crushmap.txt", "crushmap.json"]
 
@@ -73,9 +76,11 @@ rule run_sim:
         mon_metrics = "results/{exp}/mon_metrics.csv",
         client_metrics = "results/{exp}/client_metrics.csv",
         topology = "results/{exp}/topology.json",
-        output = "results/{exp}/stdout.txt",
+        stdout = "results/{exp}/stdout.txt",
+        stderr = "results/{exp}/stderr.txt",
     params:
         clients_num = lambda w: config["experiments"][w.exp]["clients_num"],
+        profile = lambda w: config["experiments"][w.exp].get("profile", "balanced"),
         client_read_queue_depth = lambda w: config["experiments"][w.exp].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["experiments"][w.exp].get("client_write_queue_depth", 1),
         dc_shape_csv = lambda w: ",".join(
@@ -91,6 +96,7 @@ rule run_sim:
             "--dc-speed={params.dc_speed_csv}" \
             "--pgdump={input.pgdump1}" \
             "--pgdump={input.pgdump2}" \
+            "--profile={params.profile}" \
             "--pg-objects=1000" \
             "--object-size=4194304" \
             "--pool-id=1" \
@@ -99,8 +105,8 @@ rule run_sim:
             "--dc-clients={params.clients_num}" \
             "--client-read-queue-depth={params.client_read_queue_depth}" \
             "--client-write-queue-depth={params.client_write_queue_depth}" \
-            "--output-dir=results/{wildcards.exp}"
-            > {output.output}
+            "--output-dir=results/{wildcards.exp}" \
+            > {output.stdout} 2> {output.stderr}
         """
 
 
