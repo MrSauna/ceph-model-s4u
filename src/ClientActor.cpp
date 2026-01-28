@@ -133,17 +133,6 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
 
   xbt_assert(in_flight_reads + in_flight_writes == op_contexts.size());
 
-  if (shutting_down) {
-    XBT_INFO("Shutting down, %d read ops and %d write ops remaining",
-             in_flight_reads, in_flight_writes);
-    // print op contexts with field names
-    for (auto const &[key, val] : op_contexts) {
-      XBT_INFO("Op %d: local_id=%d, client_op_id=%d, type=%d, pgid=%d, "
-               "sender=%d, size=%zu",
-               key, val->local_id, val->client_op_id, val->type, val->pgid,
-               val->sender, val->size);
-    }
-  }
   if (shutting_down && (in_flight_reads + in_flight_writes) == 0) {
     auto mon_mb = simgrid::s4u::Mailbox::by_name("mon");
     auto msg = make_message<KillAckMsg>();
