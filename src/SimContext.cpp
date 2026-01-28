@@ -180,6 +180,8 @@ std::string SimContext::to_string() {
   ss << "  Racks: " << global_rack_id << std::endl;
   ss << "  Hosts: " << global_host_id << std::endl;
   ss << "  OSDs: " << global_osd_id << std::endl;
+  ss << "  Start Up Delay: " << start_up_delay << std::endl;
+  ss << "  Shut Down Delay: " << shut_down_delay << std::endl;
   std::string profile_str = "unknown";
   switch (profile) {
   case SchedulerProfile::BALANCED:

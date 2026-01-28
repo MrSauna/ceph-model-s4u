@@ -37,6 +37,8 @@ experiments:
     clients_num: 2
     client_read_queue_depth: 16
     client_write_queue_depth: 16
+    start_up_delay: 1000
+    shut_down_delay: 1000
 
   "small_cluster_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
@@ -53,6 +55,8 @@ experiments:
     clients_num: 2
     client_read_queue_depth: 16
     client_write_queue_depth: 16
+    start_up_delay: 1000
+    shut_down_delay: 1000
 
   "small_cluster_clients_high_client_ops":
     template: "inputs/templates/cm_simple.j2"
@@ -69,6 +73,8 @@ experiments:
     clients_num: 2
     client_read_queue_depth: 16
     client_write_queue_depth: 16
+    start_up_delay: 1000
+    shut_down_delay: 1000
 
   "medium_cluster":
     template: "inputs/templates/cm_simple.j2"

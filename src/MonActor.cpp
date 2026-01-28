@@ -17,8 +17,10 @@ void Mon::set_metrics_output(const std::string &filename) {
   }
 }
 
-Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names)
-    : CephActor(-1, pgmap), client_names(client_names) {
+Mon::Mon(PGMap *pgmap, std::vector<std::string> client_names,
+         long start_up_delay, long shut_down_delay)
+    : CephActor(-1, pgmap), client_names(client_names),
+      start_up_delay(start_up_delay), shut_down_delay(shut_down_delay) {
 
   // dynamically discover osds
   std::vector<int> osds = pgmap->get_osds();
@@ -86,10 +88,20 @@ void Mon::on_pgmap_change(int pg_id) {
 
   // Check if backfill is complete
   if (!pgmap->needs_backfill()) {
-    XBT_INFO("Cluster does not need backfill, shutting down");
-    kill_all_osds();
-    kill_self();
+    XBT_INFO("Cluster is balanced");
+    dispatch_kill_cluster();
   }
+}
+
+void Mon::dispatch_kill_cluster() {
+  if (shut_down_delay > 0) {
+    sg4::this_actor::sleep_for(shut_down_delay);
+    XBT_INFO("Waited %ld seconds before shutting down cluster",
+             shut_down_delay);
+  }
+  XBT_INFO("Shutting down cluster");
+  kill_all_osds();
+  kill_self();
 }
 
 void Mon::process_message(Message *msg) {
@@ -183,6 +195,20 @@ void Mon::kill_self() {
 
 void Mon::operator()() {
   XBT_INFO("Monitor was created");
+
+  // start up delay
+  sg4::this_actor::sleep_for(start_up_delay);
+
+  // Send PGMapNotification to all OSDs
+  for (auto mb_tuple : osd_mailboxes) {
+    auto mb = mb_tuple.second;
+    Message *msg = make_message<PGMapNotification>(pgmap);
+    mb->put(msg, 0);
+  }
+  if (start_up_delay > 0) {
+    XBT_INFO("Monitor waited %ld seconds before sending PGMapNotification",
+             start_up_delay);
+  }
   // Calls the base class main_loop which is event driven
   CephActor::main_loop();
 }

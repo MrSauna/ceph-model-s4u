@@ -80,6 +80,8 @@ rule run_sim:
         stderr = "results/{exp}/stderr.txt",
     params:
         clients_num = lambda w: config["experiments"][w.exp]["clients_num"],
+        start_up_delay = lambda w: config["experiments"][w.exp].get("start_up_delay", 0),
+        shut_down_delay = lambda w: config["experiments"][w.exp].get("shut_down_delay", 0),
         profile = lambda w: config["experiments"][w.exp].get("profile", "balanced"),
         client_read_queue_depth = lambda w: config["experiments"][w.exp].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["experiments"][w.exp].get("client_write_queue_depth", 1),
@@ -96,6 +98,8 @@ rule run_sim:
             "--dc-speed={params.dc_speed_csv}" \
             "--pgdump={input.pgdump1}" \
             "--pgdump={input.pgdump2}" \
+            "--start-up-delay={params.start_up_delay}" \
+            "--shut-down-delay={params.shut_down_delay}" \
             "--profile={params.profile}" \
             "--pg-objects=1000" \
             "--object-size=4194304" \

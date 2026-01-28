@@ -120,6 +120,16 @@ int main(int argc, char *argv[]) {
                                     "Path to pgdump output files (min 2)");
   pgdump_opt->required()->check(CLI::ExistingFile)->expected(2);
 
+  // --start-up-delay
+  auto *start_up_delay_opt =
+      app.add_option("--start-up-delay", ctx.start_up_delay, "Start up delay");
+  start_up_delay_opt->default_val(0)->expected(1)->type_name("INT");
+
+  // --shut-down-delay
+  auto *shut_down_delay_opt = app.add_option(
+      "--shut-down-delay", ctx.shut_down_delay, "Shut down delay");
+  shut_down_delay_opt->default_val(0)->expected(1)->type_name("INT");
+
   // --pg-objects
   auto *pg_objects_opt = app.add_option("--pg-objects", ctx.pg_objects,
                                         "Number of objects per PG");
@@ -386,8 +396,8 @@ int main(int argc, char *argv[]) {
       (fs::path(ctx.output_dir) / "mon_metrics.csv").string();
   Mon::set_metrics_output(mon_metrics_path);
 
-  e.add_actor("mon", mon, [pgmap, client_names]() {
-    Mon mon(pgmap, client_names);
+  e.add_actor("mon", mon, [pgmap, client_names, ctx]() {
+    Mon mon(pgmap, client_names, ctx.start_up_delay, ctx.shut_down_delay);
     mon();
   });
 

@@ -16,9 +16,11 @@ class Mon : public CephActor {
   void kill_self() override;
   static PGMap create_initial_pgmap(std::vector<std::string> args);
   void on_pgmap_change(int pg_id);
+  void dispatch_kill_cluster();
 
 public:
-  explicit Mon(PGMap *pgmap, std::vector<std::string> client_names);
+  explicit Mon(PGMap *pgmap, std::vector<std::string> client_names,
+               long start_up_delay, long shut_down_delay);
   void operator()();
   void on_subscribe_pgmap_change(const std::string &sender,
                                  const SubscribeToPGMapChangeMsg &payload);
@@ -28,4 +30,6 @@ public:
 private:
   static std::ofstream metrics_stream;
   static std::mutex metrics_mutex;
+  long start_up_delay;
+  long shut_down_delay;
 };

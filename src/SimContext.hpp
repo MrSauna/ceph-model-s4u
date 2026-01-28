@@ -24,6 +24,9 @@ struct SimContext {
   int global_host_id = 0;
   int global_osd_id = 0;
 
+  long start_up_delay = 0;
+  long shut_down_delay = 0;
+
   int disk_read_bandwidth = 0;
   int disk_write_bandwidth = 0;
   int iops = 0;

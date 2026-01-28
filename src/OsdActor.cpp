@@ -54,8 +54,6 @@ void Osd::on_pgmap_change() {
   } else {
     XBT_DEBUG("%s", pg_str.c_str());
   }
-
-  // todo check if pending backfills can be advanced
 }
 
 void Osd::maybe_reserve_backfill() {
@@ -136,8 +134,8 @@ void Osd::maybe_schedule_object_backfill() {
         .size = backfilling_pg->get_object_size(),
         .state = OpState::OP_QUEUED, // New initial state
     };
-    // Do NOT add to op_contexts yet. The callback will do it with the stable
-    // address.
+    // Do NOT add to op_contexts yet. When pulled from the queue, we'll do it
+    // with the stable address.
 
     dmc::ReqParams null_req_params;
     queue->add_request_time(std::move(oc), CLIENT_ID_BACKFILL, null_req_params,
@@ -630,7 +628,8 @@ Osd::Osd(PGMap *pgmap, int osd_id, std::string disk_name, double iops,
 
   xbt_assert(osd_id >= 0, "osd_id must be non-negative");
   disk = my_host->get_disk_by_name(disk_name);
-  on_pgmap_change();
+  // on_pgmap_change(); // defer doing this until PGMapNotification arrives,
+  // enables us to handle start up delay for backfill on the monitor.
   init_scheduler(iops, profile);
 }
 
