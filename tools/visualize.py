@@ -75,7 +75,7 @@ def viz_client_metrics(client_metrics_df):
     
     # Apply rolling mean to smooth out the "quantization" effect of large ops
     # Window size of 5s - 10s is usually good for readability
-    window_size = 5
+    window_size = 10
     smoothed = grouped.rolling(window=window_size, min_periods=1).mean()
     
     # Convert index back to seconds (float) for plotting
