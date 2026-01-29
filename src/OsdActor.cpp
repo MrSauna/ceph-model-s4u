@@ -125,6 +125,8 @@ void Osd::maybe_schedule_object_backfill() {
     // enough. OpContext contains a set, so it's not tiny but manageable. Let's
     // create on stack for simplicity and move.
 
+    std::vector<int> targets = backfilling_pg->get_backfill_targets();
+    std::set<int> pending_peers(targets.begin(), targets.end());
     OpContext oc = {
         .local_id = op_id,
         .client_op_id = op_id, // strictly internal
@@ -133,14 +135,17 @@ void Osd::maybe_schedule_object_backfill() {
         .sender = id,
         .size = backfilling_pg->get_object_size(),
         .state = OpState::OP_QUEUED, // New initial state
+        .pending_peers = pending_peers,
     };
     // Do NOT add to op_contexts yet. When pulled from the queue, we'll do it
     // with the stable address.
 
     dmc::ReqParams null_req_params;
+    // the cost is the sum of costs for each peer (like in the ceph code)
     queue->add_request_time(std::move(oc), CLIENT_ID_BACKFILL, null_req_params,
                             sg4::Engine::get_clock(),
-                            calc_cost(backfilling_pg->get_object_size()));
+                            clamp_cost(backfilling_pg->get_object_size()) *
+                                pending_peers.size());
     used_recovery_threads++;
   }
 }
@@ -171,9 +176,10 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     // op_contexts[op_id] = oc; // Don't track yet
 
     dmc::ReqParams null_req_params;
+    // real ceph uses message payload size as the cost, we use object size
     queue->add_request_time(std::move(oc), CLIENT_ID_USER, null_req_params,
                             sg4::Engine::get_clock(),
-                            calc_cost(pg->get_object_size()));
+                            clamp_cost(pg->get_object_size()));
     break;
   }
 
@@ -192,9 +198,10 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     // op_contexts[op_id] = oc; // Don't track yet
 
     dmc::ReqParams null_req_params;
+    // for some reason real ceph uses the payload size again as the cost, which
+    // is zero. The clamp will define the cost
     queue->add_request_time(std::move(oc), CLIENT_ID_USER, null_req_params,
-                            sg4::Engine::get_clock(),
-                            calc_cost(pg->get_object_size()));
+                            sg4::Engine::get_clock(), clamp_cost(0));
     break;
   }
 
@@ -454,7 +461,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
 
   case OpState::OP_WAITING_DISK:
     // send to peers
-    for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
+    for (auto peer_osd_id : context->pending_peers) {
 
       Op *op = new Op{
           .type = OpType::REPLICA_WRITE,
@@ -468,7 +475,6 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
       XBT_DEBUG("sending backfill op %u to osd.%u", context->local_id,
                 op->recipient);
       context->state = OpState::OP_WAITING_PEER;
-      context->pending_peers.insert(op->recipient);
     }
     break;
 
@@ -490,7 +496,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
         Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
         mon_mb->put_async(msg, 0).detach();
 
-        // free remote reservations, comment is wrong???
+        // free remote reservations, based on the original backfill targets
         for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
           BackfillReservationOp *reservation_op = new BackfillReservationOp{
               .primary_osd_id = id,
@@ -637,10 +643,8 @@ void Osd::init_scheduler(double iops, SchedulerProfile profile) {
   // following ceph implementation where bytes are used as the unit
   // the cost is calcuated as: base_cost + io_size, where base_cost =
   // bandwidth/random_iops
-  double avg_bandwidth =
-      (disk->get_read_bandwidth() + disk->get_write_bandwidth()) / 2;
-  base_cost = avg_bandwidth / iops;
-  double limit = base_cost + avg_bandwidth;
+  double limit = disk->get_write_bandwidth();
+  base_cost = limit / iops;
 
   // Client Configurations (reservation, weight, limit)
   user_info = std::make_unique<dmc::ClientInfo>(0, 0, 0);

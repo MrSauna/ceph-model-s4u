@@ -61,7 +61,7 @@ class Osd : public CephActor {
 
   // Helper to init QoS
   void init_scheduler(double iops, SchedulerProfile profile);
-  double calc_cost(double size) { return base_cost + size; }
+  double clamp_cost(double size) { return std::max(base_cost, size); }
 
   void send_op(Op *op);
   void process_message(Message *msg) override;
