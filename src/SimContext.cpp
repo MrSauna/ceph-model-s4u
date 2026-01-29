@@ -104,7 +104,7 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
   int osd_count = std::stoi(count_spec.empty() ? "0" : count_spec);
 
   for (int o = 0; o < osd_count; ++o) {
-    host->add_disk("disk" + std::to_string(o), ctx.disk_read_bandwidth,
+    host->add_disk("disk" + std::to_string(o), ctx.disk_write_bandwidth,
                    ctx.disk_write_bandwidth);
   }
 }
@@ -195,8 +195,7 @@ std::string SimContext::to_string() {
     break;
   }
   ss << "  Profile: " << profile_str << std::endl;
-  ss << "  Disk Read Bandwidth: " << disk_read_bandwidth << std::endl;
-  ss << "  Disk Write Bandwidth: " << disk_write_bandwidth << std::endl;
+  ss << "  Disk Read/Write Bandwidth: " << disk_write_bandwidth << std::endl;
   ss << "  Pool ID: " << pool_id << std::endl;
   ss << "  PG Objects: " << pg_objects << std::endl;
   ss << "  Object Size: " << object_size << std::endl;

@@ -144,13 +144,6 @@ int main(int argc, char *argv[]) {
   auto *pool_id_opt = app.add_option("--pool-id", ctx.pool_id, "Pool ID");
   pool_id_opt->default_val(1)->expected(1)->type_name("INT");
 
-  // --disk-read-bandwidth
-  auto *disk_read_bandwidth_opt = app.add_option(
-      "--disk-read-bandwidth", ctx.disk_read_bandwidth, "Disk read bandwidth");
-  disk_read_bandwidth_opt->default_val(READ_BANDWIDTH)
-      ->expected(1)
-      ->type_name("INT");
-
   // --disk-write-bandwidth
   auto *disk_write_bandwidth_opt =
       app.add_option("--disk-write-bandwidth", ctx.disk_write_bandwidth,

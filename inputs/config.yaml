@@ -11,68 +11,68 @@ active_experiments:
 experiments:
   "small_cluster":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 8
+    osd_num: 4
     pg_num: 32
     "crush_spec_params":
-      - dc_shape: "2:2:1"
+      - dc_shape: "1:3:1"
         dc_weight: "14.0::"
         dc_speed: "10:10:10"
-      - dc_shape: ["2:2:1", "2:2:1"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["10:10:10", "10:10:10"]
+      - dc_shape: ["1:4:1"]
+        dc_weight: ["14.0::"]
+        dc_speed: ["10:10:10"]
     clients_num: 0
 
   "small_cluster_clients_high_recovery_ops":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 8
+    osd_num: 4
     pg_num: 32
     profile: "high_recovery_ops"
     "crush_spec_params":
-      - dc_shape: "2:2:1"
+      - dc_shape: "1:3:1"
         dc_weight: "14.0::"
         dc_speed: "10:10:10"
-      - dc_shape: ["2:2:1", "2:2:1"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["10:10:10", "10:10:10"]
+      - dc_shape: ["1:4:1"]
+        dc_weight: ["14.0::"]
+        dc_speed: ["10:10:10"]
     clients_num: 2
-    client_read_queue_depth: 16
-    client_write_queue_depth: 16
+    client_read_queue_depth: 0
+    client_write_queue_depth: 64
     start_up_delay: 1000
     shut_down_delay: 1000
 
   "small_cluster_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 8
+    osd_num: 4
     pg_num: 32
     profile: "balanced"
     "crush_spec_params":
-      - dc_shape: "2:2:1"
+      - dc_shape: "1:3:1"
         dc_weight: "14.0::"
         dc_speed: "10:10:10"
-      - dc_shape: ["2:2:1", "2:2:1"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["10:10:10", "10:10:10"]
+      - dc_shape: ["1:4:1"]
+        dc_weight: ["14.0::"]
+        dc_speed: ["10:10:10"]
     clients_num: 2
-    client_read_queue_depth: 16
-    client_write_queue_depth: 16
+    client_read_queue_depth: 0
+    client_write_queue_depth: 64
     start_up_delay: 1000
     shut_down_delay: 1000
 
   "small_cluster_clients_high_client_ops":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 8
+    osd_num: 4
     pg_num: 32
     profile: "high_client_ops"
     "crush_spec_params":
-      - dc_shape: "2:2:1"
+      - dc_shape: "1:3:1"
         dc_weight: "14.0::"
         dc_speed: "10:10:10"
-      - dc_shape: ["2:2:1", "2:2:1"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["10:10:10", "10:10:10"]
+      - dc_shape: ["1:4:1"]
+        dc_weight: ["14.0::"]
+        dc_speed: ["10:10:10"]
     clients_num: 2
-    client_read_queue_depth: 16
-    client_write_queue_depth: 16
+    client_read_queue_depth: 0
+    client_write_queue_depth: 64
     start_up_delay: 1000
     shut_down_delay: 1000
 

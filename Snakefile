@@ -104,8 +104,7 @@ rule run_sim:
             "--pg-objects=1000" \
             "--object-size=4194304" \
             "--pool-id=1" \
-            "--disk-read-bandwidth=125829120" \
-            "--disk-write-bandwidth=83886080" \
+            "--disk-write-bandwidth=209715200" \
             "--dc-clients={params.clients_num}" \
             "--client-read-queue-depth={params.client_read_queue_depth}" \
             "--client-write-queue-depth={params.client_write_queue_depth}" \
