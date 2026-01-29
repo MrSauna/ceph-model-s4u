@@ -34,7 +34,7 @@ void Client::gen_op(OpType type) {
   }
   // Create Op
   int op_id = last_op_id++;
-  int pg_id = last_op_pg++ % pgmap->size();
+  int pg_id = random.uniform_int(0, pgmap->size() - 1);
   int target_osd_id = pgmap->get_pg(pg_id)->get_primary();
 
   Op *op = new Op{
