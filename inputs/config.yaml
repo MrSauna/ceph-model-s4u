@@ -8,7 +8,14 @@ active_experiments:
   - "small_cluster_clients_balanced"
   - "small_cluster_clients_high_client_ops"
 
-experiments:
+scenarios:
+  "scenario_a":
+    - "small_cluster"
+    - "small_cluster_clients_high_recovery_ops"
+    - "small_cluster_clients_balanced"
+    - "small_cluster_clients_high_client_ops"
+
+cases:
   "small_cluster":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
