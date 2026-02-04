@@ -142,10 +142,9 @@ void Osd::maybe_schedule_object_backfill() {
 
     dmc::ReqParams null_req_params;
     // the cost is the sum of costs for each peer (like in the ceph code)
-    queue->add_request_time(std::move(oc), CLIENT_ID_BACKFILL, null_req_params,
-                            sg4::Engine::get_clock(),
-                            clamp_cost(backfilling_pg->get_object_size()) *
-                                pending_peers.size());
+    queue->add_request_time(
+        std::move(oc), CLIENT_ID_BACKFILL, null_req_params, get_mock_epoch(),
+        clamp_cost(backfilling_pg->get_object_size()) * pending_peers.size());
     used_recovery_threads++;
   }
 }
@@ -178,7 +177,7 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     dmc::ReqParams null_req_params;
     // real ceph uses message payload size as the cost, we use object size
     queue->add_request_time(std::move(oc), CLIENT_ID_USER, null_req_params,
-                            sg4::Engine::get_clock(),
+                            get_mock_epoch(),
                             clamp_cost(pg->get_object_size()));
     break;
   }
@@ -201,7 +200,7 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     // for some reason real ceph uses the payload size again as the cost, which
     // is zero. The clamp will define the cost
     queue->add_request_time(std::move(oc), CLIENT_ID_USER, null_req_params,
-                            sg4::Engine::get_clock(), clamp_cost(0));
+                            get_mock_epoch(), clamp_cost(0));
     break;
   }
 
@@ -609,10 +608,10 @@ std::optional<double> Osd::make_progress() {
   maybe_schedule_object_backfill();
   // clean mClock queue using patched maintenance method every 60s
   if (sg4::Engine::get_clock() - last_clean_time > 60) {
-    queue->maintenance(sg4::Engine::get_clock());
+    queue->maintenance(get_mock_epoch());
     last_clean_time = sg4::Engine::get_clock();
   }
-  auto result = queue->pull_request(sg4::Engine::get_clock());
+  auto result = queue->pull_request(get_mock_epoch());
   if (result.is_retn()) {
     auto &retn = result.get_retn();
     OpContext *oc = retn.request.release();

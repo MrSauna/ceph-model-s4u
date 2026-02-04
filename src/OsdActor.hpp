@@ -62,6 +62,7 @@ class Osd : public CephActor {
 
   // Helper to init QoS
   void init_scheduler(double iops, SchedulerProfile profile);
+  double get_mock_epoch() { return 1770240931 + sg4::Engine::get_clock(); }
   double clamp_cost(double size) { return std::max(base_cost, size); }
 
   void send_op(Op *op);
