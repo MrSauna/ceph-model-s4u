@@ -5,25 +5,41 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import json
 
+try:
+    from tools.sim_analysis import SimulationRun
+except ImportError:
+    # Handle case where tools is not in pythonpath (e.g. running from root)
+    import sys
+    sys.path.append(os.getcwd())
+    from tools.sim_analysis import SimulationRun
+
 
 if "snakemake" not in globals():
     mon_metrics_file = "results/vscode/mon_metrics.csv"
     net_metrics_file = "results/vscode/net_metrics.csv"
     client_metrics_file = "results/vscode/client_metrics.csv"
     output_dir = "results/vscode/figures"
+    git_hash = "unknown"
 else:
     mon_metrics_file = snakemake.input.mon_metrics
     net_metrics_file = snakemake.input.net_metrics
     client_metrics_file = snakemake.input.client_metrics
     output_dir = snakemake.params.output_dir
+    git_hash = snakemake.params.get("git_hash", "unknown")
 
 
-def viz_mon_metrics(mon_metrics_df):
-    # try/except block removed as reading happens in main
+def add_git_hash(fig):
+    fig.text(0.99, 0.01, f'Commit: {git_hash}', 
+             ha='right', va='bottom', 
+             fontsize=8, color='gray', alpha=0.5)
+
+
+def viz_mon_metrics(sim_run):
+    mon_metrics_df = sim_run.mon_df
     if mon_metrics_df is None:
         return
 
-    plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(10, 6))
     
     # Plot all columns except 'time'
     for column in mon_metrics_df.columns:
@@ -36,6 +52,7 @@ def viz_mon_metrics(mon_metrics_df):
     plt.title("PG States Over Time")
     plt.legend()
     plt.grid(True)
+    add_git_hash(fig)
     
     output_path = os.path.join(output_dir, "pgmap_plot.svg")
     plt.savefig(output_path)
@@ -43,81 +60,54 @@ def viz_mon_metrics(mon_metrics_df):
     plt.close()
 
 
-def viz_client_metrics(client_metrics_df):
-    if client_metrics_df.empty:
+def viz_client_metrics(sim_run):
+    throughput = sim_run.get_client_throughput()
+    
+    if throughput.empty:
         print("Client metrics empty, creating empty plot")
-        plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(10, 6))
         plt.xlabel("Time (s)")
         plt.ylabel("Throughput (MiB/s)")
         plt.title("Client Throughput (No Data)")
         plt.grid(True)
+        add_git_hash(fig)
         output_path = os.path.join(output_dir, "client_throughput.svg")
         plt.savefig(output_path)
         plt.close()
         return
 
-    # Sort by time
-    client_metrics_df = client_metrics_df.sort_values(by="time")
+    fig = plt.figure(figsize=(10, 6))
+    plot_index = throughput.index
     
-    # Convert bytes to MiB
-    client_metrics_df["size_mib"] = client_metrics_df["op_size"] / (1024 * 1024)
+    window_size = 10 # This is hardcoded in sim_analysis too, maybe should expose it?
+
+    if "read" in throughput.columns:
+        plt.plot(plot_index, throughput["read"], label=f"Read ({window_size}s avg)", linestyle='-', linewidth=1.5)
     
-    # Bin by second (floor) and calculate rolling average
-    # We use a 1s resample periodicity, but smooth over a window (e.g., 5s)
-    
-    # Create a datetime-like index for resampling
-    client_metrics_df["time_pd"] = pd.to_timedelta(client_metrics_df["time"], unit="s")
-    client_metrics_df = client_metrics_df.set_index("time_pd")
-    
-    # Group by op_type and resample to 1s, summing size_mib
-    # We unstack 'op_type' to get columns for 'read', 'write'
-    grouped = client_metrics_df.groupby("op_type")["size_mib"].resample("1s").sum().unstack(level=0, fill_value=0)
-    
-    # Apply rolling mean to smooth out the "quantization" effect of large ops
-    # Window size of 5s - 10s is usually good for readability
-    window_size = 10
-    smoothed = grouped.rolling(window=window_size, min_periods=1).mean()
-    
-    # Convert index back to seconds (float) for plotting
-    plot_index = smoothed.index.total_seconds()
-    
-    plt.figure(figsize=(10, 6))
-    
-    if "read" in smoothed.columns:
-        plt.plot(plot_index, smoothed["read"], label=f"Read ({window_size}s avg)", linestyle='-', linewidth=1.5)
-    
-    if "write" in smoothed.columns:
-        plt.plot(plot_index, smoothed["write"], label=f"Write ({window_size}s avg)", linestyle='--', linewidth=1.5)
+    if "write" in throughput.columns:
+        plt.plot(plot_index, throughput["write"], label=f"Write ({window_size}s avg)", linestyle='--', linewidth=1.5)
 
     plt.xlabel("Time (s)")
     plt.ylabel("Throughput (MiB/s)")
     plt.title(f"Client Throughput Over Time (Smoothed {window_size}s)")
     plt.legend()
     plt.grid(True)
+    add_git_hash(fig)
     
     output_path = os.path.join(output_dir, "client_throughput.svg")
     plt.savefig(output_path)
     print(f"Saved plot to {output_path}")
     plt.close()
 
-def viz_net_metrics(net_metrics_df):
-    if net_metrics_df.empty:
+def viz_net_metrics(sim_run):
+    net_df = sim_run.net_df
+    if net_df is None or net_df.empty:
         print("Net metrics empty, skipping viz_net_metrics")
         return
 
-    # Infer topology path relative to net_metrics_file or default
-    metrics_dir = os.path.dirname(net_metrics_file)
-    topo_path = os.path.join(metrics_dir, "topology.json")
-
-    if not os.path.exists(topo_path):
-        print(f"Topology file not found: {topo_path}")
-        return
-
-    try:
-        with open(topo_path, "r") as f:
-            topology = json.load(f)
-    except Exception as e:
-        print(f"Error loading topology: {e}")
+    topology = sim_run.topology
+    if not topology:
+        print(f"Topology not loaded")
         return
 
     # 1. Parse Topology and calculate Tree Layout
@@ -174,7 +164,7 @@ def viz_net_metrics(net_metrics_df):
                 actor_names.append(clean_name)
 
             formatted_actors = [f"({n})" for n in actor_names]
-            name_str += "\n" + "\n".join(formatted_actors)
+            name_str += "\\n" + "\\n".join(formatted_actors)
             
         if node_id != "_world_":
             node_names[node_id] = name_str
@@ -214,12 +204,10 @@ def viz_net_metrics(net_metrics_df):
 
     # 2. Process Metrics
     # Calculate average utilization for each link
-    # avg_val = mean(value)
-    
-    avg_usage = net_metrics_df.groupby("resource_name")["value"].mean()
+    avg_usage = sim_run.get_average_link_utilization()
 
     # 3. Plot
-    plt.figure(figsize=(14, 10))
+    fig = plt.figure(figsize=(14, 10))
     ax = plt.gca()
 
     # Draw Edges
@@ -248,7 +236,7 @@ def viz_net_metrics(net_metrics_df):
         util_pct = max(up_pct, down_pct)
         
         bw_str = format_bw(bw)
-        label_text = f"{bw_str}\nU: {up_pct:.0f}% / D: {down_pct:.0f}%"
+        label_text = f"{bw_str}\\nU: {up_pct:.0f}% / D: {down_pct:.0f}%"
         
         # Style
         color = "#aaaaaa" # default gray
@@ -292,6 +280,7 @@ def viz_net_metrics(net_metrics_df):
 
     plt.title("Network Topology & Link Utilization")
     plt.axis('off')
+    add_git_hash(fig)
     
     # Save
     output_path = os.path.join(output_dir, "network_topology.svg")
@@ -299,104 +288,44 @@ def viz_net_metrics(net_metrics_df):
     print(f"Saved plot to {output_path}")
     plt.close()
 
-def viz_star_link_utilization(net_metrics_df):
-    if net_metrics_df.empty:
-        print("Net metrics empty, skipping viz_star_link_utilization")
-        return
-
-    # Infer topology path relative to net_metrics_file or default
-    metrics_dir = os.path.dirname(net_metrics_file)
-    topo_path = os.path.join(metrics_dir, "topology.json")
-
-    if not os.path.exists(topo_path):
-        print(f"Topology file not found: {topo_path}")
-        return
-
-    try:
-        with open(topo_path, "r") as f:
-            topology = json.load(f)
-    except Exception as e:
-        print(f"Error loading topology: {e}")
-        return
-
-    # Find star node and its children (data centers)
-    # The topology structure is usually _world_ -> star -> dc-X
-    
-    star_node = None
-    
-    # Helper to find node by id recursively
-    def find_node(root, target_id):
-        if root.get("id") == target_id:
-            return root
-        for child in root.get("children", []):
-            res = find_node(child, target_id)
-            if res:
-                return res
-        return None
-
-    star_node = find_node(topology, "star")
-    
-    if not star_node:
-        print("Star node not found in topology, skipping star link viz")
-        return
-        
-    # Identify links to monitor
-    # child["uplink"] is the link name. child["bandwidth"] is the link capacity (bits/s)
-    links = [] # (link_name, bandwidth, display_name)
-    
-    for child in star_node.get("children", []):
-        uplink = child.get("uplink")
-        bw = child.get("bandwidth", 0)
-        name = child.get("name", child.get("id"))
-        
-        if uplink and bw > 0:
-            links.append((uplink, bw, name))
-            
+def viz_star_link_utilization(sim_run):
+    links = sim_run.get_star_links()
     if not links:
-        print("No star links found")
+        print("No star links found or topology missing")
         return
 
     # If exactly two data centers (links) are connected, only draw the first one.
     if len(links) == 2:
         print("Exactly 2 star links found, visualizing only the first one.")
         links = links[:1]
+        
+    # Get all resource names we care about
+    resource_names = []
+    for link_name, _, _ in links:
+        resource_names.append(f"{link_name}_UP")
+        resource_names.append(f"{link_name}_DOWN")
 
-    plt.figure(figsize=(12, 8))
+    data = sim_run.get_link_utilization_over_time(resource_names)
     
-    # Prepare data for plotting
-    # net_metrics_df has columns: timestamp, resource_type, resource_name, value
-    # value is in bytes/s (utilization)
+    if data.empty:
+        print("No metrics found for star links")
+        return
+
+    fig = plt.figure(figsize=(12, 8))
     
-    # Sort by time
-    df = net_metrics_df.sort_values(by="timestamp")
-    time_vals = df["timestamp"].unique()
-    time_vals.sort()
+    time_vals = data.index
     
-    has_data = False
-    
-    # Define colors/linestyles for clarity
-    # We might have UP and DOWN for each link
+    # Needs reindexing explicitly if we want to ensure continuity, but pandas plot usually handles line gaps okay-ish
+    # or we can reindex like before if strictly needed.
     
     for link_name, bw_bps, display_name in links:
-        # Filter for this link
-        # Look for _UP and _DOWN suffixes
-        
         for direction in ["UP", "DOWN"]:
             resource_name = f"{link_name}_{direction}"
-            link_data = df[df["resource_name"] == resource_name]
-            
-            if link_data.empty:
+            if resource_name not in data.columns:
                 continue
                 
-            has_data = True
-            
-            # Reindex to ensure we have values for all timestamps (fill missing with 0)
-            # Use pivot or set_index to align with time_vals
-            s = link_data.set_index("timestamp")["value"]
-            s = s.reindex(time_vals, fill_value=0)
-            
+            s = data[resource_name]
             # Convert values (bytes/s) to utilization % of bandwidth (bits/s)
-            # value * 8 / bw_bps * 100
             utilization = (s * 8.0 / bw_bps) * 100.0
             
             label = f"{display_name} {direction}"
@@ -404,16 +333,12 @@ def viz_star_link_utilization(net_metrics_df):
             
             plt.plot(time_vals, utilization, label=label, linestyle=linestyle)
 
-    if not has_data:
-        print("No metrics found for star links")
-        plt.close()
-        return
-
     plt.xlabel("Time (s)")
     plt.ylabel("Bandwidth Utilization (%)")
     plt.title("Star Link Utilization Over Time")
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True)
+    add_git_hash(fig)
     plt.tight_layout()
     
     output_path = os.path.join(output_dir, "star_link_utilization.svg")
@@ -422,17 +347,25 @@ def viz_star_link_utilization(net_metrics_df):
     plt.close()
 
 def main():
-    mon_metrics_df = pd.read_csv(mon_metrics_file)
-    client_metrics_df = pd.read_csv(client_metrics_file)
-    net_metrics_df = pd.read_csv(net_metrics_file)
-
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
+        
+    # infer topology path relative to net_metrics_file if possible
+    # logic copied from old viz_net_metrics but applied centrally
+    metrics_dir = os.path.dirname(net_metrics_file)
+    topo_path = os.path.join(metrics_dir, "topology.json")
 
-    viz_mon_metrics(mon_metrics_df)
-    viz_client_metrics(client_metrics_df)
-    viz_net_metrics(net_metrics_df)
-    viz_star_link_utilization(net_metrics_df)
+    sim_run = SimulationRun(
+        mon_path=mon_metrics_file,
+        net_path=net_metrics_file,
+        client_path=client_metrics_file,
+        topology_path=topo_path
+    )
+
+    viz_mon_metrics(sim_run)
+    viz_client_metrics(sim_run)
+    viz_net_metrics(sim_run)
+    viz_star_link_utilization(sim_run)
 
 if __name__ == "__main__":
     main()
