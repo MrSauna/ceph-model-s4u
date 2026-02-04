@@ -29,7 +29,7 @@ else:
 
 
 def add_git_hash(fig):
-    fig.text(0.99, 0.01, f'Commit: {git_hash}', 
+    fig.text(0.99, 0.01, f'commit: {git_hash}', 
              ha='right', va='bottom', 
              fontsize=8, color='gray', alpha=0.5)
 

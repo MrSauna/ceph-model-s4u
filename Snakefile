@@ -70,35 +70,39 @@ rule scenario:
     output:
         done = "results/{scenario}/done",
     input:
-        comparison = "results/{scenario}/figures/client_throughput.svg",
+        case_done = lambda w: expand("results/{case}/done", case=config["scenarios"][w.scenario]),
+        client_throughput = "results/{scenario}/figures/client_throughput.svg",
+        latency_comparison = "results/{scenario}/figures/latency_comparison.svg",
+        recovery_progress = "results/{scenario}/figures/recovery_progress.svg",
     shell:
         """
         touch {output.done}
         """
 
-rule scenario_viz:
+rule scenario_vizualize:
     input:
+        done = lambda w: expand("results/{case}/done", case=config["scenarios"][w.scenario]),
         client_metrics = lambda w: expand("results/{case}/client_metrics.csv", case=config["scenarios"][w.scenario]),
         net_metrics = lambda w: expand("results/{case}/net_metrics.csv", case=config["scenarios"][w.scenario]),
         mon_metrics = lambda w: expand("results/{case}/mon_metrics.csv", case=config["scenarios"][w.scenario]),
-        script = "tools/compare_results.py",
+        script = "tools/visualize_scenario.py",
     output:
-        comparison = "results/{scenario}/figures/client_throughput.svg",
+        client_throughput = "results/{scenario}/figures/client_throughput.svg",
+        latency_comparison = "results/{scenario}/figures/latency_comparison.svg",
+        recovery_progress = "results/{scenario}/figures/recovery_progress.svg",
     params:
         git_hash = GIT_HASH,
         output_dir = "results/{scenario}/figures",
     script:
-        "tools/compare_results.py"
-
+        "tools/visualize_scenario.py"
 
 rule case:
     output:
         done = "results/{case}/done",
     input:
         client_throughput = "results/{case}/figures/client_throughput.svg",
-        pgmap_plot = "results/{case}/figures/pgmap_plot.svg",
-        network_topology = "results/{case}/figures/network_topology.svg",
-        metadata = "results/{case}/metadata.json",
+        latency_comparison = "results/{case}/figures/pgmap_plot.svg",
+        recovery_progress = "results/{case}/figures/network_topology.svg",
     shell:
         """
         touch {output.done}
@@ -117,11 +121,12 @@ rule metadata:
         """
 
 
-rule viz_pgmap:
+rule case_viz:
     input:
         net_metrics = "results/{case}/net_metrics.csv",
         mon_metrics = "results/{case}/mon_metrics.csv",
         client_metrics = "results/{case}/client_metrics.csv",
+        script = "tools/visualize_case.py",
     output:
         client_throughput = "results/{case}/figures/client_throughput.svg",
         pgmap_plot = "results/{case}/figures/pgmap_plot.svg",
@@ -131,7 +136,7 @@ rule viz_pgmap:
         output_dir = "results/{case}/figures",
         git_hash = GIT_HASH,
     script: 
-        "tools/visualize.py"
+        "tools/visualize_case.py"
 
 
 rule run_sim:
@@ -151,6 +156,7 @@ rule run_sim:
         start_up_delay = lambda w: config["cases"][w.case].get("start_up_delay", 0),
         shut_down_delay = lambda w: config["cases"][w.case].get("shut_down_delay", 0),
         profile = lambda w: config["cases"][w.case].get("profile", "balanced"),
+        disk_write_bandwidth = lambda w: config["cases"][w.case].get("disk_write_bandwidth", 209715200),
         client_read_queue_depth = lambda w: config["cases"][w.case].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["cases"][w.case].get("client_write_queue_depth", 1),
         dc_shape_csv = lambda w: ",".join(
@@ -174,7 +180,7 @@ rule run_sim:
             "--pg-objects={params.pg_objects}" \
             "--object-size={params.object_size}" \
             "--pool-id=1" \
-            "--disk-write-bandwidth=209715200" \
+            "--disk-write-bandwidth={params.disk_write_bandwidth}" \
             "--dc-clients={params.clients_num}" \
             "--client-read-queue-depth={params.client_read_queue_depth}" \
             "--client-write-queue-depth={params.client_write_queue_depth}" \

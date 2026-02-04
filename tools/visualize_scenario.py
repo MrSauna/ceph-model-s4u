@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 import sys
+import textwrap
 
 # Ensure tools is in path
 try:
@@ -22,13 +23,20 @@ client_metrics_files = snakemake.input.client_metrics
 mon_metrics_files = snakemake.input.mon_metrics
 net_metrics_files = snakemake.input.net_metrics
 output_dir = snakemake.params.output_dir
+git_hash = snakemake.params.get("git_hash", "unknown")
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
+def add_git_hash(fig):
+    fig.text(0.99, 0.01, f'commit: {git_hash}', 
+             ha='right', va='bottom', 
+             fontsize=8, color='gray', alpha=0.5)
+
 def main():
-    runs = []
-    
+    raw_labels = []
+    run_objects = []
+
     # Zip together the file lists
     # We assume they are strictly ordered and correspond to each other
     for c_file, m_file, n_file in zip(client_metrics_files, mon_metrics_files, net_metrics_files):
@@ -48,7 +56,38 @@ def main():
             client_path=c_file,
             topology_path=topo_file
         )
-        runs.append((label, run))
+        raw_labels.append(label)
+        run_objects.append(run)
+
+    # Shorten labels by removing common prefix
+    if raw_labels:
+        # Pass 1: Global common prefix
+        prefix = os.path.commonprefix(raw_labels)
+        if len(prefix) > 4:
+             raw_labels = [l[len(prefix):].lstrip(" _-") for l in raw_labels]
+        
+        # Pass 2: Common prefix of non-empty labels (e.g. 'clients_')
+        non_empty = [l for l in raw_labels if l]
+        if non_empty:
+             prefix2 = os.path.commonprefix(non_empty)
+             # Only strip if it covers a significant portion or is a specific marker
+             if len(prefix2) > 2:
+                 raw_labels = [l[len(prefix2):].lstrip(" _-") if l else l for l in raw_labels]
+                 
+        # Finalize
+        final_labels = []
+        for l in raw_labels:
+            if not l:
+                l = "baseline"
+            final_labels.append(l)
+        raw_labels = final_labels
+
+    # Combine with runs and wrap text
+    runs = []
+    for label, run in zip(raw_labels, run_objects):
+        # Wrap label
+        wrapped_label = "\n".join(textwrap.wrap(label, width=12, break_long_words=False))
+        runs.append((wrapped_label, run))
 
     # Plot 1: Compare Total Throughput
     fig = plt.figure(figsize=(12, 6))
@@ -76,6 +115,7 @@ def main():
     plt.title("Client Throughput Comparison")
     plt.legend()
     plt.grid(True)
+    add_git_hash(fig)
     
     output_path = os.path.join(output_dir, "client_throughput.svg")
     plt.savefig(output_path)
@@ -178,6 +218,7 @@ def main():
         # Or distinct locations.
         ax1.legend(loc='upper left')
         ax2.legend(loc='upper right')
+        add_git_hash(fig)
         
         output_path_rec = os.path.join(output_dir, "recovery_progress.svg")
         plt.savefig(output_path_rec)
@@ -215,16 +256,26 @@ def main():
         
         df_lat.plot(kind='bar', ax=ax, rot=0)
         
-        plt.xlabel("Scenario")
+        for p in ax.patches:
+            height = p.get_height()
+            if height > 0:
+                ax.annotate(f'{height:.2f}', 
+                            (p.get_x() + p.get_width() / 2., height), 
+                            ha='center', va='bottom', 
+                            fontsize=9, xytext=(0, 2), 
+                            textcoords='offset points')
+
+        plt.xlabel("Scenarios")
         plt.ylabel("Latency (s)")
         plt.title("Client Latency Statistics")
         plt.grid(True, axis='y')
         plt.legend(title="Metric")
         
         # Rotate x labels if too many or long
-        plt.xticks(rotation=45, ha='right')
+        plt.xticks(rotation=0, ha='center')
         
         plt.tight_layout()
+        add_git_hash(fig)
         
         output_path_lat = os.path.join(output_dir, "latency_comparison.svg")
         plt.savefig(output_path_lat)
