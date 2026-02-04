@@ -19,6 +19,9 @@ try:
         ["git", "rev-parse", "--short", "HEAD"], 
         cwd=workflow.basedir  # Ensures you run git in the workflow directory
     ).decode("utf-8").strip()
+    
+    if subprocess.check_output(["git", "status", "--porcelain"], cwd=workflow.basedir):
+        GIT_HASH += "-dirty"
 except subprocess.CalledProcessError:
     GIT_HASH = "unknown"
 
@@ -53,6 +56,9 @@ def get_scenario_inputs(wildcards):
     return expand("results/{case}/done", case=cases)
 
 
+wildcard_constraints:
+    case = "|".join(CASES),
+    scenario = "|".join(SCENARIOS)
 
 # Rules
 rule all:
@@ -61,8 +67,6 @@ rule all:
         expand("results/{scenario}/done", scenario=SCENARIOS),
 
 rule scenario:
-    input:
-        results = "results/{scenario}/done",
     output:
         done = "results/{scenario}/done",
     shell:
@@ -78,6 +82,8 @@ rule scenario_viz:
         script = "tools/compare_results.py",
     output:
         comparison = "results/{scenario}/comparison.svg",
+    params:
+        git_hash = GIT_HASH,
     script:
         "tools/compare_results.py"
 
@@ -120,6 +126,7 @@ rule viz_pgmap:
 
     params:
         output_dir = "results/{case}/figures",
+        git_hash = GIT_HASH,
     script: 
         "tools/visualize.py"
 
@@ -204,22 +211,22 @@ rule build_maps:
         mon_bootstrap_script = config["mon_bootstrap_script"],
         ceph_image = config["ceph_image"],
         out_dir = "results/{case}/{i}",
-        osd_num = lambda w: config["experiments"][w.case]["osd_num"],
-        pg_num = lambda w: config["experiments"][w.case]["pg_num"],
+        osd_num = lambda w: config["cases"][w.case]["osd_num"],
+        pg_num = lambda w: config["cases"][w.case]["pg_num"],
     script:
         "tools/gen_osdmap.py"
 
 
 rule gen_crushmap:
     input:
-        template = lambda w: config["experiments"][w.case]["template"],
+        template = lambda w: config["cases"][w.case]["template"],
         osds_template = "inputs/templates/osds.j2",
         buckets_template = "inputs/templates/buckets.j2",
     output:
         crushmap_txt = "results/{case}/{i}/crushmap.txt",
     params:
-        dc_shape = lambda w: config["experiments"][w.case]["crush_spec_params"][int(w.i)]["dc_shape"],
-        dc_weight = lambda w: config["experiments"][w.case]["crush_spec_params"][int(w.i)]["dc_weight"],
-        osd_num = lambda w: config["experiments"][w.case]["osd_num"],
+        dc_shape = lambda w: config["cases"][w.case]["crush_spec_params"][int(w.i)]["dc_shape"],
+        dc_weight = lambda w: config["cases"][w.case]["crush_spec_params"][int(w.i)]["dc_weight"],
+        osd_num = lambda w: config["cases"][w.case]["osd_num"],
     script:
         "tools/gen_crushmap.py"
