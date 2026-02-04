@@ -11,3 +11,4 @@ maps/
 results/
 .cache/
 perfdumps/
+**/__pycache__/
