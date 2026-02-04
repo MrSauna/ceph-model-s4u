@@ -29,7 +29,7 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 0
     client_read_queue_depth: 0
-    client_write_queue_depth: 32
+    client_write_queue_depth: 4
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 1000
@@ -49,7 +49,7 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 32
+    client_write_queue_depth: 4
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 1000
@@ -69,7 +69,7 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 32
+    client_write_queue_depth: 4
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 1000
@@ -89,7 +89,7 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 32
+    client_write_queue_depth: 4
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 1000

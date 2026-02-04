@@ -13,27 +13,41 @@ except ImportError:
     sys.path.append(os.getcwd())
     from tools.sim_analysis import SimulationRun
 
-if "snakemake" not in globals():
-    # Standalone mode - mostly for testing or if manually invoked
-    # This might need argument parsing if used manually, but for now we assume snakemake
-    print("This script is intended to be run via Snakemake.")
-    sys.exit(1)
-    
-client_metrics_files = snakemake.input.client_metrics
-mon_metrics_files = snakemake.input.mon_metrics
-net_metrics_files = snakemake.input.net_metrics
-output_dir = snakemake.params.output_dir
-git_hash = snakemake.params.get("git_hash", "unknown")
-
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir, exist_ok=True)
-
-def add_git_hash(fig):
-    fig.text(0.99, 0.01, f'commit: {git_hash}', 
-             ha='right', va='bottom', 
-             fontsize=8, color='gray', alpha=0.5)
 
 def main():
+    if "snakemake" in globals():
+        client_metrics_files = snakemake.input.client_metrics
+        mon_metrics_files = snakemake.input.mon_metrics
+        net_metrics_files = snakemake.input.net_metrics
+        output_dir = snakemake.params.output_dir
+        git_hash = snakemake.params.get("git_hash", "unknown")
+    else:
+        # Fallback for manual testing (if set by wrapper) or sys.argv could be added here
+        try:
+             # Check if we have manually injected variables in the module scope (from wrapper)
+             # This is a bit hacky but keeps the wrapper working if we update it
+             client_metrics_files = globals().get("client_metrics_files")
+             mon_metrics_files = globals().get("mon_metrics_files")
+             net_metrics_files = globals().get("net_metrics_files")
+             output_dir = globals().get("output_dir")
+             git_hash = globals().get("git_hash", "unknown")
+             
+             if not (client_metrics_files and mon_metrics_files and net_metrics_files and output_dir):
+                 raise ValueError("Missing inputs")
+                 
+        except (NameError, ValueError):
+            print("This script is intended to be run via Snakemake or with proper globals injected.")
+            sys.exit(1)
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+        
+    # Helper for git hash
+    def add_git_hash(fig):
+        fig.text(0.99, 0.01, f'commit: {git_hash}', 
+                 ha='right', va='bottom', 
+                 fontsize=8, color='gray', alpha=0.5)
+
     raw_labels = []
     run_objects = []
 
@@ -123,14 +137,18 @@ def main():
     plt.close()
 
     # Plot 2: Recovery Detailed Progress
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax2 = ax1.twinx()
+    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(12, 10), sharex=True,
+                                   gridspec_kw={'height_ratios': [3, 1]})
     
     # Calculate global recovery window
     global_start = float('inf')
     global_end = float('-inf')
     has_recovery_data = False
     
+    # Helper to collect data first so we can calculate offsets
+    recovery_series = []
+    max_concurrency = 0
+
     for label, run in runs:
         start_time, end_time = run.get_recovery_times()
         if start_time is None:
@@ -138,15 +156,12 @@ def main():
             
         has_recovery_data = True
         global_start = min(global_start, start_time)
-        # If end_time is None (ongoing), distinct logic might be needed, 
-        # but get_recovery_times returns max time if not finished.
         if end_time is not None:
              global_end = max(global_end, end_time)
 
         # Prepare Data
         mon_df = run.mon_df
-        # Filter for relevant range (optional, but good for plotting)
-        # We assume monotonic time
+        # Filter for relevant range 
         df_rec = mon_df[mon_df["time"] >= start_time].copy()
         
         if df_rec.empty:
@@ -155,69 +170,75 @@ def main():
         # Calculate Backlog
         df_rec["backlog"] = df_rec["backfill"] + df_rec["backfill_wait"]
         
-        # Plot Primary (Backlog) on Left Axis
-        # We need to maintain color cycle manually or retrieve it
-        # Since we are iterating, we can trust matplotlib's cycle if we plot on same ax, 
-        # but here we are plotting on two axes.
-        # Let's verify throughput plot order or just rely on default cycle order matching loop order
+        # Track max concurrency for offset calculation
+        if not df_rec["backfill"].empty:
+             max_concurrency = max(max_concurrency, df_rec["backfill"].max())
         
-        # Plot Backlog
-        l1, = ax1.plot(df_rec["time"], df_rec["backlog"], label=f"{label} (Backlog)", linewidth=1.5)
-        color = l1.get_color()
-        
-        # Plot Active Backfill on Right Axis (Stairs)
-        # Match color to the backlog line
-        ax2.plot(df_rec["time"], df_rec["backfill"], label=f"{label} (Active)", 
-                 color=color, linestyle=':', drawstyle='steps-post', linewidth=1.5, alpha=0.8)
+        recovery_series.append({
+            "label": label,
+            "df": df_rec
+        })
 
     if has_recovery_data:
+        # Determine offset for seismic plot
+        # Add a bit of padding, e.g., 20% or at least 1
+        offset_step = max(1, max_concurrency * 1.2)
+        
+        for i, series in enumerate(recovery_series):
+            label = series["label"]
+            df_rec = series["df"]
+            
+            # Plot Backlog on Top Axis (ax1)
+            l1, = ax1.plot(df_rec["time"], df_rec["backlog"], label=label, linewidth=1.5)
+            color = l1.get_color()
+            
+            # Plot Active Backfill on Bottom Axis (ax2)
+            # Offset = i * offset_step
+            base_y = i * offset_step
+            # We want the baseline to be at base_y, and values adding to it
+            # But "seismic" usually means centered or just displaced. 
+            # The user asked for "starting from different height".
+            # Let's plot (y + base_y)
+            
+            y_values = df_rec["backfill"] + base_y
+            
+            # Add a baseline for reference? Or just the trace?
+            # User said "discrete behavior... quantized to integers". 
+            # Step plot is good.
+            ax2.plot(df_rec["time"], y_values, label=label, 
+                     color=color, linestyle='-', drawstyle='steps-post', linewidth=1.5)
+            
+            # Maybe add a faint zero line for this series?
+            ax2.axhline(y=base_y, color=color, linestyle=':', alpha=0.3, linewidth=0.5)
+
         # Set X-Axis Limits
-        # Add a small buffer?
         margin = (global_end - global_start) * 0.05
         ax1.set_xlim(global_start - margin, global_end + margin)
+        # ax2 shares x, so it will update automatically
         
-        ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Total Backlog (PGs)")
-        ax2.set_ylabel("Active Backfill (PGs)")
-        
-        # Scale ax2 so that the max value is at 10% of height
-        # Get max data value plotted on ax2
-        # We didn't track it, so let's get it from the lines if possible, or recalculate
-        max_backfill = 0
-        for line in ax2.get_lines():
-             y_data = line.get_ydata()
-             if len(y_data) > 0:
-                 max_backfill = max(max_backfill, max(y_data))
-        
-        if max_backfill > 0:
-            ax2.set_ylim(0, max_backfill * 10)
-        
-        # Scale ax1 so that 0 is at 10% of height (to avoid overlap with ax2)
-        # 0 = bottom + 0.1 * (top - bottom)
-        # => -bottom = 0.1 * top - 0.1 * bottom
-        # => -0.9 * bottom = 0.1 * top
-        # => bottom = -top / 9
-        
-        max_backlog = 0
-        for line in ax1.get_lines():
-             y_data = line.get_ydata()
-             if len(y_data) > 0:
-                 max_backlog = max(max_backlog, max(y_data))
-        
-        if max_backlog > 0:
-            # Add a bit of top margin (e.g. 5%)
-            top_limit = max_backlog * 1.05
-            bottom_limit = -top_limit / 9.0
-            ax1.set_ylim(bottom_limit, top_limit)
-        
-        ax1.set_title("Recovery Progress: Backlog vs Active Backfill")
+        ax1.set_title("Recovery Progress: Total Backlog")
         ax1.grid(True)
+        ax1.legend(loc='upper right')
         
-        # Combine legends?
-        # It's tricky with dual axes. Let's just put them separately or let user figure it out by color.
-        # Or distinct locations.
-        ax1.legend(loc='upper left')
-        ax2.legend(loc='upper right')
+        ax2.set_xlabel("Time (s)")
+        ax2.set_ylabel("Active Backfill (Stacked)")
+        ax2.set_title("Recovery Progress: Active Backfill (Offset per Scenario)")
+        # Remove Y ticks on the second plot as they are arbitrary due to offset
+        ax2.set_yticks([])
+        
+        # Maybe add text labels for each series on the left or right of the plot?
+        for i, series in enumerate(recovery_series):
+             label = series["label"]
+             y_pos = i * offset_step + (offset_step / 2) # approximate center of the band
+             # Or just at the base?
+             y_pos = i * offset_step
+             # Place label at the start time?
+             # Let's just rely on the legend for color matching, 
+             # OR put text at the far right.
+             ax2.text(global_end + margin, y_pos, label, va='bottom', ha='right', 
+                      fontsize=8, color='black', alpha=0.7)
+
         add_git_hash(fig)
         
         output_path_rec = os.path.join(output_dir, "recovery_progress.svg")

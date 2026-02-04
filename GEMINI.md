@@ -24,9 +24,7 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
 
 ```
 ./build/ceph-sim \
-    --dc-shape=2:2:1 \
-    --dc-speed=10:10:10 \
-    --dc-shape=2:2:1 \
+    --dc-shape=1:4:1 \
     --dc-speed=10:10:10 \
     --pgdump=results/small_cluster/0/pgdump.txt \
     --pgdump=results/small_cluster/1/pgdump.txt \
@@ -34,8 +32,7 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
     --pg-objects=1000 \
     --object-size=4194304 \
     --pool-id=1 \
-    --disk-read-bandwidth=125829120 \
-    --disk-write-bandwidth=83886080 \
+    --disk-write-bandwidth=209715200 \
     --dc-clients=1 \
     --client-read-queue-depth=4 \
     --client-write-queue-depth=4
