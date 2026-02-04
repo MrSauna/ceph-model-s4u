@@ -607,6 +607,11 @@ void Osd::opcontext_dispatch(OpContext *context) {
 std::optional<double> Osd::make_progress() {
   maybe_reserve_backfill();
   maybe_schedule_object_backfill();
+  // clean mClock queue using patched maintenance method every 60s
+  if (sg4::Engine::get_clock() - last_clean_time > 60) {
+    queue->maintenance(sg4::Engine::get_clock());
+    last_clean_time = sg4::Engine::get_clock();
+  }
   auto result = queue->pull_request(sg4::Engine::get_clock());
   if (result.is_retn()) {
     auto &retn = result.get_retn();
@@ -676,9 +681,10 @@ void Osd::init_scheduler(double iops, SchedulerProfile profile) {
     return nullptr;
   };
 
+  // client lookup func, idle age, erase age, check time, at limit behavior
   queue = std::make_unique<Queue>(
-      client_info_f, std::chrono::seconds(100), std::chrono::seconds(200),
-      std::chrono::seconds(50),
+      client_info_f, std::chrono::seconds(300), std::chrono::seconds(600),
+      std::chrono::seconds(60),
       dmc::AtLimit::Wait); // only second time arg means anything for the
                            // simulation (idle age)
 }

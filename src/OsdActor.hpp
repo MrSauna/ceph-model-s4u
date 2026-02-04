@@ -54,6 +54,7 @@ class Osd : public CephActor {
   std::unique_ptr<dmc::ClientInfo> backfill_info;
 
   std::unique_ptr<Queue> queue;
+  double last_clean_time = 0.0;
 
   // QoS Clients
   static constexpr ClientId CLIENT_ID_USER = 1;

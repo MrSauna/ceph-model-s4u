@@ -1,0 +1,78 @@
+From a382a2d760b9b3fd3d2c5c2f385a312bbe4b6d66 Mon Sep 17 00:00:00 2001
+From: Eemeli <eemelilari@gmail.com>
+Date: Wed, 4 Feb 2026 22:21:18 +0200
+Subject: [PATCH] feat: enable cleaning using provided time
+
+---
+ src/dmclock/src/dmclock_server.h | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/src/dmclock/src/dmclock_server.h b/src/dmclock/src/dmclock_server.h
+index fbbdc2b3348..60f596a833d 100644
+--- a/src/dmclock/src/dmclock_server.h
++++ b/src/dmclock/src/dmclock_server.h
+@@ -300,7 +300,7 @@ namespace crimson {
+     protected:
+ 
+       using Clock = std::chrono::steady_clock;
+-      using TimePoint = Clock::time_point;
++  using TimePoint = Time;
+       using Duration = std::chrono::milliseconds;
+       using MarkPoint = std::pair<TimePoint,Counter>;
+ 
+@@ -539,6 +539,12 @@ namespace crimson {
+ 	}
+       };
+ 
++  // expose internal maintenance for manual simulation driving
++  void
++  maintenance(Time now)
++  {
++    do_clean(now);
++  }
+ 
+       // a function that can be called to look up client information
+       using ClientInfoFunc = std::function<const ClientInfo*(const C&)>;
+@@ -854,7 +860,7 @@ namespace crimson {
+ 	erase_age(std::chrono::duration_cast<Duration>(_erase_age)),
+ 	check_time(std::chrono::duration_cast<Duration>(_check_time)),
+ 	erase_max(standard_erase_max),
+-	cleaning_job(check_time, std::bind(&PriorityQueueBase::do_clean, this))
++    cleaning_job(check_time, [this]() { do_clean(get_time()); })
+       {
+ 	assert(_erase_age >= _idle_age);
+ 	assert(_check_time < _idle_age);
+@@ -1198,8 +1204,9 @@ namespace crimson {
+        * map and delete all server entries that were last used before
+        * that mark point.
+        */
+-      void do_clean() {
+-	TimePoint now = std::chrono::steady_clock::now();
++  void
++  do_clean(Time now)
++  {
+ 	DataGuard g(data_mtx);
+ 	clean_mark_points.emplace_back(MarkPoint(now, tick));
+ 
+@@ -1207,7 +1214,8 @@ namespace crimson {
+ 
+ 	Counter erase_point = last_erase_point;
+ 	auto point = clean_mark_points.front();
+-	while (point.first <= now - erase_age) {
++    while (point.first <=
++           now - std::chrono::duration<double>(erase_age).count()) {
+ 	  last_erase_point = point.second;
+ 	  erase_point = last_erase_point;
+ 	  clean_mark_points.pop_front();
+@@ -1216,7 +1224,7 @@ namespace crimson {
+ 
+ 	Counter idle_point = 0;
+ 	for (auto i : clean_mark_points) {
+-	  if (i.first <= now - idle_age) {
++      if (i.first <= now - std::chrono::duration<double>(idle_age).count()) {
+ 	    idle_point = i.second;
+ 	  } else {
+ 	    break;
+-- 
+2.53.0
+
