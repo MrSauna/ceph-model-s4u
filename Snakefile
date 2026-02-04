@@ -69,6 +69,8 @@ rule all:
 rule scenario:
     output:
         done = "results/{scenario}/done",
+    input:
+        comparison = "results/{scenario}/figures/client_throughput.svg",
     shell:
         """
         touch {output.done}
@@ -81,9 +83,10 @@ rule scenario_viz:
         mon_metrics = lambda w: expand("results/{case}/mon_metrics.csv", case=config["scenarios"][w.scenario]),
         script = "tools/compare_results.py",
     output:
-        comparison = "results/{scenario}/comparison.svg",
+        comparison = "results/{scenario}/figures/client_throughput.svg",
     params:
         git_hash = GIT_HASH,
+        output_dir = "results/{scenario}/figures",
     script:
         "tools/compare_results.py"
 

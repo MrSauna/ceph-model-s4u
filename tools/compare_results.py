@@ -61,15 +61,23 @@ def main():
         # Calculate total throughput (read + write)
         total_tp = tp.sum(axis=1)
         
-        plt.plot(total_tp.index, total_tp.values, label=label, linewidth=1.5)
+        line, = plt.plot(total_tp.index, total_tp.values, label=label, linewidth=1.5)
+        color = line.get_color()
+        
+        # Add recovery markers
+        start_time, end_time = run.get_recovery_times()
+        if start_time is not None:
+            plt.axvline(x=start_time, color=color, linestyle=':', alpha=0.8)
+        if end_time is not None:
+            plt.axvline(x=end_time, color=color, linestyle='--', alpha=0.8)
         
     plt.xlabel("Time (s)")
     plt.ylabel("Total Throughput (MiB/s)")
-    plt.title("Throughput Comparison")
+    plt.title("Client Throughput Comparison")
     plt.legend()
     plt.grid(True)
     
-    output_path = os.path.join(output_dir, "comparison_throughput.svg")
+    output_path = os.path.join(output_dir, "client_throughput.svg")
     plt.savefig(output_path)
     print(f"Saved comparison to {output_path}")
     plt.close()

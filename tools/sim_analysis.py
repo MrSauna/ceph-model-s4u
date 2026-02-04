@@ -148,4 +148,41 @@ class SimulationRun:
             if uplink and bw > 0:
                 links.append((uplink, bw, name))
         return links
-
+    def get_recovery_times(self):
+        """
+        Returns a tuple (start_time, end_time) of the recovery process.
+        Returns (None, None) if no recovery was detected.
+        
+        Logic:
+        - Total PGs = max(active_clean + backfill + backfill_wait)
+        - Start: First time active_clean < Total PGs
+        - End: First time active_clean == Total PGs after Start
+        """
+        df = self.mon_df
+        if df is None or df.empty:
+            return None, None
+            
+        # Calculate total PGs at each timestamp
+        # We assume total PGs is constant, but let's be robust
+        df["total_pgs"] = df["active_clean"] + df["backfill"] + df["backfill_wait"]
+        max_pgs = df["total_pgs"].max()
+        
+        # Find where we are NOT fully clean
+        # (Using a small threshold for float comparison safety if needed, but integers should be fine)
+        not_clean = df[df["active_clean"] < max_pgs]
+        
+        if not_clean.empty:
+            return None, None
+            
+        start_time = not_clean["time"].min()
+        
+        # End time is the first time we are clean AFTER the start time
+        clean_after_start = df[(df["time"] > start_time) & (df["active_clean"] == max_pgs)]
+        
+        if clean_after_start.empty:
+            # Maybe recovery never finished?
+            end_time = df["time"].max()
+        else:
+            end_time = clean_after_start["time"].min()
+            
+        return start_time, end_time
