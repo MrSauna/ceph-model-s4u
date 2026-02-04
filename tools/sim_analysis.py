@@ -186,3 +186,26 @@ class SimulationRun:
             end_time = clean_after_start["time"].min()
             
         return start_time, end_time
+
+    def get_latency_stats(self):
+        """
+        Returns a dictionary with latency statistics in seconds:
+        - avg
+        - p95
+        - p99
+        - p99.5
+        """
+        df = self.client_df
+        if df is None or df.empty:
+            return {}
+            
+        if "duration" not in df.columns:
+            return {}
+            
+        stats = {}
+        stats["avg"] = df["duration"].mean()
+        stats["p95"] = df["duration"].quantile(0.95)
+        stats["p99"] = df["duration"].quantile(0.99)
+        stats["p99.5"] = df["duration"].quantile(0.995)
+        
+        return stats

@@ -159,6 +159,8 @@ rule run_sim:
         dc_speed_csv = lambda w: ",".join(
             ensure_list(config["cases"][w.case]["crush_spec_params"][-1].get("dc_speed", ["10:10:10"]))
         ),
+        pg_objects = lambda w: config["cases"][w.case].get("pg_objects", 1000),
+        object_size = lambda w: config["cases"][w.case].get("object_size", 4194304),
     shell:
         """
         {input.binary} \
@@ -169,8 +171,8 @@ rule run_sim:
             "--start-up-delay={params.start_up_delay}" \
             "--shut-down-delay={params.shut_down_delay}" \
             "--profile={params.profile}" \
-            "--pg-objects=1000" \
-            "--object-size=4194304" \
+            "--pg-objects={params.pg_objects}" \
+            "--object-size={params.object_size}" \
             "--pool-id=1" \
             "--disk-write-bandwidth=209715200" \
             "--dc-clients={params.clients_num}" \
