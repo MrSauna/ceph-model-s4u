@@ -612,7 +612,6 @@ std::optional<double> Osd::make_progress() {
   }
   auto result = queue->pull_request(get_mock_epoch());
   if (result.is_retn()) {
-    last_time_i_pulled_from_queue_ = sg4::Engine::get_clock();
     auto &retn = result.get_retn();
     OpContext *oc = retn.request.release();
     op_contexts[oc->local_id] = oc;
