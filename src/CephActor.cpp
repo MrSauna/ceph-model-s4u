@@ -27,7 +27,7 @@ void CephActor::main_loop() {
     double timeout = 1000000.0; // Default large timeout (infinity)
 
     if (next_event.has_value()) {
-      timeout = next_event.value() - sg4::Engine::get_clock();
+      timeout = next_event.value() - get_mock_epoch();
       if (timeout < 0)
         timeout = 0;
     }

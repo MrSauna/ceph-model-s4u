@@ -24,6 +24,8 @@ protected:
   int id;
   PGMap *pgmap;
 
+  double get_mock_epoch() { return 1770240931 + sg4::Engine::get_clock(); }
+
 public:
   CephActor(int id, PGMap *pgmap);
   virtual ~CephActor() = default;
