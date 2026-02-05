@@ -196,6 +196,7 @@ std::string SimContext::to_string() {
   }
   ss << "  Profile: " << profile_str << std::endl;
   ss << "  Disk Read/Write Bandwidth: " << disk_write_bandwidth << std::endl;
+  ss << "  IOPS: " << iops << std::endl;
   ss << "  Pool ID: " << pool_id << std::endl;
   ss << "  PG Objects: " << pg_objects << std::endl;
   ss << "  Object Size: " << object_size << std::endl;

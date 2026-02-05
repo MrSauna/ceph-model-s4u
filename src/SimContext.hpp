@@ -35,6 +35,7 @@ struct SimContext {
   std::vector<int> clients;
   int client_read_queue = 1;
   int client_write_queue = 1;
+  int client_op_size = 4096;
 
   std::vector<std::string> shapes;
   std::vector<std::string> speeds;

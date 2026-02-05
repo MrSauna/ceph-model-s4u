@@ -157,6 +157,7 @@ rule run_sim:
         shut_down_delay = lambda w: config["cases"][w.case].get("shut_down_delay", 0),
         profile = lambda w: config["cases"][w.case].get("profile", "balanced"),
         disk_write_bandwidth = lambda w: config["cases"][w.case].get("disk_write_bandwidth", 209715200),
+        iops = lambda w: config["cases"][w.case].get("iops", 100),
         client_read_queue_depth = lambda w: config["cases"][w.case].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["cases"][w.case].get("client_write_queue_depth", 1),
         dc_shape_csv = lambda w: ",".join(
@@ -181,6 +182,7 @@ rule run_sim:
             "--object-size={params.object_size}" \
             "--pool-id=1" \
             "--disk-write-bandwidth={params.disk_write_bandwidth}" \
+            "--iops={params.iops}" \
             "--dc-clients={params.clients_num}" \
             "--client-read-queue-depth={params.client_read_queue_depth}" \
             "--client-write-queue-depth={params.client_write_queue_depth}" \
