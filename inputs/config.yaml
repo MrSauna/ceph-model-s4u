@@ -2,24 +2,20 @@ ceph_image: "quay.io/ceph/ceph:v17.2.8"
 container_runtime: "podman"
 mon_bootstrap_script: "inputs/mon_bootstrap.sh"
 
-active_experiments:
-  - "small_cluster"
-  - "small_cluster_clients_high_recovery_ops"
-  - "small_cluster_clients_balanced"
-  - "small_cluster_clients_high_client_ops"
-
 scenarios:
   "scenario_a":
-    - "small_cluster"
+    - "small_cluster_no_clients"
+    - "small_cluster_no_backfill"
     - "small_cluster_clients_high_recovery_ops"
     - "small_cluster_clients_balanced"
     - "small_cluster_clients_high_client_ops"
 
 cases:
-  "small_cluster":
+  "small_cluster_no_clients":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
     pg_num: 64
+    profile: "balanced"
     "crush_spec_params":
       - dc_shape: "1:3:1"
         dc_weight: "14.0::"
@@ -29,11 +25,37 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 0
     client_read_queue_depth: 0
-    client_write_queue_depth: 4
+    client_write_queue_depth: 64
+    client_op_size: 4096
+    disk_write_bandwidth: 524288000
+    iops: 50000
     pg_objects: 1000
     object_size: 4194304
-    start_up_delay: 1000
+    start_up_delay: 0
     shut_down_delay: 1000
+
+  "small_cluster_no_backfill":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 4
+    pg_num: 64
+    profile: "balanced"
+    "crush_spec_params":
+      - dc_shape: "1:4:1"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["1:4:1"]
+        dc_weight: ["14.0::"]
+        dc_speed: ["10:10:10"]
+    clients_num: 1
+    client_read_queue_depth: 0
+    client_write_queue_depth: 64
+    client_op_size: 4096
+    disk_write_bandwidth: 524288000
+    iops: 50000
+    pg_objects: 1000
+    object_size: 4194304
+    start_up_delay: 0
+    shut_down_delay: 2000
 
   "small_cluster_clients_high_recovery_ops":
     template: "inputs/templates/cm_simple.j2"
@@ -49,10 +71,13 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 4
+    client_write_queue_depth: 64
+    client_op_size: 4096
+    disk_write_bandwidth: 524288000
+    iops: 50000
     pg_objects: 1000
     object_size: 4194304
-    start_up_delay: 1000
+    start_up_delay: 0
     shut_down_delay: 1000
 
   "small_cluster_clients_balanced":
@@ -69,10 +94,13 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 4
+    client_write_queue_depth: 64
+    client_op_size: 4096
+    disk_write_bandwidth: 524288000
+    iops: 50000
     pg_objects: 1000
     object_size: 4194304
-    start_up_delay: 1000
+    start_up_delay: 0
     shut_down_delay: 1000
 
   "small_cluster_clients_high_client_ops":
@@ -89,10 +117,13 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 4
+    client_write_queue_depth: 64
+    client_op_size: 4096
+    disk_write_bandwidth: 524288000
+    iops: 50000
     pg_objects: 1000
     object_size: 4194304
-    start_up_delay: 1000
+    start_up_delay: 0
     shut_down_delay: 1000
 
   "medium_cluster":

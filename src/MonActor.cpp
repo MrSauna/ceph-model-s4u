@@ -209,6 +209,11 @@ void Mon::operator()() {
     XBT_INFO("Monitor waited %ld seconds before sending PGMapNotification",
              start_up_delay);
   }
-  // Calls the base class main_loop which is event driven
+  // did we start balanced?
+  if (!pgmap->needs_backfill()) {
+    XBT_INFO("Cluster is balanced");
+    dispatch_kill_cluster();
+  }
+
   CephActor::main_loop();
 }

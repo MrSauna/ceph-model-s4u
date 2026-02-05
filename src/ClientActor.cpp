@@ -18,9 +18,10 @@ void Client::set_metrics_output(const std::string &filename) {
   }
 }
 
-Client::Client(PGMap *pgmap, int client_id, int read_queue, int write_queue)
+Client::Client(PGMap *pgmap, int client_id, int read_queue, int write_queue,
+               int op_size)
     : CephActor(client_id, pgmap), max_concurrent_reads(read_queue),
-      max_concurrent_writes(write_queue) {
+      max_concurrent_writes(write_queue), op_size(op_size) {
   xbt_assert(client_id < 0, "client_id must be negative");
   random.set_seed(client_id);
 }
@@ -41,7 +42,7 @@ void Client::gen_op(OpType type) {
       .type = type,
       .id = op_id,
       .pgid = pg_id,
-      .size = pgmap->get_object_size(),
+      .size = static_cast<size_t>(op_size),
       .recipient = target_osd_id,
   };
 
@@ -62,9 +63,7 @@ void Client::gen_op(OpType type) {
   sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(target_osd_id);
   Message *msg = make_message<OsdOpMsg>(op);
 
-  target_osd_mb
-      ->put_async(msg,
-                  type == OpType::CLIENT_READ ? 0 : pgmap->get_object_size())
+  target_osd_mb->put_async(msg, type == OpType::CLIENT_READ ? 0 : op_size)
       .detach();
 
   // XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
@@ -158,6 +157,8 @@ void Client::process_message(Message *msg) {
               XBT_INFO("Shutting down now");
               CephActor::kill_self();
             } else {
+              XBT_INFO("op_context.size() = %zu", op_contexts.size());
+              auto some_op = op_contexts.begin()->second;
               XBT_INFO("Received KillMsg, draining %d ops (%d read, %d write)",
                        in_flight_reads + in_flight_writes, in_flight_reads,
                        in_flight_writes);

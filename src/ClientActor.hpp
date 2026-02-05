@@ -6,6 +6,7 @@
 class Client : public CephActor {
   int max_concurrent_reads;
   int max_concurrent_writes;
+  int op_size;
   int in_flight_reads = 0;
   int in_flight_writes = 0;
   bool shutting_down = false;
@@ -27,7 +28,8 @@ class Client : public CephActor {
   static std::mutex metrics_mutex;
 
 public:
-  explicit Client(PGMap *pgmap, int client_id, int read_queue, int write_queue);
+  explicit Client(PGMap *pgmap, int client_id, int read_queue, int write_queue,
+                  int op_size);
   void operator()();
 
   static void set_metrics_output(const std::string &filename);

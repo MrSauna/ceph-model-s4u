@@ -201,6 +201,11 @@ int main(int argc, char *argv[]) {
                      "Client write queue depth");
   client_write_queue_opt->default_val(1);
 
+  // --client-op-size
+  auto *client_op_size_opt = app.add_option(
+      "--client-op-size", ctx.client_op_size, "Client operation size");
+  client_op_size_opt->default_val(4096);
+
   // Do the parsing
   CLI11_PARSE(app, argc, argv);
   XBT_INFO("Context:\n%s", ctx.to_string().c_str());
@@ -359,7 +364,7 @@ int main(int argc, char *argv[]) {
         int client_id = -client_global_counter;
         e.add_actor(client_name, client, [pgmap, ctx, client_id]() {
           Client client(pgmap, client_id, ctx.client_read_queue,
-                        ctx.client_write_queue);
+                        ctx.client_write_queue, ctx.client_op_size);
           client();
         });
         zone_hosts[target_zone].push_back(client);
