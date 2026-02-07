@@ -91,13 +91,11 @@ int main(int argc, char *argv[]) {
   Hierarchy Inheritance:
   - shape:     Absolute hierarchy
   - speed:     Each level has unique links
-  - weight:    Only OSDs have weights
 
   Examples:
   --dc-shape 4:10:24        (4 Racks, 10 Hosts, 24 Disks)
-  --dc-speed 200:200:25       (200G Uplink, 200G Rack, 25G Host)
-  --dc-weight 14::            (Mix of 10G and 100G Disks) // todo I don't need this
-  --dc-weight :10,14:         (Mix of 10G and 100G Disks)
+  --dc-shape 2:3,5:24       (first rack, 3 Hosts, second rack, 5 Hosts, 24 Disks)
+  --dc-speed 200:25:10      (200G Uplink, 25G Rack, 10G Host)
   )";
   app.footer(footer_text);
   app.set_help_flag("--help2", "Print this help message and exit");
@@ -356,7 +354,7 @@ int main(int argc, char *argv[]) {
         sg4::Host *client = target_zone->add_host(client_name, "100Gf");
         auto client_link =
             target_zone->add_split_duplex_link(client_name + "_link", "25Gbps")
-                ->set_latency("500us");
+                ->set_latency("5us");
         target_zone->add_route(client, nullptr,
                                {{client_link, sg4::LinkInRoute::Direction::UP}},
                                true);
