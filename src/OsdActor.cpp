@@ -226,6 +226,7 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
     xbt_die("osd.%u received op message with unknown type %d", id,
             static_cast<int>(op->type));
   }
+  delete op;
 }
 
 void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {

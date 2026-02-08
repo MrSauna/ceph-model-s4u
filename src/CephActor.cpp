@@ -16,6 +16,12 @@ void CephActor::kill_self() {
   simgrid::s4u::this_actor::exit();
 }
 
+CephActor::~CephActor() {
+  for (auto &pair : op_contexts) {
+    delete pair.second;
+  }
+}
+
 void CephActor::main_loop() {
   // start off listener
   Message *message;

@@ -429,7 +429,6 @@ int main(int argc, char *argv[]) {
       std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
   XBT_INFO("Simulation wall time: %ld s", duration.count());
 
-  XBT_INFO("Simulation is over");
-
+  delete pgmap;
   return 0;
 }

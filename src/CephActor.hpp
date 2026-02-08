@@ -28,7 +28,7 @@ protected:
 
 public:
   CephActor(int id, PGMap *pgmap);
-  virtual ~CephActor() = default;
+  virtual ~CephActor();
   virtual void main_loop();
   virtual void process_message(Message *msg) = 0;
   virtual void on_finished_activity(sg4::ActivityPtr activity) = 0;
