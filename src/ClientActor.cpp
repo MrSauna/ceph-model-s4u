@@ -63,8 +63,8 @@ void Client::gen_op(OpType type) {
   sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(target_osd_id);
   Message *msg = make_message<OsdOpMsg>(op);
 
-  target_osd_mb->put_async(msg, type == OpType::CLIENT_READ ? 0 : op_size)
-      .detach();
+  activities.push(
+      target_osd_mb->put_async(msg, type == OpType::CLIENT_READ ? 0 : op_size));
 
   // XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
 }
@@ -170,7 +170,7 @@ void Client::process_message(Message *msg) {
 }
 
 void Client::on_finished_activity(sg4::ActivityPtr activity) {
-  xbt_die("Clients should not have activities");
+  // Async sends complete here - no special handling needed
 }
 
 void Client::operator()() { CephActor::main_loop(); }

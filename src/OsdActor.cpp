@@ -98,7 +98,7 @@ void Osd::maybe_reserve_backfill() {
 
     Message *msg = make_message<BackfillReservationMsg>(op);
     sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(pending_osd_id);
-    peer_mb->put_async(msg, 0).detach();
+    activities.push(peer_mb->put_async(msg, 0));
   }
   xbt_assert(!(backfill_reservation_local && !pending_retry &&
                backfill_reservation_remote.empty() &&
@@ -249,7 +249,7 @@ void Osd::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
       sg4::Mailbox *client_mb =
           sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
       Message *ack_msg = make_message<OsdOpAckMsg>(context->client_op_id);
-      client_mb->put_async(ack_msg, 0).detach();
+      activities.push(client_mb->put_async(ack_msg, 0));
       delete context;
     }
     break;
@@ -275,7 +275,7 @@ void Osd::on_backfill_reservation_message(int sender,
           .type = BackfillReservationOpType::ACCEPT,
       };
       Message *accept_msg = make_message<BackfillReservationMsg>(accept_op);
-      pgmap->get_osd_mailbox(sender)->put_async(accept_msg, 0).detach();
+      activities.push(pgmap->get_osd_mailbox(sender)->put_async(accept_msg, 0));
 
     } else {
       // send reject
@@ -286,7 +286,7 @@ void Osd::on_backfill_reservation_message(int sender,
           .type = BackfillReservationOpType::REJECT,
       };
       Message *reject_msg = make_message<BackfillReservationMsg>(reject_op);
-      pgmap->get_osd_mailbox(sender)->put_async(reject_msg, 0).detach();
+      activities.push(pgmap->get_osd_mailbox(sender)->put_async(reject_msg, 0));
     }
     break;
   }
@@ -309,7 +309,7 @@ void Osd::on_backfill_reservation_message(int sender,
         XBT_INFO("Starting backfill for pg %i", backfilling_pg->get_id());
         backfilling_pg->set_state(PGState::BACKFILL);
         Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
-        mon_mb->put_async(msg, 0).detach();
+        activities.push(mon_mb->put_async(msg, 0));
       }
     }
     break;
@@ -337,7 +337,8 @@ void Osd::on_backfill_reservation_message(int sender,
           .type = BackfillReservationOpType::RELEASE_SLAVE,
       };
       Message *release_msg = make_message<BackfillReservationMsg>(release_op);
-      pgmap->get_osd_mailbox(peer_osd_id)->put_async(release_msg, 0).detach();
+      activities.push(
+          pgmap->get_osd_mailbox(peer_osd_id)->put_async(release_msg, 0));
     }
 
     // retry to self
@@ -439,7 +440,7 @@ void Osd::send_op(Op *op) {
   sg4::Mailbox *target_osd_mb = pgmap->get_osd_mailbox(op->recipient);
 
   Message *msg = make_message<OsdOpMsg>(op);
-  target_osd_mb->put_async(msg, op->size).detach();
+  activities.push(target_osd_mb->put_async(msg, op->size));
 }
 
 void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
@@ -493,7 +494,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
 
         // notify monitor of backfill completion
         Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
-        mon_mb->put_async(msg, 0).detach();
+        activities.push(mon_mb->put_async(msg, 0));
 
         // free remote reservations, based on the original backfill targets
         for (auto peer_osd_id : backfilling_pg->get_backfill_targets()) {
@@ -505,7 +506,7 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
           };
           Message *msg = make_message<BackfillReservationMsg>(reservation_op);
           sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(peer_osd_id);
-          peer_mb->put_async(msg, 0).detach();
+          activities.push(peer_mb->put_async(msg, 0));
         }
 
         // free local reservations
@@ -525,7 +526,8 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
 void Osd::on_finished_activity(sg4::ActivityPtr activity) {
 
   if (op_context_map.find(activity) == op_context_map.end()) {
-    xbt_die("osd.%u finished unknown activity", id);
+    // Async send completed - no special handling needed
+    return;
   }
 
   OpContext *context = op_context_map[activity];
@@ -542,7 +544,7 @@ void Osd::on_finished_activity(sg4::ActivityPtr activity) {
     sg4::Mailbox *peer_mb =
         sg4::Mailbox::by_name("osd." + std::to_string(context->sender));
     Message *peer_msg = make_message<OsdOpAckMsg>(context->client_op_id);
-    peer_mb->put_async(peer_msg, 0).detach();
+    activities.push(peer_mb->put_async(peer_msg, 0));
 
     op_contexts.erase(context->local_id);
     op_context_map.erase(activity);
@@ -555,7 +557,7 @@ void Osd::on_finished_activity(sg4::ActivityPtr activity) {
     Message *ack_msg = make_message<OsdOpAckMsg>(context->client_op_id);
     sg4::Mailbox *target_mb =
         sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
-    target_mb->put_async(ack_msg, context->size).detach();
+    activities.push(target_mb->put_async(ack_msg, context->size));
     op_context_map.erase(activity);
     op_contexts.erase(context->local_id);
     delete context;
