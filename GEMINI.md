@@ -26,8 +26,8 @@ Here is a quick guide on how to run the simulator. Remember to wait at least 10 
 ./build/ceph-sim \
     --dc-shape=1:4:1 \
     --dc-speed=10:10:10 \
-    --pgdump=results/small_cluster/0/pgdump.txt \
-    --pgdump=results/small_cluster/1/pgdump.txt \
+    --pgdump=results/small_cluster_clients_balanced/0/pgdump.txt \
+    --pgdump=results/small_cluster_clients_balanced/1/pgdump.txt \
     --output-dir=results/vscode \
     --pg-objects=1000 \
     --object-size=4194304 \
