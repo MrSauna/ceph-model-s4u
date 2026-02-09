@@ -157,6 +157,23 @@ void Osd::on_osd_op_message(int sender, const OsdOpMsg &osd_op_msg) {
 
   switch (op->type) {
 
+  case OpType::BACKFILL_PUSH: {
+    int op_id = last_op_id++;
+    OpContext oc = {
+        .local_id = op_id,
+        .client_op_id = op->id,
+        .type = OpType::BACKFILL_PUSH,
+        .pgid = op->pgid,
+        .sender = sender,
+        .size = op->size,
+        .state = OpState::OP_QUEUED,
+    };
+    dmc::ReqParams null_req_params;
+    queue->add_request_time(std::move(oc), CLIENT_ID_BACKFILL, null_req_params,
+                            get_mock_epoch(), clamp_cost(op->size));
+    break;
+  }
+
   case OpType::CLIENT_WRITE: {
     int op_id = last_op_id++;
     PG *pg = pgmap->get_pg(op->pgid);
@@ -464,14 +481,13 @@ void Osd::advance_backfill_op(OpContext *context, int peer_osd_id) {
     for (auto peer_osd_id : context->pending_peers) {
 
       Op *op = new Op{
-          .type = OpType::REPLICA_WRITE,
+          .type = OpType::BACKFILL_PUSH,
           .id = context->local_id,
           .pgid = backfilling_pg->get_id(),
           .size = backfilling_pg->get_object_size(),
           .recipient = peer_osd_id,
       };
-      send_op(op); // network send is not recorded in activities. I don't care
-                   // when network send is done.
+      send_op(op);
       XBT_DEBUG("sending backfill op %u to osd.%u", context->local_id,
                 op->recipient);
       context->state = OpState::OP_WAITING_PEER;
@@ -539,25 +555,37 @@ void Osd::on_finished_activity(sg4::ActivityPtr activity) {
     advance_backfill_op(context, id);
     break;
 
-  case OpType::REPLICA_WRITE: {
-    // disk write finished; send ack to peer
-    sg4::Mailbox *peer_mb =
-        sg4::Mailbox::by_name("osd." + std::to_string(context->sender));
+  case OpType::BACKFILL_PUSH: {
+    // disk write finished; send ack to primary
+    sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(context->sender);
     Message *peer_msg = make_message<OsdOpAckMsg>(context->client_op_id);
     activities.push(peer_mb->put_async(peer_msg, 0));
 
-    op_contexts.erase(context->local_id);
     op_context_map.erase(activity);
+    op_contexts.erase(context->local_id);
+    delete context;
+    break;
+  }
+
+  case OpType::REPLICA_WRITE: {
+    // disk write finished; send ack to primary
+    sg4::Mailbox *peer_mb = pgmap->get_osd_mailbox(context->sender);
+    Message *peer_msg = make_message<OsdOpAckMsg>(context->client_op_id);
+    activities.push(peer_mb->put_async(peer_msg, 0));
+
+    op_context_map.erase(activity);
+    op_contexts.erase(context->local_id);
     delete context;
     break;
   }
 
   case OpType::CLIENT_READ: {
-    op_context_map.erase(activity);
+    // disk read finished; send ack to client
     Message *ack_msg = make_message<OsdOpAckMsg>(context->client_op_id);
     sg4::Mailbox *target_mb =
         sg4::Mailbox::by_name("client." + std::to_string(-context->sender));
     activities.push(target_mb->put_async(ack_msg, context->size));
+
     op_context_map.erase(activity);
     op_contexts.erase(context->local_id);
     delete context;
@@ -576,11 +604,21 @@ void Osd::opcontext_dispatch(OpContext *context) {
     advance_backfill_op(context, id);
     break;
 
+  case OpType::BACKFILL_PUSH: {
+    // start disk write activity
+    auto a = disk->write_async(context->size);
+    activities.push(a);
+    op_context_map[a] = context;
+    op_contexts[context->local_id] = context;
+    break;
+  }
+
   case OpType::CLIENT_READ: {
     // start disk read activity, update op context state
     auto a = disk->read_async(context->size);
     activities.push(a);
     op_context_map[a] = context;
+    op_contexts[context->local_id] = context;
     break;
   }
 

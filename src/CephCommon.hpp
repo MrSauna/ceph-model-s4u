@@ -192,7 +192,8 @@ public:
 // OSD ops and op contexts
 enum class OpType {
   BACKFILL,
-  REPLICA_WRITE, // works for client write and replication
+  BACKFILL_PUSH,
+  REPLICA_WRITE, // immediate priority
   CLIENT_READ,
   CLIENT_WRITE,
 };
