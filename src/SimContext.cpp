@@ -104,8 +104,20 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
   int osd_count = std::stoi(count_spec.empty() ? "0" : count_spec);
 
   for (int o = 0; o < osd_count; ++o) {
+    // base_cost = bandwidth / iops represents the minimum I/O size that
+    // saturates IOPS. Smaller I/Os are penalized to take at least 1/IOPS time.
+    double base_cost = ctx.disk_write_bandwidth / ctx.iops;
+    auto *disk =
     host->add_disk("disk" + std::to_string(o), ctx.disk_write_bandwidth,
                    ctx.disk_write_bandwidth);
+    // todo: check if this is needed
+    disk->set_factor_cb(
+        [base_cost](sg_size_t size, simgrid::s4u::Io::OpType /* op_type */) {
+          // factor > 1.0 slows down the I/O
+          // For small I/O: factor = base_cost / size makes it take 1/IOPS time
+          double factor = base_cost / static_cast<double>(size);
+          return std::max(1.0, factor);
+        });
   }
 }
 
