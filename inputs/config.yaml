@@ -32,7 +32,7 @@ cases:
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 1000
+    shut_down_delay: 300
 
   "small_cluster_no_backfill":
     template: "inputs/templates/cm_simple.j2"
@@ -55,7 +55,7 @@ cases:
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 2000
+    shut_down_delay: 300
 
   "small_cluster_clients_high_recovery_ops":
     template: "inputs/templates/cm_simple.j2"
@@ -78,7 +78,7 @@ cases:
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 1000
+    shut_down_delay: 300
 
   "small_cluster_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
@@ -101,7 +101,7 @@ cases:
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 1000
+    shut_down_delay: 300
 
   "small_cluster_clients_high_client_ops":
     template: "inputs/templates/cm_simple.j2"
@@ -124,7 +124,7 @@ cases:
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 1000
+    shut_down_delay: 300
 
   "medium_cluster":
     template: "inputs/templates/cm_simple.j2"
