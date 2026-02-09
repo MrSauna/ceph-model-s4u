@@ -305,5 +305,61 @@ def main():
     else:
         print("No latency data found.")
 
+    # Plot 4: IOPS Comparison
+    iops_data = []
+    iops_labels = []
+    
+    for label, run in runs:
+        stats = run.get_iops_stats()
+        if not stats:
+            continue
+            
+        stats["label"] = label
+        iops_data.append(stats)
+        iops_labels.append(label)
+        
+    if iops_data:
+        df_iops = pd.DataFrame(iops_data)
+        df_iops = df_iops.set_index("label")
+        
+        # Reorder columns for logical progression
+        cols = ["avg", "read", "write"]
+        # Filter strictly those we have
+        cols = [c for c in cols if c in df_iops.columns]
+        df_iops = df_iops[cols]
+        
+        fig = plt.figure(figsize=(12, 6))
+        ax = plt.gca()
+        
+        df_iops.plot(kind='bar', ax=ax, rot=0)
+        
+        for p in ax.patches:
+            height = p.get_height()
+            if height > 0:
+                ax.annotate(f'{height:.0f}', 
+                            (p.get_x() + p.get_width() / 2., height), 
+                            ha='center', va='bottom', 
+                            fontsize=9, xytext=(0, 2), 
+                            textcoords='offset points')
+
+        plt.xlabel("Scenarios")
+        plt.ylabel("IOPS")
+        plt.title("Client IOPS Comparison")
+        plt.grid(True, axis='y')
+        plt.legend(title="Metric")
+        
+        # Horizontal x labels
+        plt.xticks(rotation=0, ha='center')
+        
+        plt.tight_layout()
+        add_git_hash(fig)
+        
+        output_path_iops = os.path.join(output_dir, "iops_comparison.svg")
+        plt.savefig(output_path_iops)
+        print(f"Saved IOPS visualization to {output_path_iops}")
+        plt.close()
+    else:
+        print("No IOPS data found.")
+
 if __name__ == "__main__":
     main()

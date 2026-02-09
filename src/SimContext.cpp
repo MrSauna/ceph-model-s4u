@@ -93,7 +93,7 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
 
   // Create Link
   auto *link = rack_zone->add_split_duplex_link(hostname + "_link", bw_str)
-                   ->set_latency("5us");
+                   ->set_latency("0us");
 
   // Route: Host -> Rack Router (ToR)
   rack_zone->add_route(host, nullptr, {{link, sg4::LinkInRoute::Direction::UP}},
@@ -108,8 +108,8 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
     // saturates IOPS. Smaller I/Os are penalized to take at least 1/IOPS time.
     double base_cost = ctx.disk_write_bandwidth / ctx.iops;
     auto *disk =
-    host->add_disk("disk" + std::to_string(o), ctx.disk_write_bandwidth,
-                   ctx.disk_write_bandwidth);
+        host->add_disk("disk" + std::to_string(o), ctx.disk_write_bandwidth,
+                       ctx.disk_write_bandwidth);
     // todo: check if this is needed
     disk->set_factor_cb(
         [base_cost](sg_size_t size, simgrid::s4u::Io::OpType /* op_type */) {
@@ -138,7 +138,7 @@ static void build_rack(SimContext &ctx, sg4::NetZone *dc_zone, int dc_idx,
   std::string bw_str = std::to_string(speed_val) + "Gbps";
 
   auto *uplink = rack_zone->add_split_duplex_link(rack_name + "_uplink", bw_str)
-                     ->set_latency("10us");
+                     ->set_latency("0us");
   dc_zone->add_route(rack_zone, nullptr,
                      {{uplink, sg4::LinkInRoute::Direction::UP}}, true);
 
@@ -169,7 +169,7 @@ void build_dc(SimContext &ctx, sg4::NetZone *world, int dc_config_idx) {
   std::string bw_str = std::to_string(speed_val) + "Gbps";
 
   auto *uplink = dc_zone->add_split_duplex_link(dc_name + "_uplink", bw_str)
-                     ->set_latency("100us");
+                     ->set_latency("0us");
 
   // Route: DC Switch -> Outside (DC Boundary)
   // Route: DC Switch -> World (in World Zone)

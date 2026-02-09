@@ -294,6 +294,9 @@ int main(int argc, char *argv[]) {
       (fs::path(ctx.output_dir) / "client_metrics.csv").string();
   Client::set_metrics_output(client_metrics_path);
 
+  // Enable aggregated metrics (memory-efficient alternative to per-op CSV)
+  Client::set_aggregate_output(ctx.output_dir);
+
   if (!ctx.clients.empty()) {
     int client_global_counter = 1;
     for (size_t dc_idx = 0; dc_idx < ctx.clients.size(); ++dc_idx) {
@@ -337,7 +340,7 @@ int main(int argc, char *argv[]) {
           auto *uplink = dc_zone
                              ->add_split_duplex_link(
                                  client_rack_name + "_uplink", "100Gbps")
-                             ->set_latency("10us");
+                             ->set_latency("0us");
           dc_zone->add_route(client_rack_zone, nullptr,
                              {{uplink, sg4::LinkInRoute::Direction::UP}}, true);
         }
@@ -379,7 +382,7 @@ int main(int argc, char *argv[]) {
   auto nz = ctx.host_zones["host-0"];
   sg4::Host *mon = nz->add_host("mon", "100Gf");
   auto mon_link =
-      nz->add_split_duplex_link("mon_link", "25Gbps")->set_latency("5us");
+      nz->add_split_duplex_link("mon_link", "25Gbps")->set_latency("0us");
   nz->add_route(mon, nullptr, {{mon_link, sg4::LinkInRoute::Direction::UP}},
                 true);
   zone_hosts[nz].push_back(mon);
@@ -428,6 +431,9 @@ int main(int argc, char *argv[]) {
   auto duration =
       std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
   XBT_INFO("Simulation wall time: %ld s", duration.count());
+
+  // Write aggregated client metrics (T-Digest and throughput buckets)
+  Client::write_aggregated_metrics();
 
   delete pgmap;
   return 0;

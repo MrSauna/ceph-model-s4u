@@ -6,8 +6,14 @@ XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ceph_sim_client,
 
 namespace sg4 = simgrid::s4u;
 
+// Static member definitions
 std::ofstream Client::metrics_stream;
 std::mutex Client::metrics_mutex;
+std::map<int, ThroughputBucket> Client::throughput_buckets;
+digestible::tdigest<float, uint32_t>
+    Client::latency_digest(100); // 100 compression factor
+bool Client::aggregate_mode = false;
+static std::string aggregate_output_dir;
 
 void Client::set_metrics_output(const std::string &filename) {
   metrics_stream.open(filename);
@@ -92,34 +98,34 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   XBT_DEBUG("received ack for op %u", msg.op_id);
   xbt_assert(context, "op context is null");
 
-  switch (context->type) {
-  case OpType::CLIENT_WRITE: {
-    double dt = sg4::Engine::get_clock() - context->start_time;
-    XBT_DEBUG("wr op %d took %f seconds", msg.op_id, dt);
-    {
-      std::lock_guard<std::mutex> lock(metrics_mutex);
-      if (metrics_stream.is_open()) {
-        metrics_stream << context->start_time << "," << id << ","
-                       << "write" << "," << context->size << "," << dt << "\n";
+  double dt = sg4::Engine::get_clock() - context->start_time;
+  int time_bucket = static_cast<int>(context->start_time);
+
+  // Record metrics based on mode
+  {
+    std::lock_guard<std::mutex> lock(metrics_mutex);
+
+    // Aggregated mode: update T-Digest and throughput buckets
+    if (aggregate_mode) {
+      latency_digest.insert(static_cast<float>(dt));
+
+      ThroughputBucket &bucket = throughput_buckets[time_bucket];
+      if (context->type == OpType::CLIENT_READ) {
+        bucket.read_ops++;
+        bucket.read_bytes += context->size;
+      } else if (context->type == OpType::CLIENT_WRITE) {
+        bucket.write_ops++;
+        bucket.write_bytes += context->size;
       }
     }
-    break;
-  }
-  case OpType::CLIENT_READ: {
-    double dt = sg4::Engine::get_clock() - context->start_time;
-    XBT_DEBUG("rd op %d took %f seconds", msg.op_id, dt);
-    {
-      std::lock_guard<std::mutex> lock(metrics_mutex);
-      if (metrics_stream.is_open()) {
-        metrics_stream << context->start_time << "," << id << ","
-                       << "read" << "," << context->size << "," << dt << "\n";
-      }
+
+    // Legacy per-op CSV (if stream is open)
+    if (metrics_stream.is_open()) {
+      const char *op_name =
+          (context->type == OpType::CLIENT_READ) ? "read" : "write";
+      metrics_stream << context->start_time << "," << id << "," << op_name
+                     << "," << context->size << "," << dt << "\n";
     }
-    break;
-  }
-  default:
-    xbt_die("osd.%u received ack message with unknown type %d", id,
-            static_cast<int>(context->type));
   }
 
   if (context->type == OpType::CLIENT_READ) {
@@ -174,3 +180,76 @@ void Client::on_finished_activity(sg4::ActivityPtr activity) {
 }
 
 void Client::operator()() { CephActor::main_loop(); }
+
+void Client::set_aggregate_output(const std::string &output_dir) {
+  aggregate_mode = true;
+  aggregate_output_dir = output_dir;
+  XBT_INFO("Client metrics aggregation enabled, output dir: %s",
+           output_dir.c_str());
+}
+
+void Client::write_aggregated_metrics() {
+  if (!aggregate_mode) {
+    return;
+  }
+
+  // Merge any buffered data in T-Digest
+  latency_digest.merge();
+
+  // Write throughput aggregates: client_metrics_agg.csv
+  std::string throughput_path =
+      aggregate_output_dir + "/client_metrics_agg.csv";
+  std::ofstream tp_out(throughput_path);
+  if (tp_out.is_open()) {
+    tp_out << "time,read_ops,read_bytes,write_ops,write_bytes\n";
+    for (const auto &[time, bucket] : throughput_buckets) {
+      tp_out << time << "," << bucket.read_ops << "," << bucket.read_bytes
+             << "," << bucket.write_ops << "," << bucket.write_bytes << "\n";
+    }
+    tp_out.close();
+    XBT_INFO("Wrote throughput aggregates to %s (%zu buckets)",
+             throughput_path.c_str(), throughput_buckets.size());
+  }
+
+  // Write T-Digest centroids: client_latency_digest.csv
+  std::string digest_path = aggregate_output_dir + "/client_latency_digest.csv";
+  std::ofstream digest_out(digest_path);
+  auto centroids = latency_digest.get(); // Returns vector<pair<mean, weight>>
+
+  if (digest_out.is_open()) {
+    digest_out << "mean,weight\n";
+    for (const auto &[mean, weight] : centroids) {
+      digest_out << mean << "," << weight << "\n";
+    }
+    digest_out.close();
+    XBT_INFO("Wrote latency T-Digest to %s (%zu centroids)",
+             digest_path.c_str(), centroids.size());
+  }
+
+  // Compute mean from centroids (weighted average)
+  double weighted_sum = 0.0;
+  size_t total_weight = 0;
+  for (const auto &[mean, weight] : centroids) {
+    weighted_sum += mean * weight;
+    total_weight += weight;
+  }
+  double avg = (total_weight > 0) ? weighted_sum / total_weight : 0.0;
+
+  // Also write computed percentiles for convenience (summary file)
+  std::string summary_path =
+      aggregate_output_dir + "/client_latency_summary.csv";
+  std::ofstream summary_out(summary_path);
+  if (summary_out.is_open()) {
+    summary_out << "metric,value\n";
+    summary_out << "count," << latency_digest.size() << "\n";
+    summary_out << "min," << latency_digest.min() << "\n";
+    summary_out << "max," << latency_digest.max() << "\n";
+    summary_out << "avg," << avg << "\n";
+    summary_out << "p50," << latency_digest.quantile(50) << "\n";
+    summary_out << "p95," << latency_digest.quantile(95) << "\n";
+    summary_out << "p99," << latency_digest.quantile(99) << "\n";
+    summary_out << "p99.5," << latency_digest.quantile(99.5) << "\n";
+    summary_out.close();
+    XBT_INFO("Wrote latency summary to %s", summary_path.c_str());
+  }
+}

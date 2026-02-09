@@ -1,7 +1,19 @@
 #include "CephActor.hpp"
 #include <fstream>
+#include <map>
 #include <mutex>
 #include <xbt/random.hpp>
+
+// T-Digest for streaming percentile calculation
+#include "digestible/digestible.h"
+
+// Per-second throughput aggregation bucket
+struct ThroughputBucket {
+  int64_t read_ops = 0;
+  int64_t read_bytes = 0;
+  int64_t write_ops = 0;
+  int64_t write_bytes = 0;
+};
 
 class Client : public CephActor {
   int max_concurrent_reads;
@@ -24,13 +36,24 @@ class Client : public CephActor {
 
   int last_op_pg = 0;
 
+  // Legacy per-op output (optional)
   static std::ofstream metrics_stream;
   static std::mutex metrics_mutex;
+
+  // Aggregated metrics
+  static std::map<int, ThroughputBucket> throughput_buckets;
+  static digestible::tdigest<float, uint32_t> latency_digest;
+  static bool aggregate_mode;
 
 public:
   explicit Client(PGMap *pgmap, int client_id, int read_queue, int write_queue,
                   int op_size);
   void operator()();
 
+  // Legacy per-op CSV output
   static void set_metrics_output(const std::string &filename);
+
+  // Aggregated output (memory-efficient)
+  static void set_aggregate_output(const std::string &output_dir);
+  static void write_aggregated_metrics();
 };

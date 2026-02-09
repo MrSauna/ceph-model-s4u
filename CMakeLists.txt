@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(CephSim)
@@ -34,3 +34,7 @@ target_link_libraries(ceph-sim PRIVATE ${SimGrid_LIBRARY})
 # Integrate dmclock
 include(FetchDmclock)
 target_link_libraries(ceph-sim PRIVATE dmclock::dmclock)
+
+# Integrate digestible (T-Digest for streaming percentiles)
+include(FetchDigestible)
+target_link_libraries(ceph-sim PRIVATE digestible_lib)
