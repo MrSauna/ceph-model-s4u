@@ -27,7 +27,7 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 200000000
+    disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
     object_size: 4194304
@@ -50,7 +50,7 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 200000000
+    disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
     object_size: 4194304
@@ -73,7 +73,7 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 200000000
+    disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
     object_size: 4194304
@@ -96,7 +96,7 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 200000000
+    disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
     object_size: 4194304
@@ -119,7 +119,7 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 200000000
+    disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
     object_size: 4194304
