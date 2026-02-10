@@ -73,8 +73,21 @@ void seal_netzone(simgrid::s4u::NetZone *zone) {
 
 int main(int argc, char *argv[]) {
 
+  // Pre-scan argv for --help before anything else, because SimGrid's
+  // Engine constructor will print its own help and exit() on --help,
+  // leaving no chance for CLI11 help to be shown afterward.
+  bool help_requested = false;
+  for (int i = 1; i < argc; i++) {
+    if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
+      help_requested = true;
+      break;
+    }
+  }
+
   // CLI11 argument parsing
+  // Disable built-in --help so SimGrid can handle it
   CLI::App app{"Ceph simulator"};
+  app.set_help_flag();
 
   // footer
   std::string footer_text = R"(
@@ -98,7 +111,6 @@ int main(int argc, char *argv[]) {
   --dc-speed 200:25:10      (200G Uplink, 25G Rack, 10G Host)
   )";
   app.footer(footer_text);
-  app.set_help_flag("--help2", "Print this help message and exit");
 
   SimContext ctx;
 
@@ -166,18 +178,6 @@ int main(int argc, char *argv[]) {
       ->expected(1)
       ->type_name("PROFILE");
 
-  // --cfg (passthrough to simgrid engine)
-  auto *cfg_opt = app.add_option("--cfg", ctx.cfg, "Simgrid configuration");
-  cfg_opt->type_name("CFG");
-
-  // --help (passthrough to simgrid engine)
-  app.add_flag("--help", "Print this help message and exit")
-      ->default_val(false);
-
-  // --help-tracing
-  app.add_flag("--help-tracing", "Print this help message and exit")
-      ->default_val(false);
-
   // --output-dir
   auto *output_dir_opt = app.add_option("--output-dir", ctx.output_dir,
                                         "Output directory for artifacts");
@@ -204,6 +204,18 @@ int main(int argc, char *argv[]) {
       "--client-op-size", ctx.client_op_size, "Client operation size");
   client_op_size_opt->default_val(4096);
 
+  // If --help was requested, print CLI11 help first (before Engine init,
+  // because Engine will print SimGrid help and exit on --help).
+  if (help_requested) {
+    std::cout << app.help() << std::endl;
+    std::cout << "--- SimGrid Engine Options ---" << std::endl;
+  }
+
+  // Initialize SimGrid engine. Handles --cfg, --help, and --help-tracing.
+  // On --help, SimGrid prints its own help and exits (after CLI11 help above).
+  // Otherwise, it strips --cfg from argv so CLI11 only sees app-specific flags.
+  simgrid::s4u::Engine e(&argc, argv);
+
   // Do the parsing
   CLI11_PARSE(app, argc, argv);
   XBT_INFO("Context:\n%s", ctx.to_string().c_str());
@@ -218,10 +230,6 @@ int main(int argc, char *argv[]) {
     XBT_ERROR("Failed to create output directory: %s", e.what());
     return 1;
   }
-
-  // Create the simgrid engine
-  simgrid::s4u::Engine e(&argc, argv);
-  // todo: Engine has set_config(string, string)
 
   // initialize pg map
   PGMap *pgmap = new PGMap(ctx.pool_id, pgdump_files[0], ctx.object_size,
