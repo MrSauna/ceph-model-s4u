@@ -4,14 +4,14 @@ mon_bootstrap_script: "inputs/mon_bootstrap.sh"
 
 scenarios:
   "scenario_a":
-    - "small_cluster_no_clients"
-    - "small_cluster_no_backfill"
+    - "small_cluster_no_clients_balanced"
+    - "small_cluster_no_backfill_balanced"
     - "small_cluster_clients_high_recovery_ops"
     - "small_cluster_clients_balanced"
     - "small_cluster_clients_high_client_ops"
 
 cases:
-  "small_cluster_no_clients":
+  "small_cluster_no_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
     pg_num: 64
@@ -34,7 +34,7 @@ cases:
     start_up_delay: 0
     shut_down_delay: 0
 
-  "small_cluster_no_backfill":
+  "small_cluster_no_backfill_balanced":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
     pg_num: 64
