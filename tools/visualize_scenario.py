@@ -257,6 +257,11 @@ def main():
         stats = run.get_latency_stats()
         if not stats:
             continue
+        
+        # Skip cases with no actual client traffic (all values zero)
+        values = [v for k, v in stats.items() if k != "label"]
+        if not values or all(v == 0 for v in values):
+            continue
             
         stats["label"] = label
         latency_data.append(stats)
@@ -344,11 +349,17 @@ def main():
         df_iops = pd.DataFrame(iops_data)
         df_iops = df_iops.set_index("label")
         
-        # Reorder columns for logical progression
-        cols = ["avg", "read", "write"]
-        # Filter strictly those we have
+        # Only show read and write IOPS
+        cols = ["read", "write"]
         cols = [c for c in cols if c in df_iops.columns]
         df_iops = df_iops[cols]
+        
+        # Drop columns where all values are zero (no traffic of that type)
+        df_iops = df_iops.loc[:, (df_iops != 0).any()]
+        
+        if df_iops.empty:
+            print("No non-zero IOPS data found, skipping IOPS plot.")
+            return
         
         fig = plt.figure(figsize=(12, 6))
         ax = plt.gca()
