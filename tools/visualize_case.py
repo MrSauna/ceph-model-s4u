@@ -26,6 +26,7 @@ else:
     client_metrics_file = snakemake.input.client_metrics
     output_dir = snakemake.params.output_dir
     git_hash = snakemake.params.get("git_hash", "unknown")
+    case_name = snakemake.params.get("case_name", "unknown")
 
 
 def add_git_hash(fig):
@@ -49,7 +50,8 @@ def viz_mon_metrics(sim_run):
 
     plt.xlabel("Time (s)")
     plt.ylabel("Number of PGs")
-    plt.title("PG States Over Time")
+    plt.ylabel("Number of PGs")
+    plt.title(f"PG States Over Time ({case_name})")
     plt.legend()
     plt.grid(True)
     add_git_hash(fig)
@@ -68,7 +70,9 @@ def viz_client_metrics(sim_run):
         fig = plt.figure(figsize=(10, 6))
         plt.xlabel("Time (s)")
         plt.ylabel("Throughput (MiB/s)")
-        plt.title("Client Throughput (No Data)")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Throughput (MiB/s)")
+        plt.title(f"Client Throughput (No Data) - {case_name}")
         plt.grid(True)
         add_git_hash(fig)
         output_path = os.path.join(output_dir, "client_throughput.svg")
@@ -89,7 +93,9 @@ def viz_client_metrics(sim_run):
 
     plt.xlabel("Time (s)")
     plt.ylabel("Throughput (MiB/s)")
-    plt.title(f"Client Throughput Over Time (Smoothed {window_size}s)")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Throughput (MiB/s)")
+    plt.title(f"Client Throughput Over Time (Smoothed {window_size}s) - {case_name}")
     plt.legend()
     plt.grid(True)
     add_git_hash(fig)
@@ -164,7 +170,7 @@ def viz_net_metrics(sim_run):
                 actor_names.append(clean_name)
 
             formatted_actors = [f"({n})" for n in actor_names]
-            name_str += "\\n" + "\\n".join(formatted_actors)
+            name_str += "\n" + "\n".join(formatted_actors)
             
         if node_id != "_world_":
             node_names[node_id] = name_str
@@ -236,8 +242,7 @@ def viz_net_metrics(sim_run):
         util_pct = max(up_pct, down_pct)
         
         bw_str = format_bw(bw)
-        label_text = f"{bw_str}\\nU: {up_pct:.0f}% / D: {down_pct:.0f}%"
-        
+        label_text = f"{bw_str}\nU: {up_pct:02.0f}%\nD: {down_pct:02.0f}%"
         # Style
         color = "#aaaaaa" # default gray
         width = 1.0
@@ -278,7 +283,28 @@ def viz_net_metrics(sim_run):
             # Place label ABOVE the node (default)
             plt.text(x, y + 0.15, label, fontsize=9, ha='center', va='bottom', fontweight='bold')
 
-    plt.title("Network Topology & Link Utilization")
+    # Calculate bounds for better centering and margins
+    xs = [pos[0] for pos in node_pos.values()]
+    ys = [pos[1] for pos in node_pos.values()]
+    
+    if xs and ys:
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        
+        x_span = max_x - min_x
+        y_span = max_y - min_y
+        
+        # Add padding
+        x_pad = max(0.2, x_span * 0.05)
+        y_pad = max(0.2, y_span * 0.1)
+        
+        # Extra top padding for title/root label to avoid overlap
+        top_pad = y_pad + 0.2
+        
+        ax.set_xlim(min_x - x_pad, max_x + x_pad)
+        ax.set_ylim(min_y - y_pad, max_y + top_pad)
+
+    plt.title(f"Network Topology & Link Utilization ({case_name})", pad=10)
     plt.axis('off')
     add_git_hash(fig)
     
@@ -335,7 +361,9 @@ def viz_star_link_utilization(sim_run):
 
     plt.xlabel("Time (s)")
     plt.ylabel("Bandwidth Utilization (%)")
-    plt.title("Star Link Utilization Over Time")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Bandwidth Utilization (%)")
+    plt.title(f"Star Link Utilization Over Time ({case_name})")
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True)
     add_git_hash(fig)

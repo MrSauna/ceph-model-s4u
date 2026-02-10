@@ -135,6 +135,7 @@ rule case_viz:
     params:
         output_dir = "results/{case}/figures",
         git_hash = GIT_HASH,
+        case_name = lambda w: w.case,
     script: 
         "tools/visualize_case.py"
 
