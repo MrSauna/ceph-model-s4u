@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
           auto *uplink = dc_zone
                              ->add_split_duplex_link(
                                  client_rack_name + "_uplink", "100Gbps")
-                             ->set_latency("0us");
+                             ->set_latency("1us");
           dc_zone->add_route(client_rack_zone, nullptr,
                              {{uplink, sg4::LinkInRoute::Direction::UP}}, true);
         }
@@ -390,7 +390,7 @@ int main(int argc, char *argv[]) {
   auto nz = ctx.host_zones["host-0"];
   sg4::Host *mon = nz->add_host("mon", "100Gf");
   auto mon_link =
-      nz->add_split_duplex_link("mon_link", "25Gbps")->set_latency("0us");
+      nz->add_split_duplex_link("mon_link", "25Gbps")->set_latency("5us");
   nz->add_route(mon, nullptr, {{mon_link, sg4::LinkInRoute::Direction::UP}},
                 true);
   zone_hosts[nz].push_back(mon);

@@ -27,12 +27,12 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 524288000
-    iops: 50000
+    disk_write_bandwidth: 200000000
+    iops: 10000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 300
+    shut_down_delay: 0
 
   "small_cluster_no_backfill":
     template: "inputs/templates/cm_simple.j2"
@@ -50,8 +50,8 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 524288000
-    iops: 50000
+    disk_write_bandwidth: 200000000
+    iops: 10000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
@@ -73,12 +73,12 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 524288000
-    iops: 50000
+    disk_write_bandwidth: 200000000
+    iops: 10000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 300
+    shut_down_delay: 0
 
   "small_cluster_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
@@ -96,12 +96,12 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 524288000
-    iops: 50000
+    disk_write_bandwidth: 200000000
+    iops: 10000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 300
+    shut_down_delay: 0
 
   "small_cluster_clients_high_client_ops":
     template: "inputs/templates/cm_simple.j2"
@@ -119,12 +119,12 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
-    disk_write_bandwidth: 524288000
-    iops: 50000
+    disk_write_bandwidth: 200000000
+    iops: 10000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 300
+    shut_down_delay: 0
 
   "medium_cluster":
     template: "inputs/templates/cm_simple.j2"

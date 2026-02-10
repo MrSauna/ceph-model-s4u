@@ -171,6 +171,7 @@ rule run_sim:
     shell:
         """
         {input.binary} \
+            "--cfg=network/model:CM02" \
             "--dc-shape={params.dc_shape_csv}" \
             "--dc-speed={params.dc_speed_csv}" \
             "--pgdump={input.pgdump1}" \

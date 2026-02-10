@@ -272,6 +272,28 @@ def main():
         cols = [c for c in cols if c in df_lat.columns]
         df_lat = df_lat[cols]
         
+        # Determine if we should display in milliseconds based on max value
+        max_latency = df_lat.max().max()
+        use_ms = max_latency < 1.0  # Use ms if all values are under 1 second
+        
+        if use_ms:
+            # Convert to milliseconds for display
+            df_lat = df_lat * 1000
+            latency_unit = "ms"
+        else:
+            latency_unit = "s"
+        
+        def format_latency(val):
+            """Format latency value with appropriate precision."""
+            if val >= 100:
+                return f'{val:.0f}'
+            elif val >= 10:
+                return f'{val:.1f}'
+            elif val >= 1:
+                return f'{val:.2f}'
+            else:
+                return f'{val:.3f}'
+        
         fig = plt.figure(figsize=(12, 6))
         ax = plt.gca()
         
@@ -280,14 +302,14 @@ def main():
         for p in ax.patches:
             height = p.get_height()
             if height > 0:
-                ax.annotate(f'{height:.2f}', 
+                ax.annotate(format_latency(height), 
                             (p.get_x() + p.get_width() / 2., height), 
                             ha='center', va='bottom', 
                             fontsize=9, xytext=(0, 2), 
                             textcoords='offset points')
 
         plt.xlabel("Scenarios")
-        plt.ylabel("Latency (s)")
+        plt.ylabel(f"Latency ({latency_unit})")
         plt.title("Client Latency Statistics")
         plt.grid(True, axis='y')
         plt.legend(title="Metric")

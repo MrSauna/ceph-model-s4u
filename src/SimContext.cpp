@@ -93,7 +93,7 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
 
   // Create Link
   auto *link = rack_zone->add_split_duplex_link(hostname + "_link", bw_str)
-                   ->set_latency("0us");
+                   ->set_latency("5us");
 
   // Route: Host -> Rack Router (ToR)
   rack_zone->add_route(host, nullptr, {{link, sg4::LinkInRoute::Direction::UP}},
@@ -138,7 +138,7 @@ static void build_rack(SimContext &ctx, sg4::NetZone *dc_zone, int dc_idx,
   std::string bw_str = std::to_string(speed_val) + "Gbps";
 
   auto *uplink = rack_zone->add_split_duplex_link(rack_name + "_uplink", bw_str)
-                     ->set_latency("0us");
+                     ->set_latency("1us");
   dc_zone->add_route(rack_zone, nullptr,
                      {{uplink, sg4::LinkInRoute::Direction::UP}}, true);
 
@@ -169,7 +169,7 @@ void build_dc(SimContext &ctx, sg4::NetZone *world, int dc_config_idx) {
   std::string bw_str = std::to_string(speed_val) + "Gbps";
 
   auto *uplink = dc_zone->add_split_duplex_link(dc_name + "_uplink", bw_str)
-                     ->set_latency("0us");
+                     ->set_latency("150us");
 
   // Route: DC Switch -> Outside (DC Boundary)
   // Route: DC Switch -> World (in World Zone)
@@ -218,10 +218,7 @@ std::string SimContext::to_string() {
   ss << std::endl;
   ss << "  Client Read Queue: " << client_read_queue << std::endl;
   ss << "  Client Write Queue: " << client_write_queue << std::endl;
-  ss << "  Engine Config: ";
-  for (const auto &s : cfg)
-    ss << s << " ";
-  ss << std::endl;
+
   ss << "  Shapes: ";
   for (const auto &s : shapes)
     ss << s << " ";

@@ -38,6 +38,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/ceph-sim",
             "args": [
+                "--cfg=network/model:CM02",
                 "--dc-shape=1:4:1",
                 "--dc-speed=10:10:10",
                 "--pgdump=results/small_cluster_no_backfill/0/pgdump.txt",

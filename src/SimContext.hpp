@@ -43,7 +43,6 @@ struct SimContext {
   int pg_objects = 1000;
   int object_size = 4 * 1024 * 1024;
 
-  std::vector<std::string> cfg; // for simgrid engine
   std::map<std::string, simgrid::s4u::NetZone *> host_zones;
   std::vector<std::string> ordered_host_names;
   std::string output_dir = ".";
