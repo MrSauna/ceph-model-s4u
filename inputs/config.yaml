@@ -14,7 +14,7 @@ cases:
   "small_cluster_no_clients_high_recovery":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
-    pg_num: 64
+    pg_num: 32
     profile: "high_recovery_ops"
     "crush_spec_params":
       - dc_shape: "1:3:1"
@@ -25,11 +25,11 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 0
     client_read_queue_depth: 0
-    client_write_queue_depth: 64
-    client_op_size: 4096
-    disk_write_bandwidth: 536870912
+    client_write_queue_depth: 32
+    client_op_size: 16384
+    disk_write_bandwidth: 104857600
     iops: 10000
-    pg_objects: 1000
+    pg_objects: 100
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 0
@@ -37,7 +37,7 @@ cases:
   "small_cluster_no_backfill_balanced":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
-    pg_num: 64
+    pg_num: 32
     profile: "balanced"
     "crush_spec_params":
       - dc_shape: "1:4:1"
@@ -48,11 +48,11 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 64
-    client_op_size: 4096
-    disk_write_bandwidth: 536870912
+    client_write_queue_depth: 32
+    client_op_size: 16384
+    disk_write_bandwidth: 104857600
     iops: 10000
-    pg_objects: 1000
+    pg_objects: 100
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 300
@@ -60,7 +60,7 @@ cases:
   "small_cluster_clients_high_recovery_ops":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
-    pg_num: 64
+    pg_num: 32
     profile: "high_recovery_ops"
     "crush_spec_params":
       - dc_shape: "1:3:1"
@@ -71,11 +71,11 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 64
-    client_op_size: 4096
-    disk_write_bandwidth: 536870912
+    client_write_queue_depth: 32
+    client_op_size: 16384
+    disk_write_bandwidth: 104857600
     iops: 10000
-    pg_objects: 1000
+    pg_objects: 100
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 0
@@ -83,7 +83,7 @@ cases:
   "small_cluster_clients_balanced":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
-    pg_num: 64
+    pg_num: 32
     profile: "balanced"
     "crush_spec_params":
       - dc_shape: "1:3:1"
@@ -94,11 +94,11 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 64
-    client_op_size: 4096
-    disk_write_bandwidth: 536870912
+    client_write_queue_depth: 32
+    client_op_size: 16384
+    disk_write_bandwidth: 104857600
     iops: 10000
-    pg_objects: 1000
+    pg_objects: 100
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 0
@@ -106,7 +106,7 @@ cases:
   "small_cluster_clients_high_client_ops":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
-    pg_num: 64
+    pg_num: 32
     profile: "high_client_ops"
     "crush_spec_params":
       - dc_shape: "1:3:1"
@@ -117,11 +117,11 @@ cases:
         dc_speed: ["10:10:10"]
     clients_num: 1
     client_read_queue_depth: 0
-    client_write_queue_depth: 64
-    client_op_size: 4096
-    disk_write_bandwidth: 536870912
+    client_write_queue_depth: 32
+    client_op_size: 16384
+    disk_write_bandwidth: 104857600
     iops: 10000
-    pg_objects: 1000
+    pg_objects: 100
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 0
