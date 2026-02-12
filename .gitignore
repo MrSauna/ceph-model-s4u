@@ -8,7 +8,7 @@ ping-pong
 master-workers
 maps/
 .snakemake/
-results/
+results*/
 .cache/
 perfdumps/
 **/__pycache__/
