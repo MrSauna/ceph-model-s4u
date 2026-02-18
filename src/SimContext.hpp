@@ -36,6 +36,8 @@ struct SimContext {
   int client_read_queue = 1;
   int client_write_queue = 1;
   int client_op_size = 4096;
+  double client_read_bandwidth = 0;  // 0 = unlimited (use link default)
+  double client_write_bandwidth = 0; // 0 = unlimited (use link default)
 
   std::vector<std::string> shapes;
   std::vector<std::string> speeds;

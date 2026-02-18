@@ -9,6 +9,11 @@ scenarios:
     - "small_cluster_clients_high_recovery_ops"
     - "small_cluster_clients_balanced"
     - "small_cluster_clients_high_client_ops"
+  
+  "scenario_b":
+    - "big_cluster_no_clients_balanced"
+    - "big_cluster_clients_balanced"
+
 
 cases:
   "small_cluster_no_clients_high_recovery":
@@ -27,6 +32,8 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
+    client_read_bandwidth: 0
+    client_write_bandwidth: 0
     disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
@@ -50,6 +57,8 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
+    client_read_bandwidth: 0
+    client_write_bandwidth: 0
     disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
@@ -73,6 +82,8 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
+    client_read_bandwidth: 0
+    client_write_bandwidth: 0
     disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
@@ -96,6 +107,8 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
+    client_read_bandwidth: 0
+    client_write_bandwidth: 0
     disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
@@ -119,6 +132,8 @@ cases:
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
+    client_read_bandwidth: 0
+    client_write_bandwidth: 0
     disk_write_bandwidth: 536870912
     iops: 10000
     pg_objects: 1000
@@ -155,3 +170,53 @@ cases:
     clients_num: 0
     client_read_queue_depth: 16
     client_write_queue_depth: 16
+  
+  "big_cluster_no_clients_balanced":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 720
+    pg_num: 2048
+    profile: "balanced"
+    "crush_spec_params":
+      - dc_shape: "2:10:24"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["2:10:24", "2:5:24"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["100:100:25", "100:100:25"]
+    clients_num: 0
+    client_read_queue_depth: 0
+    client_write_queue_depth: 0
+    client_op_size: 4194304
+    client_read_bandwidth: 536870912
+    client_write_bandwidth: 536870912
+    disk_write_bandwidth: 268435456
+    iops: 80
+    pg_objects: 100
+    object_size: 4194304
+    start_up_delay: 0
+    shut_down_delay: 0
+
+  "big_cluster_clients_balanced":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 720
+    pg_num: 2048
+    profile: "balanced"
+    "crush_spec_params":
+      - dc_shape: "2:10:24"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["2:10:24", "2:5:24"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["100:100:25", "100:100:25"]
+    clients_num: 4
+    client_read_queue_depth: 4
+    client_write_queue_depth: 4
+    client_op_size: 4194304
+    client_read_bandwidth: 536870912
+    client_write_bandwidth: 536870912
+    disk_write_bandwidth: 268435456
+    iops: 80
+    pg_objects: 100
+    object_size: 4194304
+    start_up_delay: 0
+    shut_down_delay: 0

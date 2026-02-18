@@ -204,6 +204,18 @@ int main(int argc, char *argv[]) {
       "--client-op-size", ctx.client_op_size, "Client operation size");
   client_op_size_opt->default_val(4096);
 
+  // --client-read-bandwidth
+  auto *client_read_bw_opt = app.add_option(
+      "--client-read-bandwidth", ctx.client_read_bandwidth,
+      "Client read bandwidth limit in bytes/sec (0 = unlimited)");
+  client_read_bw_opt->default_val(0);
+
+  // --client-write-bandwidth
+  auto *client_write_bw_opt = app.add_option(
+      "--client-write-bandwidth", ctx.client_write_bandwidth,
+      "Client write bandwidth limit in bytes/sec (0 = unlimited)");
+  client_write_bw_opt->default_val(0);
+
   // If --help was requested, print CLI11 help first (before Engine init,
   // because Engine will print SimGrid help and exit on --help).
   if (help_requested) {
@@ -369,6 +381,16 @@ int main(int argc, char *argv[]) {
         target_zone->add_route(client, nullptr,
                                {{client_link, sg4::LinkInRoute::Direction::UP}},
                                true);
+
+        // Override per-direction bandwidth if configured
+        if (ctx.client_write_bandwidth > 0) {
+          sg4::Link::by_name(client_name + "_link_UP")
+              ->set_bandwidth(ctx.client_write_bandwidth);
+        }
+        if (ctx.client_read_bandwidth > 0) {
+          sg4::Link::by_name(client_name + "_link_DOWN")
+              ->set_bandwidth(ctx.client_read_bandwidth);
+        }
 
         int client_id = -client_global_counter;
         e.add_actor(client_name, client, [pgmap, ctx, client_id]() {

@@ -159,6 +159,7 @@ rule run_sim:
         profile = lambda w: config["cases"][w.case].get("profile", "balanced"),
         disk_write_bandwidth = lambda w: config["cases"][w.case].get("disk_write_bandwidth", 209715200),
         iops = lambda w: config["cases"][w.case].get("iops", 100),
+        client_op_size = lambda w: config["cases"][w.case].get("client_op_size", 4194304),
         client_read_queue_depth = lambda w: config["cases"][w.case].get("client_read_queue_depth", 1),
         client_write_queue_depth = lambda w: config["cases"][w.case].get("client_write_queue_depth", 1),
         dc_shape_csv = lambda w: ",".join(
@@ -169,6 +170,8 @@ rule run_sim:
         ),
         pg_objects = lambda w: config["cases"][w.case].get("pg_objects", 1000),
         object_size = lambda w: config["cases"][w.case].get("object_size", 4194304),
+        client_read_bandwidth = lambda w: config["cases"][w.case].get("client_read_bandwidth", 0),
+        client_write_bandwidth = lambda w: config["cases"][w.case].get("client_write_bandwidth", 0),
     shell:
         """
         {input.binary} \
@@ -186,8 +189,11 @@ rule run_sim:
             "--disk-write-bandwidth={params.disk_write_bandwidth}" \
             "--iops={params.iops}" \
             "--dc-clients={params.clients_num}" \
+            "--client-op-size={params.client_op_size}" \
             "--client-read-queue-depth={params.client_read_queue_depth}" \
             "--client-write-queue-depth={params.client_write_queue_depth}" \
+            "--client-read-bandwidth={params.client_read_bandwidth}" \
+            "--client-write-bandwidth={params.client_write_bandwidth}" \
             "--output-dir=results/{wildcards.case}" \
             > {output.stdout} 2> {output.stderr}
         """
