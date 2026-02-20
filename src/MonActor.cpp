@@ -82,7 +82,7 @@ void Mon::on_pgmap_change(int pg_id) {
     for (int osd_id : notify) {
       auto mb = osd_mailboxes[osd_id];
       Message *msg = make_message<PGMapNotification>(pgmap);
-      mb->put(msg, 0);
+      activities.push(mb->put_async(msg, 0));
     }
   }
 
@@ -139,7 +139,7 @@ void Mon::on_subscribe_pgmap_change(const std::string &sender,
   XBT_INFO("%s subscribed to pg map changes", sender.c_str());
   auto response_msg = make_message<PGMapNotification>(pgmap);
   auto return_mb = simgrid::s4u::Mailbox::by_name(sender);
-  return_mb->put(response_msg, 0);
+  activities.push(return_mb->put_async(response_msg, 0));
 }
 
 void Mon::kill_all_osds() {
@@ -180,16 +180,26 @@ void Mon::kill_all_osds() {
   for (auto mb_tuple : osd_mailboxes) {
     auto mb = mb_tuple.second;
     Message *msg = make_message<KillMsg>();
-    auto a = mb->put_async(msg, 0);
-    kill_activities.push(a);
+    mb->put(msg, 0);
+    // auto a = mb->put_async(msg, 0);
+    // kill_activities.push(a);
   }
-  kill_activities.wait_all();
+  // kill_activities.wait_all();
 }
 
 void Mon::kill_self() {
   XBT_INFO("Monitor is killing itself");
-  // CephActor::kill_self(); // This calls exit(), but we want to log first as
-  // above
+  std::vector<sg4::Host *> host_list =
+      sg4::Engine::get_instance()->get_all_hosts();
+
+  for (auto const &host : host_list) {
+    // Get actors on this specific host
+    std::vector<sg4::ActorPtr> actors = host->get_all_actors();
+
+    for (auto const &actor : actors) {
+      XBT_INFO("Found actor: %s", actor->get_cname());
+    }
+  }
   simgrid::s4u::this_actor::exit();
 }
 
@@ -203,7 +213,7 @@ void Mon::operator()() {
   for (auto mb_tuple : osd_mailboxes) {
     auto mb = mb_tuple.second;
     Message *msg = make_message<PGMapNotification>(pgmap);
-    mb->put(msg, 0);
+    activities.push(mb->put_async(msg, 0));
   }
   if (start_up_delay > 0) {
     XBT_INFO("Monitor waited %ld seconds before sending PGMapNotification",
