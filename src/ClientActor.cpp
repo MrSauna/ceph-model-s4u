@@ -10,8 +10,8 @@ namespace sg4 = simgrid::s4u;
 std::ofstream Client::metrics_stream;
 std::mutex Client::metrics_mutex;
 std::map<int, ThroughputBucket> Client::throughput_buckets;
-digestible::tdigest<float, uint32_t>
-    Client::latency_digest(100); // 100 compression factor
+digestible::tdigest<float, uint32_t> Client::read_latency_digest(100);
+digestible::tdigest<float, uint32_t> Client::write_latency_digest(100);
 bool Client::aggregate_mode = false;
 static std::string aggregate_output_dir;
 
@@ -107,7 +107,11 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
 
     // Aggregated mode: update T-Digest and throughput buckets
     if (aggregate_mode) {
-      latency_digest.insert(static_cast<float>(dt));
+      if (context->type == OpType::CLIENT_READ) {
+        read_latency_digest.insert(static_cast<float>(dt));
+      } else if (context->type == OpType::CLIENT_WRITE) {
+        write_latency_digest.insert(static_cast<float>(dt));
+      }
 
       ThroughputBucket &bucket = throughput_buckets[time_bucket];
       if (context->type == OpType::CLIENT_READ) {
@@ -194,7 +198,8 @@ void Client::write_aggregated_metrics() {
   }
 
   // Merge any buffered data in T-Digest
-  latency_digest.merge();
+  read_latency_digest.merge();
+  write_latency_digest.merge();
 
   // Write throughput aggregates: client_metrics_agg.csv
   std::string throughput_path =
@@ -214,41 +219,57 @@ void Client::write_aggregated_metrics() {
   // Write T-Digest centroids: client_latency_digest.csv
   std::string digest_path = aggregate_output_dir + "/client_latency_digest.csv";
   std::ofstream digest_out(digest_path);
-  auto centroids = latency_digest.get(); // Returns vector<pair<mean, weight>>
 
   if (digest_out.is_open()) {
-    digest_out << "mean,weight\n";
-    for (const auto &[mean, weight] : centroids) {
-      digest_out << mean << "," << weight << "\n";
+    digest_out << "op_type,mean,weight\n";
+    auto read_centroids = read_latency_digest.get();
+    for (const auto &[mean, weight] : read_centroids) {
+      digest_out << "read," << mean << "," << weight << "\n";
+    }
+    auto write_centroids = write_latency_digest.get();
+    for (const auto &[mean, weight] : write_centroids) {
+      digest_out << "write," << mean << "," << weight << "\n";
     }
     digest_out.close();
-    XBT_INFO("Wrote latency T-Digest to %s (%zu centroids)",
-             digest_path.c_str(), centroids.size());
+    XBT_INFO("Wrote latency T-Digest to %s (%zu + %zu centroids)",
+             digest_path.c_str(), read_centroids.size(),
+             write_centroids.size());
   }
-
-  // Compute mean from centroids (weighted average)
-  double weighted_sum = 0.0;
-  size_t total_weight = 0;
-  for (const auto &[mean, weight] : centroids) {
-    weighted_sum += mean * weight;
-    total_weight += weight;
-  }
-  double avg = (total_weight > 0) ? weighted_sum / total_weight : 0.0;
 
   // Also write computed percentiles for convenience (summary file)
   std::string summary_path =
       aggregate_output_dir + "/client_latency_summary.csv";
   std::ofstream summary_out(summary_path);
   if (summary_out.is_open()) {
-    summary_out << "metric,value\n";
-    summary_out << "count," << latency_digest.size() << "\n";
-    summary_out << "min," << latency_digest.min() << "\n";
-    summary_out << "max," << latency_digest.max() << "\n";
-    summary_out << "avg," << avg << "\n";
-    summary_out << "p50," << latency_digest.quantile(50) << "\n";
-    summary_out << "p95," << latency_digest.quantile(95) << "\n";
-    summary_out << "p99," << latency_digest.quantile(99) << "\n";
-    summary_out << "p99.5," << latency_digest.quantile(99.5) << "\n";
+    summary_out << "op_type,metric,value\n";
+
+    auto write_summary = [&](const std::string &type,
+                             digestible::tdigest<float, uint32_t> &digest) {
+      if (digest.size() == 0)
+        return;
+
+      auto centroids = digest.get();
+      double weighted_sum = 0.0;
+      size_t total_weight = 0;
+      for (const auto &[mean, weight] : centroids) {
+        weighted_sum += mean * weight;
+        total_weight += weight;
+      }
+      double avg = (total_weight > 0) ? weighted_sum / total_weight : 0.0;
+
+      summary_out << type << ",count," << digest.size() << "\n";
+      summary_out << type << ",min," << digest.min() << "\n";
+      summary_out << type << ",max," << digest.max() << "\n";
+      summary_out << type << ",avg," << avg << "\n";
+      summary_out << type << ",p50," << digest.quantile(50) << "\n";
+      summary_out << type << ",p95," << digest.quantile(95) << "\n";
+      summary_out << type << ",p99," << digest.quantile(99) << "\n";
+      summary_out << type << ",p99.5," << digest.quantile(99.5) << "\n";
+    };
+
+    write_summary("read", read_latency_digest);
+    write_summary("write", write_latency_digest);
+
     summary_out.close();
     XBT_INFO("Wrote latency summary to %s", summary_path.c_str());
   }

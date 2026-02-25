@@ -103,32 +103,49 @@ def main():
         wrapped_label = "\n".join(textwrap.wrap(label, width=12, break_long_words=False))
         runs.append((wrapped_label, run))
 
-    # Plot 1: Compare Total Throughput
-    fig = plt.figure(figsize=(12, 6))
+    # Plot 1: Compare Client Throughput (Read and Write)
+    fig, (ax_read, ax_write) = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
     
     for label, run in runs:
         tp = run.get_client_throughput(window_size=10)
         if tp.empty:
             continue
             
-        # Calculate total throughput (read + write)
-        total_tp = tp.sum(axis=1)
-        
-        line, = plt.plot(total_tp.index, total_tp.values, label=label, linewidth=1.5)
-        color = line.get_color()
-        
-        # Add recovery markers
         start_time, end_time = run.get_recovery_times()
-        if start_time is not None:
-            plt.axvline(x=start_time, color=color, linestyle=':', alpha=0.8)
-        if end_time is not None:
-            plt.axvline(x=end_time, color=color, linestyle='--', alpha=0.8)
         
-    plt.xlabel("Time (s)")
-    plt.ylabel("Total Throughput (MiB/s)")
-    plt.title("Client Throughput Comparison")
-    plt.legend()
-    plt.grid(True)
+        # Plot Read Throughput
+        if 'read' in tp.columns:
+            line_r, = ax_read.plot(tp.index, tp['read'].values, label=label, linewidth=1.5)
+            color_r = line_r.get_color()
+            
+            if start_time is not None:
+                ax_read.axvline(x=start_time, color=color_r, linestyle=':', alpha=0.8)
+            if end_time is not None:
+                ax_read.axvline(x=end_time, color=color_r, linestyle='--', alpha=0.8)
+                
+        # Plot Write Throughput
+        if 'write' in tp.columns:
+            line_w, = ax_write.plot(tp.index, tp['write'].values, label=label, linewidth=1.5)
+            color_w = line_w.get_color()
+            
+            if start_time is not None:
+                ax_write.axvline(x=start_time, color=color_w, linestyle=':', alpha=0.8)
+            if end_time is not None:
+                ax_write.axvline(x=end_time, color=color_w, linestyle='--', alpha=0.8)
+        
+    ax_read.set_xlabel("Time (s)")
+    ax_read.set_ylabel("Read Throughput (MiB/s)")
+    ax_read.set_title("Client Read Throughput")
+    ax_read.legend()
+    ax_read.grid(True)
+    
+    ax_write.set_xlabel("Time (s)")
+    ax_write.set_ylabel("Write Throughput (MiB/s)")
+    ax_write.set_title("Client Write Throughput")
+    ax_write.legend()
+    ax_write.grid(True)
+
+    plt.tight_layout()
     add_git_hash(fig)
     
     output_path = os.path.join(output_dir, "client_throughput.svg")
@@ -258,13 +275,23 @@ def main():
         if not stats:
             continue
         
+        # Flatten nested stats
+        flat_stats = {}
+        for op_type, type_stats in stats.items():
+            if isinstance(type_stats, dict):
+                for metric, val in type_stats.items():
+                    key = f"{metric} ({op_type})" if op_type != 'all' else metric
+                    flat_stats[key] = val
+            else:
+                flat_stats[op_type] = type_stats
+
         # Skip cases with no actual client traffic (all values zero)
-        values = [v for k, v in stats.items() if k != "label"]
+        values = [v for k, v in flat_stats.items() if k != "label"]
         if not values or all(v == 0 for v in values):
             continue
             
-        stats["label"] = label
-        latency_data.append(stats)
+        flat_stats["label"] = label
+        latency_data.append(flat_stats)
         labels.append(label)
         
     if latency_data:
@@ -272,7 +299,13 @@ def main():
         df_lat = df_lat.set_index("label")
         
         # Reorder columns for logical progression
-        cols = ["avg", "p95", "p99", "p99.5"]
+        cols = [
+            "avg (read)", "avg (write)", 
+            "p95 (read)", "p95 (write)",
+            "p99 (read)", "p99 (write)",
+            "p99.5 (read)", "p99.5 (write)",
+            "avg", "p95", "p99", "p99.5"
+        ]
         # Filter strictly those we put in
         cols = [c for c in cols if c in df_lat.columns]
         df_lat = df_lat[cols]
@@ -299,29 +332,61 @@ def main():
             else:
                 return f'{val:.3f}'
         
-        fig = plt.figure(figsize=(12, 6))
-        ax = plt.gca()
+        # Split into Read and Write dataframes if columns exist
+        read_cols = [c for c in cols if "(read)" in c]
+        write_cols = [c for c in cols if "(write)" in c]
         
-        df_lat.plot(kind='bar', ax=ax, rot=0)
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(16, 6), sharey=True)
         
-        for p in ax.patches:
-            height = p.get_height()
-            if height > 0:
-                ax.annotate(format_latency(height), 
-                            (p.get_x() + p.get_width() / 2., height), 
-                            ha='center', va='bottom', 
-                            fontsize=9, xytext=(0, 2), 
-                            textcoords='offset points')
+        # Plot Reads
+        if read_cols:
+            df_read = df_lat[read_cols]
+            # Rename columns to remove " (read)" for cleaner legend
+            df_read.columns = [c.replace(" (read)", "") for c in df_read.columns]
+            df_read.plot(kind='bar', ax=axes[0], rot=0)
+            
+            for p in axes[0].patches:
+                height = p.get_height()
+                if height > 0:
+                    axes[0].annotate(format_latency(height), 
+                                (p.get_x() + p.get_width() / 2., height), 
+                                ha='center', va='bottom', 
+                                fontsize=9, xytext=(0, 2), 
+                                textcoords='offset points',
+                                rotation=90)
+            
+            axes[0].set_xlabel("Scenarios")
+            axes[0].set_ylabel(f"Latency ({latency_unit})")
+            axes[0].set_title("Read Latency")
+            axes[0].grid(True, axis='y')
+            axes[0].legend(title="Metric")
+        
+        # Plot Writes
+        if write_cols:
+            df_write = df_lat[write_cols]
+            df_write.columns = [c.replace(" (write)", "") for c in df_write.columns]
+            df_write.plot(kind='bar', ax=axes[1], rot=0)
+            
+            for p in axes[1].patches:
+                height = p.get_height()
+                if height > 0:
+                    axes[1].annotate(format_latency(height), 
+                                (p.get_x() + p.get_width() / 2., height), 
+                                ha='center', va='bottom', 
+                                fontsize=9, xytext=(0, 2), 
+                                textcoords='offset points',
+                                rotation=90)
+            
+            axes[1].set_xlabel("Scenarios")
+            axes[1].set_title("Write Latency")
+            axes[1].grid(True, axis='y')
+            axes[1].legend(title="Metric")
 
-        plt.xlabel("Scenarios")
-        plt.ylabel(f"Latency ({latency_unit})")
-        plt.title("Client Latency Statistics")
-        plt.grid(True, axis='y')
-        plt.legend(title="Metric")
-        
         # Rotate x labels if too many or long
-        plt.xticks(rotation=0, ha='center')
-        
+        for ax in axes:
+            ax.tick_params(axis='x', rotation=0)
+
+        plt.suptitle("Client Latency Statistics")
         plt.tight_layout()
         add_git_hash(fig)
         

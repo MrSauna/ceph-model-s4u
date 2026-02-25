@@ -174,7 +174,8 @@ class SimulationRun:
 
     def get_latency_stats(self):
         """
-        Returns a dictionary with latency statistics from pre-computed summary.
+        Returns a nested dictionary with latency statistics from pre-computed summary
+        grouped by op_type (if available).
         """
         if self._latency_stats_cache is not None:
             return self._latency_stats_cache
@@ -185,17 +186,19 @@ class SimulationRun:
         try:
             df = pd.read_csv(self.summary_path)
             stats = {}
+            has_op_type = 'op_type' in df.columns
+            
             for _, row in df.iterrows():
                 metric = row['metric']
                 value = row['value']
-                if metric == 'avg':
-                    stats['avg'] = value
-                elif metric == 'p95':
-                    stats['p95'] = value
-                elif metric == 'p99':
-                    stats['p99'] = value
-                elif metric == 'p99.5':
-                    stats['p99.5'] = value
+                op_type = row['op_type'] if has_op_type else 'all'
+                
+                if op_type not in stats:
+                    stats[op_type] = {}
+                    
+                if metric in ['avg', 'p95', 'p99', 'p99.5']:
+                    stats[op_type][metric] = value
+                    
             self._latency_stats_cache = stats
             return stats
         except Exception:

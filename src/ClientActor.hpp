@@ -42,7 +42,8 @@ class Client : public CephActor {
 
   // Aggregated metrics
   static std::map<int, ThroughputBucket> throughput_buckets;
-  static digestible::tdigest<float, uint32_t> latency_digest;
+  static digestible::tdigest<float, uint32_t> read_latency_digest;
+  static digestible::tdigest<float, uint32_t> write_latency_digest;
   static bool aggregate_mode;
 
 public:
