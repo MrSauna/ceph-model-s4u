@@ -382,20 +382,11 @@ int main(int argc, char *argv[]) {
                                {{client_link, sg4::LinkInRoute::Direction::UP}},
                                true);
 
-        // Override per-direction bandwidth if configured
-        if (ctx.client_write_bandwidth > 0) {
-          sg4::Link::by_name(client_name + "_link_UP")
-              ->set_bandwidth(ctx.client_write_bandwidth);
-        }
-        if (ctx.client_read_bandwidth > 0) {
-          sg4::Link::by_name(client_name + "_link_DOWN")
-              ->set_bandwidth(ctx.client_read_bandwidth);
-        }
-
         int client_id = -client_global_counter;
         e.add_actor(client_name, client, [pgmap, ctx, client_id]() {
           Client client(pgmap, client_id, ctx.client_read_queue,
-                        ctx.client_write_queue, ctx.client_op_size);
+                        ctx.client_write_queue, ctx.client_op_size,
+                        ctx.client_read_bandwidth, ctx.client_write_bandwidth);
           client();
         });
         zone_hosts[target_zone].push_back(client);

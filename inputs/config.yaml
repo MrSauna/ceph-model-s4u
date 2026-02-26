@@ -13,6 +13,7 @@ scenarios:
   "scenario_b":
     - "big_cluster_no_clients"
     - "big_cluster_no_backfill"
+    - "big_cluster_no_backfill2"
     - "big_cluster_1new"
     - "big_cluster_5new"
     - "big_cluster_10new"
@@ -169,14 +170,14 @@ cases:
     "crush_spec_params":
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:25"
       - dc_shape: ["2:10:24", "2:5:24"]
         dc_weight: ["14.0::", "20.0::"]
         dc_speed: ["100:100:25", "100:100:25"]
     clients_num: 0
     client_read_queue_depth: 0
     client_write_queue_depth: 0
-    client_op_size: 4194304
+    client_op_size: 8388608
     client_read_bandwidth: 536870912
     client_write_bandwidth: 536870912
     disk_write_bandwidth: 268435456
@@ -194,22 +195,47 @@ cases:
     "crush_spec_params":
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:25"
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
-    clients_num: 4
-    client_read_queue_depth: 4
-    client_write_queue_depth: 4
-    client_op_size: 4194304
-    client_read_bandwidth: 536870912
-    client_write_bandwidth: 536870912
+        dc_speed: "100:100:25"
+    clients_num: 1
+    client_read_queue_depth: 128
+    client_write_queue_depth: 32
+    client_op_size: 8388608
+    client_read_bandwidth: 2297801845
+    client_write_bandwidth: 709885952
     disk_write_bandwidth: 268435456
     iops: 80
     pg_objects: 250
     object_size: 4194304
     start_up_delay: 0
-    shut_down_delay: 600
+    shut_down_delay: 300
+
+  "big_cluster_no_backfill2":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 720
+    pg_num: 2048
+    profile: "balanced"
+    "crush_spec_params":
+      - dc_shape: "2:10:24"
+        dc_weight: "14.0::"
+        dc_speed: "100:100:25"
+      - dc_shape: "2:10:24"
+        dc_weight: "14.0::"
+        dc_speed: "100:100:25"
+    clients_num: 1
+    client_read_queue_depth: 128
+    client_write_queue_depth: 32
+    client_op_size: 8388608
+    client_read_bandwidth: 229780184
+    client_write_bandwidth: 70988595
+    disk_write_bandwidth: 268435456
+    iops: 80
+    pg_objects: 250
+    object_size: 4194304
+    start_up_delay: 0
+    shut_down_delay: 300
 
   "big_cluster_1new":
     template: "inputs/templates/cm_simple.j2"
@@ -219,16 +245,16 @@ cases:
     "crush_spec_params":
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:25"
       - dc_shape: ["2:10:24", "1:1:24"]
         dc_weight: ["14.0::", "20.0::"]
         dc_speed: ["100:100:25", "100:100:25"]
-    clients_num: 4
-    client_read_queue_depth: 4
-    client_write_queue_depth: 4
-    client_op_size: 4194304
-    client_read_bandwidth: 536870912
-    client_write_bandwidth: 536870912
+    clients_num: 1
+    client_read_queue_depth: 128
+    client_write_queue_depth: 32
+    client_op_size: 8388608
+    client_read_bandwidth: 2297801845
+    client_write_bandwidth: 709885952
     disk_write_bandwidth: 268435456
     iops: 80
     pg_objects: 250
@@ -244,16 +270,16 @@ cases:
     "crush_spec_params":
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:25"
       - dc_shape: ["2:10:24", "1:5:24"]
         dc_weight: ["14.0::", "20.0::"]
         dc_speed: ["100:100:25", "100:100:25"]
-    clients_num: 4
-    client_read_queue_depth: 4
-    client_write_queue_depth: 4
-    client_op_size: 4194304
-    client_read_bandwidth: 536870912
-    client_write_bandwidth: 536870912
+    clients_num: 1
+    client_read_queue_depth: 128
+    client_write_queue_depth: 32
+    client_op_size: 8388608
+    client_read_bandwidth: 2297801845
+    client_write_bandwidth: 709885952
     disk_write_bandwidth: 268435456
     iops: 80
     pg_objects: 250
@@ -269,16 +295,16 @@ cases:
     "crush_spec_params":
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:25"
       - dc_shape: ["2:10:24", "2:5:24"]
         dc_weight: ["14.0::", "20.0::"]
         dc_speed: ["100:100:25", "100:100:25"]
-    clients_num: 4
-    client_read_queue_depth: 4
-    client_write_queue_depth: 4
-    client_op_size: 4194304
-    client_read_bandwidth: 536870912
-    client_write_bandwidth: 536870912
+    clients_num: 1
+    client_read_queue_depth: 128
+    client_write_queue_depth: 32
+    client_op_size: 8388608
+    client_read_bandwidth: 2297801845
+    client_write_bandwidth: 709885952
     disk_write_bandwidth: 268435456
     iops: 80
     pg_objects: 250

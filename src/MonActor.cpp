@@ -189,17 +189,6 @@ void Mon::kill_all_osds() {
 
 void Mon::kill_self() {
   XBT_INFO("Monitor is killing itself");
-  std::vector<sg4::Host *> host_list =
-      sg4::Engine::get_instance()->get_all_hosts();
-
-  for (auto const &host : host_list) {
-    // Get actors on this specific host
-    std::vector<sg4::ActorPtr> actors = host->get_all_actors();
-
-    for (auto const &actor : actors) {
-      XBT_INFO("Found actor: %s", actor->get_cname());
-    }
-  }
   simgrid::s4u::this_actor::exit();
 }
 

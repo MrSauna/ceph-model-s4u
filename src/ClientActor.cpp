@@ -25,11 +25,17 @@ void Client::set_metrics_output(const std::string &filename) {
 }
 
 Client::Client(PGMap *pgmap, int client_id, int read_queue, int write_queue,
-               int op_size)
+               int op_size, double read_bandwidth, double write_bandwidth)
     : CephActor(client_id, pgmap), max_concurrent_reads(read_queue),
-      max_concurrent_writes(write_queue), op_size(op_size) {
+      max_concurrent_writes(write_queue), op_size(op_size),
+      read_bandwidth(read_bandwidth), write_bandwidth(write_bandwidth) {
   xbt_assert(client_id < 0, "client_id must be negative");
   random.set_seed(client_id);
+  read_tokens =
+      read_bandwidth > 0 ? read_bandwidth : 0; // 1 second burst capacity
+  write_tokens =
+      write_bandwidth > 0 ? write_bandwidth : 0; // 1 second burst capacity
+  last_token_time = get_mock_epoch();
 }
 
 void Client::gen_op(OpType type) {
@@ -72,23 +78,84 @@ void Client::gen_op(OpType type) {
   activities.push(
       target_osd_mb->put_async(msg, type == OpType::CLIENT_READ ? 0 : op_size));
 
+  // double jitter = random.uniform_real(0, 0.01);
+  // sg4::this_actor::sleep_for(jitter);
+
   // XBT_INFO("Sent op %d to %s", op_id, target_osd_mb->get_cname());
 }
 
 std::optional<double> Client::make_progress() {
-  if ((in_flight_reads >= max_concurrent_reads &&
-       in_flight_writes >= max_concurrent_writes) ||
-      shutting_down)
+  if (shutting_down)
     return std::nullopt;
+
+  double now = get_mock_epoch();
+  double dt = now - last_token_time;
+  last_token_time = now;
+
+  if (dt > 0) {
+    if (read_bandwidth > 0) {
+      read_tokens += dt * read_bandwidth;
+      read_tokens =
+          std::min(read_tokens, read_bandwidth * 1.0); // max 1s buffer
+    }
+    if (write_bandwidth > 0) {
+      write_tokens += dt * write_bandwidth;
+      write_tokens =
+          std::min(write_tokens, write_bandwidth * 1.0); // max 1s buffer
+    }
+  }
 
   // Fill both pipelines
   while (in_flight_reads < max_concurrent_reads) {
-    gen_op(OpType::CLIENT_READ);
-  }
-  while (in_flight_writes < max_concurrent_writes) {
-    gen_op(OpType::CLIENT_WRITE);
+    if (read_bandwidth > 0) {
+      if (read_tokens >= op_size) {
+        read_tokens -= op_size;
+        gen_op(OpType::CLIENT_READ);
+      } else {
+        break; // not enough tokens
+      }
+    } else {
+      gen_op(OpType::CLIENT_READ);
+    }
   }
 
+  while (in_flight_writes < max_concurrent_writes) {
+    if (write_bandwidth > 0) {
+      if (write_tokens >= op_size) {
+        write_tokens -= op_size;
+        gen_op(OpType::CLIENT_WRITE);
+      } else {
+        break; // not enough tokens
+      }
+    } else {
+      gen_op(OpType::CLIENT_WRITE);
+    }
+  }
+
+  if (in_flight_reads >= max_concurrent_reads &&
+      in_flight_writes >= max_concurrent_writes) {
+    return std::nullopt;
+  }
+
+  double next_wakeup = -1.0;
+
+  if (in_flight_reads < max_concurrent_reads && read_bandwidth > 0) {
+    double needed = op_size - read_tokens;
+    double time_needed = needed / read_bandwidth;
+    next_wakeup = now + time_needed;
+  }
+
+  if (in_flight_writes < max_concurrent_writes && write_bandwidth > 0) {
+    double needed = op_size - write_tokens;
+    double time_needed = needed / write_bandwidth;
+    if (next_wakeup < 0 || now + time_needed < next_wakeup) {
+      next_wakeup = now + time_needed;
+    }
+  }
+
+  if (next_wakeup > 0) {
+    return next_wakeup;
+  }
   return std::nullopt;
 }
 

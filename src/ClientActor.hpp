@@ -19,6 +19,11 @@ class Client : public CephActor {
   int max_concurrent_reads;
   int max_concurrent_writes;
   int op_size;
+  double read_bandwidth;
+  double write_bandwidth;
+  double read_tokens = 0;
+  double write_tokens = 0;
+  double last_token_time = 0;
   int in_flight_reads = 0;
   int in_flight_writes = 0;
   bool shutting_down = false;
@@ -48,7 +53,8 @@ class Client : public CephActor {
 
 public:
   explicit Client(PGMap *pgmap, int client_id, int read_queue, int write_queue,
-                  int op_size);
+                  int op_size, double read_bandwidth = 0,
+                  double write_bandwidth = 0);
   void operator()();
 
   // Legacy per-op CSV output
