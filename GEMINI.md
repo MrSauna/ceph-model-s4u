@@ -23,26 +23,8 @@
 Here is a quick guide on how to run the simulator. Remember to wait at least 10 seconds for the simulation to finish.
 
 ```
-./build/ceph-sim \
-    --dc-shape=1:4:1 \
-    --dc-speed=10:10:10 \
-    --pgdump=results/small_cluster_clients_balanced/0/pgdump.txt \
-    --pgdump=results/small_cluster_clients_balanced/1/pgdump.txt \
-    --output-dir=results/vscode \
-    --pg-objects=1000 \
-    --object-size=4194304 \
-    --pool-id=1 \
-    --disk-write-bandwidth=209715200 \
-    --dc-clients=1 \
-    --client-read-queue-depth=4 \
-    --client-write-queue-depth=4
+./build/ceph-sim --cfg=network/model:CM02 --dc-shape=2:10:24 --dc-speed=100:100:25 --pgdump=results/big_cluster_no_backfill2/0/pgdump.txt --pgdump=results/big_cluster_no_backfill2/1/pgdump.txt --start-up-delay=0 --shut-down-delay=300 --profile=balanced --pg-objects=250 --object-size=4194304 --pool-id=1 --disk-write-bandwidth=268435456 --iops=80 --dc-clients=1 --client-op-size=8388608 --client-read-queue-depth=128 --client-write-queue-depth=32 --client-read-bandwidth=229780184 --client-write-bandwidth=70988595 --output-dir=results/big_cluster_no_backfill2
 ```
-
-- The --dc-shape is a toplogoy descriptor, you don't need to modify unless specifically asked to. The --dc-speed is the speed of the links, you don't need to modify unless specifically asked to. The --dc-weight is the weight of the links, you don't need to modify unless specifically asked to.
-
-- The --pgdump defines the data that needs to be moved in the simulation but you can not create a pgdump file yourself. 
-
-- The --pg-objects=1000 says that 1000 objects exist per pg. The --object-size=4194304 says that each object is 4MB. This practically means the whole simulation that should run in about 5 seconds wall time.
 
 - Use --output-dir vscode to output the results to the vscode directory.
 
@@ -61,4 +43,3 @@ Most of the artifacts produced by the simulation are files. The files are in the
 - You must run python scripts with `.venv/bin/python` otherwise the command will fail.
 - The python scripts are in the `tools` directory. The `visualize.py` script can be run using `.venv/bin/python tools/visualize.py`. The output will go in `results/vscode/figures/`.
 - If running other python commands do it in the `.venv` virtual environment.
-
