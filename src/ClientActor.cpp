@@ -153,7 +153,8 @@ std::optional<double> Client::make_progress() {
     }
   }
 
-  if (next_wakeup > 0) {
+  if (next_wakeup > now) {
+    // main loop expects epoch time, it's used as timeout
     return next_wakeup;
   }
   return std::nullopt;
