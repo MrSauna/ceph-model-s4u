@@ -32,9 +32,9 @@ Client::Client(PGMap *pgmap, int client_id, int read_queue, int write_queue,
   xbt_assert(client_id < 0, "client_id must be negative");
   random.set_seed(client_id);
   read_tokens =
-      read_bandwidth > 0 ? read_bandwidth : 0; // 1 second burst capacity
+      read_bandwidth > 0 ? 2.0 * op_size : 0; // max 2 ops burst capacity
   write_tokens =
-      write_bandwidth > 0 ? write_bandwidth : 0; // 1 second burst capacity
+      write_bandwidth > 0 ? 2.0 * op_size : 0; // max 2 ops burst capacity
   last_token_time = get_mock_epoch();
 }
 
@@ -95,13 +95,11 @@ std::optional<double> Client::make_progress() {
   if (dt > 0) {
     if (read_bandwidth > 0) {
       read_tokens += dt * read_bandwidth;
-      read_tokens =
-          std::min(read_tokens, read_bandwidth * 1.0); // max 1s buffer
+      read_tokens = std::min(read_tokens, 2.0 * op_size); // max 2 ops buffer
     }
     if (write_bandwidth > 0) {
       write_tokens += dt * write_bandwidth;
-      write_tokens =
-          std::min(write_tokens, write_bandwidth * 1.0); // max 1s buffer
+      write_tokens = std::min(write_tokens, 2.0 * op_size); // max 2 ops buffer
     }
   }
 
@@ -153,9 +151,11 @@ std::optional<double> Client::make_progress() {
     }
   }
 
-  if (next_wakeup > now) {
+  if (next_wakeup > 0) {
     // main loop expects epoch time, it's used as timeout
-    return next_wakeup;
+    // Prevent 0s sleep / hot loop from FP inaccuracies. clamp to minimum 1
+    // microsecond.
+    return std::max(next_wakeup, now + 1e-6);
   }
   return std::nullopt;
 }
