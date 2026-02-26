@@ -216,6 +216,8 @@ std::string SimContext::to_string() {
   for (const auto &c : clients)
     ss << c << " ";
   ss << std::endl;
+  ss << "  Client Read Bandwidth: " << client_read_bandwidth << std::endl;
+  ss << "  Client Write Bandwidth: " << client_write_bandwidth << std::endl;
   ss << "  Client Read Queue: " << client_read_queue << std::endl;
   ss << "  Client Write Queue: " << client_write_queue << std::endl;
 
