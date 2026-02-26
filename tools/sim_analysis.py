@@ -59,7 +59,11 @@ class SimulationRun:
     def agg_df(self):
         """Load aggregated client metrics (tiny file, ~KB)."""
         if self._agg_df is None and os.path.exists(self.agg_path):
-            self._agg_df = pd.read_csv(self.agg_path)
+            df = pd.read_csv(self.agg_path)
+            if not df.empty:
+                self._agg_df = df.iloc[:-1]
+            else:
+                self._agg_df = df
         return self._agg_df
 
     @property

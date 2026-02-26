@@ -169,8 +169,8 @@ void Client::on_osd_op_ack_message(int sender, const OsdOpAckMsg &msg) {
   double dt = sg4::Engine::get_clock() - context->start_time;
   int time_bucket = static_cast<int>(context->start_time);
 
-  // Record metrics based on mode
-  {
+  // Record metrics based on mode if not shutting down
+  if (!shutting_down) {
     std::lock_guard<std::mutex> lock(metrics_mutex);
 
     // Aggregated mode: update T-Digest and throughput buckets
