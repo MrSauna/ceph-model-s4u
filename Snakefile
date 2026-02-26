@@ -86,6 +86,7 @@ rule scenario_vizualize:
         net_metrics = lambda w: expand("results/{case}/net_metrics.csv", case=config["scenarios"][w.scenario]),
         mon_metrics = lambda w: expand("results/{case}/mon_metrics.csv", case=config["scenarios"][w.scenario]),
         script = "tools/visualize_scenario.py",
+        analysis_script = "tools/sim_analysis.py",
     output:
         client_throughput = "results/{scenario}/figures/client_throughput.svg",
         latency_comparison = "results/{scenario}/figures/latency_comparison.svg",
@@ -127,6 +128,7 @@ rule case_viz:
         mon_metrics = "results/{case}/mon_metrics.csv",
         client_metrics = "results/{case}/client_metrics.csv",
         script = "tools/visualize_case.py",
+        analysis_script = "tools/sim_analysis.py",
     output:
         client_throughput = "results/{case}/figures/client_throughput.svg",
         pgmap_plot = "results/{case}/figures/pgmap_plot.svg",
