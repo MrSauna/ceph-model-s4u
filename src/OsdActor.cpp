@@ -319,15 +319,17 @@ void Osd::on_backfill_reservation_message(int sender,
 
   // For primary from slave
   case BackfillReservationOpType::ACCEPT:
-    if (!pending_retry) {
-      backfill_reservation_remote.insert(sender);
-      backfill_reservation_remote_pending.erase(sender);
-      if (backfill_reservation_remote_pending.empty()) {
-        XBT_INFO("Starting backfill for pg %i", backfilling_pg->get_id());
-        backfilling_pg->set_state(PGState::BACKFILL);
-        Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
-        activities.push(mon_mb->put_async(msg, 0));
-      }
+    if (pending_retry || !backfilling_pg ||
+        msg.op->pg_id != backfilling_pg->get_id())
+      break;
+
+    backfill_reservation_remote.insert(sender);
+    backfill_reservation_remote_pending.erase(sender);
+    if (backfill_reservation_remote_pending.empty()) {
+      XBT_INFO("Starting backfill for pg %i", backfilling_pg->get_id());
+      backfilling_pg->set_state(PGState::BACKFILL);
+      Message *msg = make_message<PGNotification>(backfilling_pg->get_id());
+      activities.push(mon_mb->put_async(msg, 0));
     }
     break;
 
