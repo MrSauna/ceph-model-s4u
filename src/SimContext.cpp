@@ -110,13 +110,15 @@ static void build_host(SimContext &ctx, sg4::NetZone *rack_zone, int dc_idx,
     auto *disk =
         host->add_disk("disk" + std::to_string(o), ctx.disk_write_bandwidth,
                        ctx.disk_write_bandwidth);
-    // todo: check if this is needed
+    simgrid::xbt::random::XbtRandom random;
+    random.set_seed(1234 + ctx.global_host_id * 100 + o);
     disk->set_factor_cb(
-        [base_cost](sg_size_t size, simgrid::s4u::Io::OpType /* op_type */) {
+        [base_cost, random](sg_size_t size,
+                            simgrid::s4u::Io::OpType /* op_type */) mutable {
           // factor > 1.0 slows down the I/O
           // For small I/O: factor = base_cost / size makes it take 1/IOPS time
           double factor = base_cost / static_cast<double>(size);
-          return std::max(1.0, factor);
+          return std::max(1.0, factor) * random.uniform_real(0.9, 1.1);
         });
   }
 }
