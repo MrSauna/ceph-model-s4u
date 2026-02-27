@@ -13,10 +13,55 @@ scenarios:
   "scenario_b":
     - "big_cluster_no_clients"
     - "big_cluster_no_backfill"
-    - "big_cluster_no_backfill2"
-    - "big_cluster_1new"
-    - "big_cluster_5new"
-    - "big_cluster_10new"
+    - sweep:
+        base: "big_cluster_no_backfill"
+        name_template: "big_cluster_add_{n}_{profile}"
+        # using the variables list allows you to bind specific parameters together
+        variables:
+          - n: 1
+            shape: "2:1:24"
+            osd_num: 528   # 480 + (2 * 1 * 24)
+          - n: 2
+            shape: "2:2:24"
+            osd_num: 576   # 480 + (2 * 2 * 24)
+          - n: 3
+            shape: "2:3:24"
+            osd_num: 624   # 480 + (2 * 3 * 24)
+          - n: 4
+            shape: "2:4:24"
+            osd_num: 672   # 480 + (2 * 4 * 24)
+          - n: 5
+            shape: "2:5:24"
+            osd_num: 720   # 480 + (2 * 5 * 24)
+          - n: 6
+            shape: "2:6:24"
+            osd_num: 768   # 480 + (2 * 6 * 24)
+          - n: 7
+            shape: "2:7:24"
+            osd_num: 816   # 480 + (2 * 7 * 24)
+          - n: 8
+            shape: "2:8:24"
+            osd_num: 864   # 480 + (2 * 8 * 24)
+          - n: 9
+            shape: "2:9:24"
+            osd_num: 912   # 480 + (2 * 9 * 24)
+          - n: 10
+            shape: "2:10:24"
+            osd_num: 960   # 480 + (2 * 10 * 24)
+        # axes allows for cross-multiplying any parameters you set
+        axes:
+          profile: ["balanced", "high_recovery_ops", "high_client_ops"]
+        overrides:
+          osd_num: "{osd_num}"
+          shut_down_delay: 0
+          profile: "{profile}"
+          "crush_spec_params":
+            - dc_shape: "2:10:24"
+              dc_weight: "14.0::"
+              dc_speed: "100:100:25"
+            - dc_shape: ["2:10:24", "{shape}"]
+              dc_weight: ["14.0::", "20.0::"]
+              dc_speed: ["100:100:25", "100:100:25"]
 
 
 cases:
@@ -164,14 +209,14 @@ cases:
 
   "big_cluster_no_clients":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 720
+    osd_num: 960
     pg_num: 2048
     profile: "balanced"
     "crush_spec_params":
       - dc_shape: "2:10:24"
         dc_weight: "14.0::"
         dc_speed: "100:100:25"
-      - dc_shape: ["2:10:24", "2:5:24"]
+      - dc_shape: ["2:10:24", "2:10:24"]
         dc_weight: ["14.0::", "20.0::"]
         dc_speed: ["100:100:25", "100:100:25"]
     clients_num: 0
@@ -189,7 +234,7 @@ cases:
 
   "big_cluster_no_backfill":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 720
+    osd_num: 480
     pg_num: 2048
     profile: "balanced"
     "crush_spec_params":
@@ -212,102 +257,3 @@ cases:
     start_up_delay: 0
     shut_down_delay: 300
 
-  "big_cluster_no_backfill2":
-    template: "inputs/templates/cm_simple.j2"
-    osd_num: 720
-    pg_num: 2048
-    profile: "balanced"
-    "crush_spec_params":
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
-    clients_num: 1
-    client_read_queue_depth: 128
-    client_write_queue_depth: 32
-    client_op_size: 8388608
-    client_read_bandwidth: 229780184
-    client_write_bandwidth: 70988595
-    disk_write_bandwidth: 268435456
-    iops: 80
-    pg_objects: 250
-    object_size: 4194304
-    start_up_delay: 0
-    shut_down_delay: 300
-
-  "big_cluster_1new":
-    template: "inputs/templates/cm_simple.j2"
-    osd_num: 720
-    pg_num: 2048
-    profile: "balanced"
-    "crush_spec_params":
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
-      - dc_shape: ["2:10:24", "1:1:24"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["100:100:25", "100:100:25"]
-    clients_num: 1
-    client_read_queue_depth: 128
-    client_write_queue_depth: 32
-    client_op_size: 8388608
-    client_read_bandwidth: 2297801845
-    client_write_bandwidth: 709885952
-    disk_write_bandwidth: 268435456
-    iops: 80
-    pg_objects: 250
-    object_size: 4194304
-    start_up_delay: 0
-    shut_down_delay: 0
-
-  "big_cluster_5new":
-    template: "inputs/templates/cm_simple.j2"
-    osd_num: 720
-    pg_num: 2048
-    profile: "balanced"
-    "crush_spec_params":
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
-      - dc_shape: ["2:10:24", "1:5:24"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["100:100:25", "100:100:25"]
-    clients_num: 1
-    client_read_queue_depth: 128
-    client_write_queue_depth: 32
-    client_op_size: 8388608
-    client_read_bandwidth: 2297801845
-    client_write_bandwidth: 709885952
-    disk_write_bandwidth: 268435456
-    iops: 80
-    pg_objects: 250
-    object_size: 4194304
-    start_up_delay: 0
-    shut_down_delay: 0
-
-  "big_cluster_10new":
-    template: "inputs/templates/cm_simple.j2"
-    osd_num: 720
-    pg_num: 2048
-    profile: "balanced"
-    "crush_spec_params":
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
-      - dc_shape: ["2:10:24", "2:5:24"]
-        dc_weight: ["14.0::", "20.0::"]
-        dc_speed: ["100:100:25", "100:100:25"]
-    clients_num: 1
-    client_read_queue_depth: 128
-    client_write_queue_depth: 32
-    client_op_size: 8388608
-    client_read_bandwidth: 2297801845
-    client_write_bandwidth: 709885952
-    disk_write_bandwidth: 268435456
-    iops: 80
-    pg_objects: 250
-    object_size: 4194304
-    start_up_delay: 0
-    shut_down_delay: 0

@@ -1,9 +1,69 @@
 # Snakefile
+import copy
 import glob
+import itertools
 import subprocess
 
 
 configfile: "inputs/config.yaml"
+
+def _recursive_format(val, vars):
+    if isinstance(val, str):
+        return val.format(**vars)
+    elif isinstance(val, list):
+        return [_recursive_format(v, vars) for v in val]
+    elif isinstance(val, dict):
+        return {k: _recursive_format(v, vars) for k, v in val.items()}
+    else:
+        return val
+
+def _deep_merge(target, overrides):
+    for k, v in overrides.items():
+        if isinstance(v, dict) and k in target and isinstance(target[k], dict):
+            _deep_merge(target[k], v)
+        else:
+            target[k] = copy.deepcopy(v)
+
+if "scenarios" in config:
+    for scenario_name, scenario_items in config["scenarios"].items():
+        expanded_scenario_items = []
+        for item in scenario_items:
+            if isinstance(item, dict) and "sweep" in item:
+                sweep = item["sweep"]
+                base_case_name = sweep["base"]
+                base_case = config["cases"][base_case_name]
+                
+                # Generate variables from an `axes` dictionary (cartesian product)
+                var_sets = []
+                base_vars = sweep.get("variables", [{}])
+                if not base_vars: # if empty list, need at least empty dict to loop
+                    base_vars = [{}]
+                    
+                if "axes" in sweep:
+                    keys = sweep["axes"].keys()
+                    axis_combos = [dict(zip(keys, combo)) for combo in itertools.product(*sweep["axes"].values())]
+                    for bv in base_vars:
+                        for ac in axis_combos:
+                            combined = copy.deepcopy(bv)
+                            combined.update(ac)
+                            var_sets.append(combined)
+                else:
+                    var_sets = base_vars
+                
+                for var_set in var_sets:
+                    name = sweep["name_template"].format(**var_set)
+                    new_case = copy.deepcopy(base_case)
+                    
+                    if "overrides" in sweep:
+                        formatted_overrides = _recursive_format(sweep["overrides"], var_set)
+                        _deep_merge(new_case, formatted_overrides)
+                        
+                    config["cases"][name] = new_case
+                    expanded_scenario_items.append(name)
+            else:
+                expanded_scenario_items.append(item)
+        config["scenarios"][scenario_name] = expanded_scenario_items
+
 
 if "active_experiments" in config and config["active_experiments"]:
     CASES = [e for e in config["active_experiments"] if e in config["cases"]]
