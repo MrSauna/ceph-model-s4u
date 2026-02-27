@@ -28,16 +28,28 @@ void MetricMonitor::operator()() {
 
   auto all_links = sg4::Engine::get_instance()->get_all_links();
 
+  double dt = 0.01; // Sleep for 10ms (High frequency)
+  double time_passed = 0.0;
+  std::map<const simgrid::s4u::Link *, double> accumulated_loads;
+
   while (true) {
-    sg4::this_actor::sleep_for(interval_);
-    double now = sg4::Engine::get_clock();
+    sg4::this_actor::sleep_for(dt);
+    time_passed += dt;
 
     for (const auto *link : all_links) {
-      double current_load = link->get_load();
+      accumulated_loads[link] += link->get_load() * dt;
+    }
 
-      // Log if non-zero
-      std::string name = link->get_cname();
-      file << now << ",link," << name << "," << current_load << "\n";
+    if (time_passed >= interval_) {
+      double now = sg4::Engine::get_clock();
+      for (const auto *link : all_links) {
+        // Log average utilization over the time window
+        double avg_load = accumulated_loads[link] / interval_;
+        std::string name = link->get_cname();
+        file << now << ",link," << name << "," << avg_load << "\n";
+        accumulated_loads[link] = 0.0; // Reset
+      }
+      time_passed = 0.0;
     }
   }
 }
