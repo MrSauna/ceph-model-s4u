@@ -234,16 +234,16 @@ cases:
 
   "big_cluster_no_backfill":
     template: "inputs/templates/cm_simple.j2"
-    osd_num: 480
+    osd_num: 960
     pg_num: 2048
     profile: "balanced"
     "crush_spec_params":
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
-      - dc_shape: "2:10:24"
-        dc_weight: "14.0::"
-        dc_speed: "100:100:25"
+      - dc_shape: ["2:10:24", "2:10:24"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["100:100:25", "100:100:25"]
+      - dc_shape: ["2:10:24", "2:10:24"]
+        dc_weight: ["14.0::", "20.0::"]
+        dc_speed: ["100:100:25", "100:100:25"]
     clients_num: 1
     client_read_queue_depth: 128
     client_write_queue_depth: 32
