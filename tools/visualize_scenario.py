@@ -48,6 +48,7 @@ def main():
                  ha='right', va='bottom', 
                  fontsize=8, color='gray', alpha=0.5)
 
+    original_labels = []
     raw_labels = []
     run_objects = []
 
@@ -70,8 +71,96 @@ def main():
             client_path=c_file,
             topology_path=topo_file
         )
+        original_labels.append(label)
         raw_labels.append(label)
         run_objects.append(run)
+
+    import re
+    parsed_runs = []
+    profiles = set()
+    
+    for orig_label, label, run in zip(original_labels, raw_labels, run_objects):
+        sat_time = run.get_saturation_time(["dc-0_uplink_DOWN", "dc-0_uplink_UP"], threshold=0.8)
+        
+        m = re.match(r'big_cluster_add_(\d+)_(.*)', orig_label)
+        if m:
+            n_val = int(m.group(1))
+            prof = m.group(2)
+            parsed_runs.append({
+                "type": "grid",
+                "n": n_val,
+                "profile": prof,
+                "orig_label": orig_label,
+                "label": label,
+                "run": run,
+                "sat_time": sat_time
+            })
+            profiles.add(prof)
+        else:
+            parsed_runs.append({
+                "type": "other",
+                "orig_label": orig_label,
+                "label": label,
+                "run": run,
+                "sat_time": sat_time
+            })
+            
+    # New Grid Visualization
+    grid_runs = [r for r in parsed_runs if r["type"] == "grid"]
+    other_runs = [r for r in parsed_runs if r["type"] == "other"]
+    
+    if grid_runs or other_runs:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6), gridspec_kw={'width_ratios': [3, 1]})
+        ax_grid, ax_others = axes
+        
+        if grid_runs:
+            df_grid = pd.DataFrame(grid_runs)
+            pivot = df_grid.pivot(index="n", columns="profile", values="sat_time")
+            pivot.plot(kind="line", marker="o", ax=ax_grid)
+            ax_grid.set_xlabel("N (Added Scale)")
+            ax_grid.set_ylabel("Saturation Time (s)")
+            ax_grid.set_title("Cross-DC Link Saturation (>80%)")
+            ax_grid.grid(True)
+            
+        if other_runs:
+            df_others = pd.DataFrame(other_runs)
+            # Remove prefix for display
+            df_others["display_label"] = df_others["orig_label"].str.replace("big_cluster_", "")
+            df_others.plot(kind="bar", x="display_label", y="sat_time", ax=ax_others, color="gray", legend=False)
+            ax_others.set_xlabel("Other Scenarios")
+            ax_others.set_ylabel("Saturation Time (s)")
+            ax_others.set_title("Other Scenarios Saturation")
+            for tick in ax_others.get_xticklabels():
+                tick.set_rotation(45)
+                tick.set_ha('right')
+            ax_others.grid(True, axis='y')
+            
+        plt.tight_layout()
+        add_git_hash(fig)
+        out_path = os.path.join(output_dir, "link_saturation.svg")
+        plt.savefig(out_path)
+        print(f"Saved link saturation visualization to {out_path}")
+        plt.close()
+
+    # Filter for standard plots
+    selected_runs = []
+    if profiles:
+        for prof in profiles:
+            prof_runs = [r for r in parsed_runs if r["type"] == "grid" and r["profile"] == prof]
+            prof_runs.sort(key=lambda x: x["n"])
+            valid_runs = [r for r in prof_runs if r["sat_time"] <= 0]
+            if valid_runs:
+                selected_runs.append(valid_runs[-1])
+            elif prof_runs:
+                selected_runs.append(prof_runs[0])
+                
+        for r in parsed_runs:
+            if r["type"] == "other":
+                selected_runs.append(r)
+                
+        selected_runs.sort(key=lambda x: x["orig_label"])
+        raw_labels = [r["label"] for r in selected_runs]
+        run_objects = [r["run"] for r in selected_runs]
 
     # Shorten labels by removing common prefix
     if raw_labels:

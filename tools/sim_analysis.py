@@ -98,6 +98,61 @@ class SimulationRun:
         
         return smoothed
 
+    def get_link_bandwidth(self, link_name):
+        """Find the bandwidth of a link from topology."""
+        topology = self.topology
+        if not topology:
+            return None
+
+        # Links in net_metrics have _UP and _DOWN suffixes.
+        base_link = link_name
+        if link_name.endswith("_UP"):
+            base_link = link_name[:-3]
+        elif link_name.endswith("_DOWN"):
+            base_link = link_name[:-5]
+
+        def find_link(root):
+            if root.get("uplink") == base_link:
+                return root.get("bandwidth")
+            if root.get("uplink") == link_name:
+                return root.get("bandwidth")
+            for child in root.get("children", []):
+                res = find_link(child)
+                if res is not None:
+                    return res
+            return None
+
+        return find_link(topology)
+
+    def get_saturation_time(self, link_names, threshold=0.8):
+        """Returns the total time (seconds) that any of the specified links was > threshold * capacity."""
+        df = self.net_df
+        if df is None or df.empty:
+            return 0.0
+
+        bws = {name: self.get_link_bandwidth(name) for name in link_names}
+
+        # Filter matching links
+        df_links = df[df["resource_name"].isin(link_names)].copy()
+        if df_links.empty:
+            return 0.0
+
+        # Add capacity column
+        df_links["capacity"] = df_links["resource_name"].map(bws)
+        df_links = df_links.dropna(subset=["capacity"])
+        df_links = df_links[df_links["capacity"] > 0]
+
+        if df_links.empty:
+            return 0.0
+
+        # Filter saturated
+        # capacity in json is bits/s, value in net_metrics is bytes/s
+        saturated = df_links["value"] > (df_links["capacity"] / 8.0 * threshold)
+        df_saturated = df_links[saturated]
+
+        # Count unique timestamps where ANY link is saturated
+        return float(df_saturated["timestamp"].nunique())
+
     def get_average_link_utilization(self):
         """Returns a Series mapping resource_name -> average bytes/s."""
         df = self.net_df
