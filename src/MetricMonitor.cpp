@@ -28,7 +28,7 @@ void MetricMonitor::operator()() {
 
   auto all_links = sg4::Engine::get_instance()->get_all_links();
 
-  double dt = 0.01; // Sleep for 10ms (High frequency)
+  double dt = 0.001; // Sleep for 1ms (High frequency)
   double time_passed = 0.0;
   std::map<const simgrid::s4u::Link *, double> accumulated_loads;
 
