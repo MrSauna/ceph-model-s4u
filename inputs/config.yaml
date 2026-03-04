@@ -11,10 +11,10 @@ scenarios:
     - "small_cluster_clients_high_client_ops"
   
   "scenario_b":
-    - "big_cluster_no_clients"
-    - "big_cluster_no_backfill"
+    - "big_cluster_max_no_clients"
+    - "big_cluster_max_no_backfill"
     - sweep:
-        base: "big_cluster_no_backfill"
+        base: "big_cluster_max_no_backfill"
         name_template: "big_cluster_add_{n}_{profile}"
         # using the variables list allows you to bind specific parameters together
         variables:
@@ -207,7 +207,7 @@ cases:
 
 
 
-  "big_cluster_no_clients":
+  "big_cluster_max_no_clients":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 960
     pg_num: 4096
@@ -227,12 +227,12 @@ cases:
     client_write_bandwidth: 536870912
     disk_write_bandwidth: 268435456
     iops: 80
-    pg_objects: 500
+    pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 0
 
-  "big_cluster_no_backfill":
+  "big_cluster_max_no_backfill":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 960
     pg_num: 4096
@@ -252,7 +252,7 @@ cases:
     client_write_bandwidth: 709885952
     disk_write_bandwidth: 268435456
     iops: 80
-    pg_objects: 500
+    pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
     shut_down_delay: 300
