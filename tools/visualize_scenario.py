@@ -242,6 +242,66 @@ def main():
     print(f"Saved comparison to {output_path}")
     plt.close()
 
+    # Plot 1b: Compare Client Throughput for all 'n' of each profile
+    for prof in profiles:
+        prof_grid_runs = [r for r in parsed_runs if r["type"] == "grid" and r["profile"] == prof]
+        if prof_grid_runs:
+            prof_grid_runs.sort(key=lambda x: x["n"])
+            
+            fig, (ax_read, ax_write) = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+            has_data = False
+            
+            for r in prof_grid_runs:
+                label = f"N={r['n']}"
+                run = r["run"]
+                tp = run.get_client_throughput(window_size=10)
+                if tp.empty:
+                    continue
+                has_data = True
+                    
+                start_time, end_time = run.get_recovery_times()
+                
+                # Plot Read Throughput
+                if 'read' in tp.columns:
+                    line_r, = ax_read.plot(tp.index, tp['read'].values, label=label, linewidth=1.5)
+                    color_r = line_r.get_color()
+                    
+                    if start_time is not None:
+                        ax_read.axvline(x=start_time, color=color_r, linestyle=':', alpha=0.3)
+                    if end_time is not None:
+                        ax_read.axvline(x=end_time, color=color_r, linestyle='--', alpha=0.3)
+                        
+                # Plot Write Throughput
+                if 'write' in tp.columns:
+                    line_w, = ax_write.plot(tp.index, tp['write'].values, label=label, linewidth=1.5)
+                    color_w = line_w.get_color()
+                    
+                    if start_time is not None:
+                        ax_write.axvline(x=start_time, color=color_w, linestyle=':', alpha=0.3)
+                    if end_time is not None:
+                        ax_write.axvline(x=end_time, color=color_w, linestyle='--', alpha=0.3)
+            
+            if has_data:
+                ax_read.set_xlabel("Time (s)")
+                ax_read.set_ylabel("Read Throughput (MiB/s)")
+                ax_read.set_title(f"Client Read Throughput ({prof})")
+                ax_read.legend(title="Scale (N)", loc="lower left", fontsize='small')
+                ax_read.grid(True)
+                
+                ax_write.set_xlabel("Time (s)")
+                ax_write.set_ylabel("Write Throughput (MiB/s)")
+                ax_write.set_title(f"Client Write Throughput ({prof})")
+                ax_write.legend(title="Scale (N)", loc="lower left", fontsize='small')
+                ax_write.grid(True)
+                
+                plt.tight_layout()
+                add_git_hash(fig)
+                
+                output_path_prof = os.path.join(output_dir, f"client_throughput_{prof}_all_n.svg")
+                plt.savefig(output_path_prof)
+                print(f"Saved {prof} profile throughput comparison to {output_path_prof}")
+            plt.close()
+
     # Plot 2: Recovery Detailed Progress
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(12, 10), sharex=True,
                                    gridspec_kw={'height_ratios': [3, 1]})
@@ -486,6 +546,129 @@ def main():
     else:
         print("No latency data found.")
 
+    # Plot 3b: Latency Comparison for all 'n' of each profile
+    for prof in profiles:
+        prof_grid_runs = [r for r in parsed_runs if r["type"] == "grid" and r["profile"] == prof]
+        if not prof_grid_runs:
+            continue
+            
+        prof_grid_runs.sort(key=lambda x: x["n"])
+        lat_data_prof = []
+        for r in prof_grid_runs:
+            run = r["run"]
+            stats = run.get_latency_stats()
+            if not stats: continue
+            
+            flat_stats = {}
+            for op_type, type_stats in stats.items():
+                if isinstance(type_stats, dict):
+                    for metric, val in type_stats.items():
+                        key = f"{metric} ({op_type})" if op_type != 'all' else metric
+                        flat_stats[key] = val
+                else:
+                    flat_stats[op_type] = type_stats
+            
+            values = [v for k, v in flat_stats.items()]
+            if not values or all(v == 0 for v in values):
+                continue
+            
+            flat_stats["label"] = f"N={r['n']}"
+            lat_data_prof.append(flat_stats)
+            
+        if lat_data_prof:
+            df_lat = pd.DataFrame(lat_data_prof)
+            df_lat = df_lat.set_index("label")
+            
+            cols = [
+                "avg (read)", "avg (write)", 
+                "p95 (read)", "p95 (write)",
+                "p99 (read)", "p99 (write)",
+                "p99.5 (read)", "p99.5 (write)",
+                "avg", "p95", "p99", "p99.5"
+            ]
+            cols = [c for c in cols if c in df_lat.columns]
+            df_lat = df_lat[cols]
+            
+            # Drop purely 0-value columns just in case
+            df_lat = df_lat.loc[:, (df_lat != 0).any(axis=0)]
+            if df_lat.empty:
+                continue
+
+            max_latency = df_lat.max().max()
+            use_ms = max_latency < 1.0
+            
+            if use_ms:
+                df_lat = df_lat * 1000
+                latency_unit = "ms"
+            else:
+                latency_unit = "s"
+                
+            def format_lat(val):
+                if val >= 100: return f'{val:.0f}'
+                elif val >= 10: return f'{val:.1f}'
+                elif val >= 1: return f'{val:.2f}'
+                else: return f'{val:.3f}'
+                
+            read_cols = [c for c in cols if "(read)" in c]
+            write_cols = [c for c in cols if "(write)" in c]
+            
+            fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(16, 6), sharey=True)
+            
+            # Plot Reads
+            if read_cols:
+                df_read = df_lat[read_cols]
+                df_read.columns = [c.replace(" (read)", "") for c in df_read.columns]
+                df_read.plot(kind='bar', ax=axes[0], rot=0, edgecolor='white', linewidth=2)
+                
+                for p in axes[0].patches:
+                    height = p.get_height()
+                    if height > 0:
+                        axes[0].annotate(format_lat(height), 
+                                    (p.get_x() + p.get_width() / 2., height), 
+                                    ha='center', va='bottom', 
+                                    fontsize=8, xytext=(0, 2), 
+                                    textcoords='offset points',
+                                    rotation=90)
+                
+                axes[0].set_xlabel("Scale (N)")
+                axes[0].set_ylabel(f"Latency ({latency_unit})")
+                axes[0].set_title(f"Read Latency")
+                axes[0].grid(True, axis='y')
+                axes[0].legend(title="Metric")
+            
+            # Plot Writes
+            if write_cols:
+                df_write = df_lat[write_cols]
+                df_write.columns = [c.replace(" (write)", "") for c in df_write.columns]
+                df_write.plot(kind='bar', ax=axes[1], rot=0, edgecolor='white', linewidth=2)
+                
+                for p in axes[1].patches:
+                    height = p.get_height()
+                    if height > 0:
+                        axes[1].annotate(format_lat(height), 
+                                    (p.get_x() + p.get_width() / 2., height), 
+                                    ha='center', va='bottom', 
+                                    fontsize=8, xytext=(0, 2), 
+                                    textcoords='offset points',
+                                    rotation=90)
+                
+                axes[1].set_xlabel("Scale (N)")
+                axes[1].set_title(f"Write Latency")
+                axes[1].grid(True, axis='y')
+                axes[1].legend(title="Metric")
+
+            for ax in axes:
+                ax.tick_params(axis='x', rotation=0)
+
+            plt.suptitle(f"Client Latency Statistics ({prof})")
+            plt.tight_layout()
+            add_git_hash(fig)
+            
+            output_path_lat_prof = os.path.join(output_dir, f"latency_comparison_{prof}_all_n.svg")
+            plt.savefig(output_path_lat_prof)
+            print(f"Saved {prof} profile latency visualization to {output_path_lat_prof}")
+            plt.close()
+
     # Plot 4: IOPS Comparison
     iops_data = []
     iops_labels = []
@@ -547,6 +730,61 @@ def main():
         plt.close()
     else:
         print("No IOPS data found.")
+
+    # Plot 4b: IOPS Comparison for all 'n' of each profile
+    for prof in profiles:
+        prof_grid_runs = [r for r in parsed_runs if r["type"] == "grid" and r["profile"] == prof]
+        if not prof_grid_runs:
+            continue
+            
+        prof_grid_runs.sort(key=lambda x: x["n"])
+        iops_data_prof = []
+        for r in prof_grid_runs:
+            run = r["run"]
+            stats = run.get_iops_stats()
+            if not stats: continue
+            stats["label"] = f"N={r['n']}"
+            iops_data_prof.append(stats)
+            
+        if iops_data_prof:
+            df_iops = pd.DataFrame(iops_data_prof)
+            df_iops = df_iops.set_index("label")
+            
+            cols = ["read", "write"]
+            cols = [c for c in cols if c in df_iops.columns]
+            df_iops = df_iops[cols]
+            
+            df_iops = df_iops.loc[:, (df_iops != 0).any()]
+            if df_iops.empty: continue
+            
+            fig = plt.figure(figsize=(12, 6))
+            ax = plt.gca()
+            
+            df_iops.plot(kind='bar', ax=ax, rot=0)
+            
+            for p in ax.patches:
+                height = p.get_height()
+                if height > 0:
+                    ax.annotate(f'{height:.0f}', 
+                                (p.get_x() + p.get_width() / 2., height), 
+                                ha='center', va='bottom', 
+                                fontsize=9, xytext=(0, 2), 
+                                textcoords='offset points')
+
+            plt.xlabel("Scale (N)")
+            plt.ylabel("IOPS")
+            plt.title(f"Client IOPS Comparison ({prof})")
+            plt.grid(True, axis='y')
+            plt.legend(title="Metric")
+            
+            plt.xticks(rotation=0, ha='center')
+            plt.tight_layout()
+            add_git_hash(fig)
+            
+            output_path_iops_prof = os.path.join(output_dir, f"iops_comparison_{prof}_all_n.svg")
+            plt.savefig(output_path_iops_prof)
+            print(f"Saved {prof} profile IOPS visualization to {output_path_iops_prof}")
+            plt.close()
 
 if __name__ == "__main__":
     main()
