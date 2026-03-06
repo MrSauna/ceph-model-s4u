@@ -20,6 +20,7 @@ if "snakemake" not in globals():
     client_metrics_file = "results/vscode/client_metrics.csv"
     output_dir = "results/vscode/figures"
     git_hash = "unknown"
+    case_name = "vscode"
 else:
     mon_metrics_file = snakemake.input.mon_metrics
     net_metrics_file = snakemake.input.net_metrics
@@ -212,8 +213,13 @@ def viz_net_metrics(sim_run):
     # Calculate average utilization for each link
     avg_usage = sim_run.get_average_link_utilization()
 
+    # Calculate x_span for width scaling
+    xs = [pos[0] for pos in node_pos.values()]
+    x_span = max(xs) - min(xs) if xs else 14
+
     # 3. Plot
-    fig = plt.figure(figsize=(14, 10))
+    fig_width = max(14, x_span * 0.8)
+    fig = plt.figure(figsize=(fig_width, 10))
     ax = plt.gca()
 
     # Draw Edges
@@ -262,11 +268,11 @@ def viz_net_metrics(sim_run):
 
         plt.plot([ux, vx], [uy, vy], color=color, linewidth=width, zorder=1)
         
-        # Label with utilization
-        mid_x = (ux + vx) / 2
-        mid_y = (uy + vy) / 2
+        # Label with utilization (closer to destination node v)
+        label_x = ux + 0.7 * (vx - ux) 
+        label_y = uy + 0.7 * (vy - uy) 
         
-        plt.text(mid_x, mid_y, label_text, 
+        plt.text(label_x, label_y, label_text, 
                  color='black', fontsize=7, ha='center', va='center',
                  bbox=dict(facecolor='white', edgecolor='none', alpha=0.8, pad=1))
 
