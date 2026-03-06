@@ -225,12 +225,14 @@ def main():
     ax_read.set_xlabel("Time (s)")
     ax_read.set_ylabel("Read Throughput (MiB/s)")
     ax_read.set_title("Client Read Throughput")
+    ax_read.set_ylim(bottom=0)
     ax_read.legend()
     ax_read.grid(True)
     
     ax_write.set_xlabel("Time (s)")
     ax_write.set_ylabel("Write Throughput (MiB/s)")
     ax_write.set_title("Client Write Throughput")
+    ax_write.set_ylim(bottom=0)
     ax_write.legend()
     ax_write.grid(True)
 
@@ -285,12 +287,14 @@ def main():
                 ax_read.set_xlabel("Time (s)")
                 ax_read.set_ylabel("Read Throughput (MiB/s)")
                 ax_read.set_title(f"Client Read Throughput ({prof})")
+                ax_read.set_ylim(bottom=0)
                 ax_read.legend(title="Scale (N)", loc="lower left", fontsize='small')
                 ax_read.grid(True)
                 
                 ax_write.set_xlabel("Time (s)")
                 ax_write.set_ylabel("Write Throughput (MiB/s)")
                 ax_write.set_title(f"Client Write Throughput ({prof})")
+                ax_write.set_ylim(bottom=0)
                 ax_write.legend(title="Scale (N)", loc="lower left", fontsize='small')
                 ax_write.grid(True)
                 
