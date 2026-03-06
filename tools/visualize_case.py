@@ -310,9 +310,18 @@ def viz_net_metrics(sim_run):
         ax.set_xlim(min_x - x_pad, max_x + x_pad)
         ax.set_ylim(min_y - y_pad, max_y + top_pad)
 
+        max_lines = max((node_names.get(nid, nid).count('\n') + 1 for nid in leaf_nodes), default=1)
+        # Place it aligned with the rightmost node spread, below the lowest text
+        plt.annotate(f'commit: {git_hash}',
+                     xy=(max_x, min_y - 0.15),
+                     xycoords='data',
+                     xytext=(0, -max_lines * 11 - 15),
+                     textcoords='offset points',
+                     ha='right', va='top',
+                     fontsize=8, color='gray', alpha=0.5)
+
     plt.title(f"Network Topology & Link Utilization ({case_name})", pad=10)
     plt.axis('off')
-    add_git_hash(fig)
     
     # Save
     output_path = os.path.join(output_dir, "network_topology.svg")
