@@ -131,8 +131,12 @@ rule scenario:
         done = "results/{scenario}/done",
     input:
         case_done = lambda w: expand("results/{case}/done", case=config["scenarios"][w.scenario]),
-        client_throughput = "results/{scenario}/figures/client_throughput.svg",
-        latency_comparison = "results/{scenario}/figures/latency_comparison.svg",
+        client_read_throughput = "results/{scenario}/figures/client_read_throughput.svg",
+        client_write_throughput = "results/{scenario}/figures/client_write_throughput.svg",
+        read_latency_comparison = "results/{scenario}/figures/read_latency_comparison.svg",
+        write_latency_comparison = "results/{scenario}/figures/write_latency_comparison.svg",
+        read_iops_comparison = "results/{scenario}/figures/read_iops_comparison.svg",
+        write_iops_comparison = "results/{scenario}/figures/write_iops_comparison.svg",
         recovery_progress = "results/{scenario}/figures/recovery_progress.svg",
     shell:
         """
@@ -148,8 +152,12 @@ rule scenario_vizualize:
         script = "tools/visualize_scenario.py",
         analysis_script = "tools/sim_analysis.py",
     output:
-        client_throughput = "results/{scenario}/figures/client_throughput.svg",
-        latency_comparison = "results/{scenario}/figures/latency_comparison.svg",
+        client_read_throughput = "results/{scenario}/figures/client_read_throughput.svg",
+        client_write_throughput = "results/{scenario}/figures/client_write_throughput.svg",
+        read_latency_comparison = "results/{scenario}/figures/read_latency_comparison.svg",
+        write_latency_comparison = "results/{scenario}/figures/write_latency_comparison.svg",
+        read_iops_comparison = "results/{scenario}/figures/read_iops_comparison.svg",
+        write_iops_comparison = "results/{scenario}/figures/write_iops_comparison.svg",
         recovery_progress = "results/{scenario}/figures/recovery_progress.svg",
     params:
         git_hash = GIT_HASH,
@@ -161,7 +169,8 @@ rule case:
     output:
         done = "results/{case}/done",
     input:
-        client_throughput = "results/{case}/figures/client_throughput.svg",
+        client_read_throughput = "results/{case}/figures/client_read_throughput.svg",
+        client_write_throughput = "results/{case}/figures/client_write_throughput.svg",
         latency_comparison = "results/{case}/figures/pgmap_plot.svg",
         recovery_progress = "results/{case}/figures/network_topology.svg",
     shell:
@@ -190,7 +199,8 @@ rule case_viz:
         script = "tools/visualize_case.py",
         analysis_script = "tools/sim_analysis.py",
     output:
-        client_throughput = "results/{case}/figures/client_throughput.svg",
+        client_read_throughput = "results/{case}/figures/client_read_throughput.svg",
+        client_write_throughput = "results/{case}/figures/client_write_throughput.svg",
         pgmap_plot = "results/{case}/figures/pgmap_plot.svg",
         network_topology = "results/{case}/figures/network_topology.svg",
 
