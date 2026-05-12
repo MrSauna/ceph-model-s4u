@@ -8,5 +8,14 @@
             "affiliation": "Aalto University",
             "orcid": "0009-0004-6044-5762"
         }
-    ]
+    ],
+    "keywords": [
+        "distributed storage systems",
+        "data center migration",
+        "data placement",
+        "discrete-event simulation",
+        "Ceph",
+        "mClock scheduler"
+    ],
+    "licence": "mit"
 }
