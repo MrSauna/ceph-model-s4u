@@ -110,18 +110,18 @@ cases:
     "crush_spec_params":
       - dc_shape: "1:3:1"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:100"
       - dc_shape: ["1:4:1"]
         dc_weight: ["14.0::"]
-        dc_speed: ["10:10:10"]
+        dc_speed: ["100:100:100"]
     clients_num: 0
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
     client_read_bandwidth: 0
     client_write_bandwidth: 0
-    disk_write_bandwidth: 536870912
-    iops: 10000
+    disk_write_bandwidth: 1000000000
+    iops: 100000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
@@ -135,18 +135,18 @@ cases:
     "crush_spec_params":
       - dc_shape: "1:4:1"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:100"
       - dc_shape: ["1:4:1"]
         dc_weight: ["14.0::"]
-        dc_speed: ["10:10:10"]
+        dc_speed: ["100:100:100"]
     clients_num: 1
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
     client_read_bandwidth: 0
     client_write_bandwidth: 0
-    disk_write_bandwidth: 536870912
-    iops: 10000
+    disk_write_bandwidth: 1000000000
+    iops: 100000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
@@ -160,18 +160,18 @@ cases:
     "crush_spec_params":
       - dc_shape: "1:3:1"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:100"
       - dc_shape: ["1:4:1"]
         dc_weight: ["14.0::"]
-        dc_speed: ["10:10:10"]
+        dc_speed: ["100:100:100"]
     clients_num: 1
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
     client_read_bandwidth: 0
     client_write_bandwidth: 0
-    disk_write_bandwidth: 536870912
-    iops: 10000
+    disk_write_bandwidth: 1000000000
+    iops: 100000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
@@ -185,18 +185,18 @@ cases:
     "crush_spec_params":
       - dc_shape: "1:3:1"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:100"
       - dc_shape: ["1:4:1"]
         dc_weight: ["14.0::"]
-        dc_speed: ["10:10:10"]
+        dc_speed: ["100:100:100"]
     clients_num: 1
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
     client_read_bandwidth: 0
     client_write_bandwidth: 0
-    disk_write_bandwidth: 536870912
-    iops: 10000
+    disk_write_bandwidth: 1000000000
+    iops: 100000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
@@ -210,18 +210,18 @@ cases:
     "crush_spec_params":
       - dc_shape: "1:3:1"
         dc_weight: "14.0::"
-        dc_speed: "10:10:10"
+        dc_speed: "100:100:100"
       - dc_shape: ["1:4:1"]
         dc_weight: ["14.0::"]
-        dc_speed: ["10:10:10"]
+        dc_speed: ["100:100:100"]
     clients_num: 1
     client_read_queue_depth: 0
     client_write_queue_depth: 64
     client_op_size: 4096
     client_read_bandwidth: 0
     client_write_bandwidth: 0
-    disk_write_bandwidth: 536870912
-    iops: 10000
+    disk_write_bandwidth: 1000000000
+    iops: 100000
     pg_objects: 1000
     object_size: 4194304
     start_up_delay: 0
