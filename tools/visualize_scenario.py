@@ -1,15 +1,45 @@
 import os
-import matplotlib
+import matplotlib as mpl
 
-matplotlib.use("Agg")
-matplotlib.rcParams["svg.fonttype"] = "none"
-matplotlib.rcParams["font.family"] = "serif"
-matplotlib.rcParams["figure.dpi"] = 96
-matplotlib.rcParams["font.size"] = 12
-matplotlib.rcParams["axes.labelsize"] = 12
-matplotlib.rcParams["legend.fontsize"] = 10
-matplotlib.rcParams["xtick.labelsize"] = 10
-matplotlib.rcParams["ytick.labelsize"] = 10
+mpl.use("pgf")
+mpl.rcParams["svg.fonttype"] = "none"
+mpl.rcParams["font.family"] = "serif"
+mpl.rcParams["figure.dpi"] = 96
+mpl.rcParams["font.size"] = 12
+mpl.rcParams["axes.labelsize"] = 12
+mpl.rcParams["legend.fontsize"] = 10
+mpl.rcParams["xtick.labelsize"] = 10
+mpl.rcParams["ytick.labelsize"] = 10
+
+mpl.rcParams.update(
+    {
+        "pgf.texsystem": "pdflatex",
+        "pgf.rcfonts": False,
+        "pgf.preamble": r"""
+        \usepackage{acro}
+        \usepackage{microtype}
+        \usepackage{siunitx}
+        \sisetup{per-mode = symbol}
+        
+        % Your specific scalebox formatting
+        \acsetup{
+            format/short = \scalebox{0.9}
+        }
+        
+        % Only declare the acronyms and units you actually use in the plots
+        \DeclareSIUnit{\iops}{IOPS}
+        \DeclareAcronym{iops}{
+          short = IOPS,
+          long  = input/output operations per second,
+        }
+        
+        % Your custom macros
+        \newcommand{\hro}{\texttt{HIGH\_RECOVERY\_OPS} }
+        \newcommand{\hco}{\texttt{HIGH\_CLIENT\_OPS} }
+        \newcommand{\bal}{\texttt{BALANCED} }
+    """,
+    }
+)
 import matplotlib.pyplot as plt
 import pandas as pd
 import sys
@@ -164,26 +194,32 @@ def main():
 
     if grid_runs or other_runs:
         fig, axes = plt.subplots(
-            1, 2, figsize=(5.59, 3.0), gridspec_kw={"width_ratios": [3, 1]}
+            1, 2, figsize=(5.59, 3.0), gridspec_kw={"width_ratios": [3, 1]}, sharey=True
         )
         ax_grid, ax_others = axes
 
         if grid_runs:
             df_grid = pd.DataFrame(grid_runs)
             pivot = df_grid.pivot(index="n", columns="profile", values="sat_time")
+            pivot.columns = [
+                rf"\texttt{{{c.replace('_', r'\_')}}}" for c in pivot.columns
+            ]
             pivot.plot(kind="line", marker="o", ax=ax_grid)
-            ax_grid.set_xlabel("N (Added Scale)")
+            ax_grid.set_xlabel("Batch Size ($N$)")
             ax_grid.set_ylabel("Saturation Time (s)")
-            ax_grid.set_title("Cross-DC Link Saturation (>80%)")
             ax_grid.grid(True)
 
         if other_runs:
             df_others = pd.DataFrame(other_runs)
-            # Remove prefix for display
+            # Remove prefix for display, split at _ to newlines, and format as texttt
             df_others["display_label"] = (
                 df_others["orig_label"]
-                .str.replace("big_cluster_", "")
-                .str.replace("_", "\\_")
+                .str.replace("big_cluster_", "", regex=False)
+                .apply(
+                    lambda x: "\n".join(
+                        [rf"\texttt{{{part}}}" for part in x.split("_")]
+                    )
+                )
             )
             df_others.plot(
                 kind="bar",
@@ -193,18 +229,16 @@ def main():
                 color="gray",
                 legend=False,
             )
-            ax_others.set_xlabel("Other Scenarios")
-            ax_others.set_ylabel("Saturation Time (s)")
-            ax_others.set_title("Other Scenarios Saturation")
-            for tick in ax_others.get_xticklabels():
-                tick.set_rotation(45)
-                tick.set_ha("right")
+            ax_others.set_xlabel("Cases")
             ax_others.grid(True, axis="y")
+            ax_others.tick_params(axis="y", left=False, labelleft=False)
+            ax_others.tick_params(axis="x", rotation=0)
 
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
         add_git_hash(fig)
         out_path = os.path.join(output_dir, "link_saturation.svg")
         plt.savefig(out_path)
+        plt.savefig(out_path.replace(".svg", ".pgf"))
         print(f"Saved link saturation visualization to {out_path}")
         plt.close()
 
@@ -258,10 +292,11 @@ def main():
     # Combine with runs and wrap text
     runs = []
     for label, run in zip(raw_labels, run_objects):
-        # Do not escape here, SVG post-processing will handle it
         if isinstance(label, str):
             # For X-ticks to wrap properly, we replace underscores with a newline
             wrapped_label = label.replace("_", "\n")
+            # Escape underscores for pgf/latex rendering
+            label = label.replace("_", r"\_")
         else:
             wrapped_label = label
 
@@ -269,7 +304,7 @@ def main():
 
     # Plot 1: Compare Client Throughput (Read and Write)
     for metric in ["read", "write"]:
-        fig, ax = plt.subplots(1, 1, figsize=(5.59, 4.0))
+        fig, ax = plt.subplots(1, 1, figsize=(5.59, 3.5))
         has_data = False
 
         for r_obj in runs:
@@ -293,10 +328,11 @@ def main():
         ax.set_xlabel("Time (s)")
         if has_data:
             ax.set_ylabel(f"{metric.capitalize()} Throughput (MiB/s)")
-            ax.set_title(f"Client {metric.capitalize()} Throughput")
             if metric == "read":
                 ax.set_ylim(bottom=0)
-            ax.legend(loc="center right", ncol=1)
+            ax.legend(
+                loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=2, frameon=False
+            )
         else:
             ax.set_ylabel(f"{metric.capitalize()} Throughput (MiB/s)")
             ax.set_title(f"Client {metric.capitalize()} Throughput (No Data)")
@@ -307,6 +343,7 @@ def main():
 
         output_path = os.path.join(output_dir, f"client_{metric}_throughput.svg")
         plt.savefig(output_path)
+        plt.savefig(output_path.replace(".svg", ".pgf"))
         fix_svg_latex_escapes(output_path)
         print(f"Saved comparison to {output_path}")
         plt.close()
@@ -322,11 +359,11 @@ def main():
             has_read = False
             has_write = False
             for metric in ["read", "write"]:
-                fig, ax = plt.subplots(1, 1, figsize=(5.59, 4.0))
+                fig, ax = plt.subplots(1, 1, figsize=(5.59, 3.5))
                 has_data = False
 
                 for r in prof_grid_runs:
-                    label = f"N={r['n']}"
+                    label = str(r["n"])
                     run = r["run"]
                     tp = run.get_client_throughput(window_size=10)
                     if (
@@ -352,16 +389,21 @@ def main():
                 ax.set_xlabel("Time (s)")
                 if has_data:
                     ax.set_ylabel(f"{metric.capitalize()} Throughput (MiB/s)")
-                    ax.set_title(f"Client {metric.capitalize()} Throughput ({prof})")
+                    display_prof = prof.replace("_", r"\_")
                     if metric == "read":
                         ax.set_ylim(bottom=0)
                     ax.legend(
-                        title="Batch (N)", loc="center right", ncol=1, fontsize="small"
+                        title="Batch Size ($N$)",
+                        loc="lower right",
+                        ncol=1,
+                        fontsize="small",
+                        frameon=False,
                     )
                 else:
+                    display_prof = prof.replace("_", r"\_")
                     ax.set_ylabel(f"{metric.capitalize()} Throughput (MiB/s)")
                     ax.set_title(
-                        f"Client {metric.capitalize()} Throughput ({prof}) (No Data)"
+                        rf"Client {metric.capitalize()} Throughput (\texttt{{{display_prof}}}) (No Data)"
                     )
 
                 ax.grid(True)
@@ -372,6 +414,7 @@ def main():
                     output_dir, f"client_{metric}_throughput_{prof}_all_n.svg"
                 )
                 plt.savefig(output_path_prof)
+                plt.savefig(output_path_prof.replace(".svg", ".pgf"))
                 fix_svg_latex_escapes(output_path_prof)
                 print(
                     f"Saved {prof} profile throughput comparison to {output_path_prof}"
@@ -499,7 +542,6 @@ def main():
                 label,
                 va="bottom",
                 ha="right",
-                fontsize=8,
                 color="black",
                 alpha=0.7,
             )
@@ -508,6 +550,7 @@ def main():
 
         output_path_rec = os.path.join(output_dir, "recovery_progress.svg")
         plt.savefig(output_path_rec)
+        plt.savefig(output_path_rec.replace(".svg", ".pgf"))
         fix_svg_latex_escapes(output_path_rec)
         print(f"Saved recovery visualization to {output_path_rec}")
     else:
@@ -599,7 +642,7 @@ def main():
     )
 
     for metric_type, metric_cols in [("read", read_cols), ("write", write_cols)]:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5.59, 4.0))
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5.59, 3.5))
 
         if (
             metric_cols
@@ -611,35 +654,20 @@ def main():
                 c.replace(f" ({metric_type})", "") for c in df_metric.columns
             ]
             df_metric.plot(kind="bar", ax=ax, rot=0)
-
-            for p in ax.patches:
-                height = p.get_height()
-                if height > 0:
-                    ax.annotate(
-                        format_latency(height),
-                        (p.get_x() + p.get_width() / 2.0, height),
-                        ha="center",
-                        va="bottom",
-                        fontsize=9,
-                        xytext=(0, 2),
-                        textcoords="offset points",
-                        rotation=90,
-                    )
+            df_metric.to_csv(
+                os.path.join(output_dir, f"{metric_type}_latency_comparison.csv")
+            )
 
             ax.set_ylabel(f"Latency ({latency_unit})")
-            ax.set_title(f"{metric_type.capitalize()} Latency")
             ax.grid(True, axis="y")
-            ax.legend(
-                title="Metric", loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3
-            )
+            ax.legend(title="Metric", loc="upper left", bbox_to_anchor=(1, 1))
         else:
             ax.set_ylabel(f"Latency ({latency_unit})")
             ax.set_title(f"{metric_type.capitalize()} Latency (No Data)")
 
-        ax.set_xlabel("Scenarios")
+        ax.set_xlabel("Cases")
         ax.tick_params(axis="x", rotation=0)
 
-        plt.suptitle(f"Client {metric_type.capitalize()} Latency Statistics")
         plt.tight_layout()
         add_git_hash(fig)
 
@@ -647,6 +675,7 @@ def main():
             output_dir, f"{metric_type}_latency_comparison.svg"
         )
         plt.savefig(output_path_lat)
+        plt.savefig(output_path_lat.replace(".svg", ".pgf"))
         fix_svg_latex_escapes(output_path_lat)
         print(f"Saved latency visualization to {output_path_lat}")
         plt.close()
@@ -680,7 +709,7 @@ def main():
             if not values or all(v == 0 for v in values):
                 continue
 
-            flat_stats["label"] = f"N={r['n']}"
+            flat_stats["label"] = str(r["n"])
             lat_data_prof.append(flat_stats)
 
         df_lat = pd.DataFrame(lat_data_prof) if lat_data_prof else pd.DataFrame()
@@ -735,7 +764,8 @@ def main():
         )
 
         for metric_type, metric_cols in [("read", read_cols), ("write", write_cols)]:
-            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5.59, 3.0))
+            # xticks are smaller than in many other plots so it look bigger, height 3 to compensate
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(5.59, 3))
 
             if (
                 metric_cols
@@ -746,36 +776,29 @@ def main():
                 df_metric.columns = [
                     c.replace(f" ({metric_type})", "") for c in df_metric.columns
                 ]
-                df_metric.plot(kind="bar", ax=ax, rot=0, edgecolor="white", linewidth=2)
-
-                for p in ax.patches:
-                    height = p.get_height()
-                    if height > 0:
-                        ax.annotate(
-                            format_lat(height),
-                            (p.get_x() + p.get_width() / 2.0, height),
-                            ha="center",
-                            va="bottom",
-                            fontsize=8,
-                            xytext=(0, 2),
-                            textcoords="offset points",
-                            rotation=90,
-                        )
+                df_metric.plot(
+                    kind="bar", ax=ax, rot=0, width=0.8, edgecolor="white", linewidth=1
+                )
+                df_metric.to_csv(
+                    os.path.join(
+                        output_dir, f"{metric_type}_latency_comparison_{prof}_all_n.csv"
+                    )
+                )
 
                 ax.set_ylabel(f"Latency ({latency_unit})")
-                ax.set_title(f"{metric_type.capitalize()} Latency")
+                display_prof = prof.replace("_", r"\_")
                 ax.grid(True, axis="y")
                 ax.legend(title="Metric")
             else:
                 ax.set_ylabel(f"Latency ({latency_unit})")
-                ax.set_title(f"{metric_type.capitalize()} Latency (No Data)")
+                display_prof = prof.replace("_", r"\_")
+                ax.set_title(
+                    rf"Client {metric_type.capitalize()} Latency (\texttt{{{display_prof}}}) (No Data)"
+                )
 
-            ax.set_xlabel("Scale (N)")
+            ax.set_xlabel("Batch Size ($N$)")
             ax.tick_params(axis="x", rotation=0)
 
-            plt.suptitle(
-                f"Client {metric_type.capitalize()} Latency Statistics ({prof})"
-            )
             plt.tight_layout()
             add_git_hash(fig)
 
@@ -783,6 +806,7 @@ def main():
                 output_dir, f"{metric_type}_latency_comparison_{prof}_all_n.svg"
             )
             plt.savefig(output_path_lat_prof)
+            plt.savefig(output_path_lat_prof.replace(".svg", ".pgf"))
             fix_svg_latex_escapes(output_path_lat_prof)
             print(
                 f"Saved {prof} profile latency visualization to {output_path_lat_prof}"
@@ -810,7 +834,7 @@ def main():
         df_iops = df_iops.set_index("label")
 
     for metric in ["read", "write"]:
-        fig = plt.figure(figsize=(5.59, 4.0))
+        fig = plt.figure(figsize=(5.59, 3.5))
         ax = plt.gca()
         has_data = (
             not df_iops.empty
@@ -833,15 +857,13 @@ def main():
                         (p.get_x() + p.get_width() / 2.0, height),
                         ha="center",
                         va="bottom",
-                        fontsize=9,
                         xytext=(0, 2),
                         textcoords="offset points",
                     )
-            plt.title(f"Client {metric.capitalize()} IOPS Comparison")
         else:
             plt.title(f"Client {metric.capitalize()} IOPS Comparison (No Data)")
 
-        plt.xlabel("Scenarios")
+        plt.xlabel("Cases")
         plt.ylabel("IOPS")
         plt.grid(True, axis="y")
 
@@ -853,6 +875,7 @@ def main():
 
         output_path_iops = os.path.join(output_dir, f"{metric}_iops_comparison.svg")
         plt.savefig(output_path_iops)
+        plt.savefig(output_path_iops.replace(".svg", ".pgf"))
         fix_svg_latex_escapes(output_path_iops)
         print(f"Saved IOPS visualization to {output_path_iops}")
         plt.close()
@@ -872,7 +895,7 @@ def main():
             stats = run.get_iops_stats()
             if not stats:
                 continue
-            stats["label"] = f"N={r['n']}"
+            stats["label"] = str(r["n"])
             iops_data_prof.append(stats)
 
         df_iops = pd.DataFrame(iops_data_prof) if iops_data_prof else pd.DataFrame()
@@ -880,7 +903,7 @@ def main():
             df_iops = df_iops.set_index("label")
 
         for metric in ["read", "write"]:
-            fig = plt.figure(figsize=(5.59, 4.0))
+            fig = plt.figure(figsize=(5.59, 3.5))
             ax = plt.gca()
             has_data = (
                 not df_iops.empty
@@ -903,17 +926,20 @@ def main():
                             (p.get_x() + p.get_width() / 2.0, height),
                             ha="center",
                             va="bottom",
-                            fontsize=9,
                             xytext=(0, 2),
                             textcoords="offset points",
                         )
-                plt.title(f"Client {metric.capitalize()} IOPS Comparison ({prof})")
-            else:
+                display_prof = prof.replace("_", r"\_")
                 plt.title(
-                    f"Client {metric.capitalize()} IOPS Comparison ({prof}) (No Data)"
+                    rf"Client {metric.capitalize()} IOPS Comparison (\texttt{{{display_prof}}})"
+                )
+            else:
+                display_prof = prof.replace("_", r"\_")
+                plt.title(
+                    rf"Client {metric.capitalize()} IOPS Comparison (\texttt{{{display_prof}}}) (No Data)"
                 )
 
-            plt.xlabel("Scale (N)")
+            plt.xlabel("Batch Size ($N$)")
             plt.ylabel("IOPS")
             plt.grid(True, axis="y")
             plt.xticks(rotation=0, ha="center")
@@ -924,6 +950,7 @@ def main():
                 output_dir, f"{metric}_iops_comparison_{prof}_all_n.svg"
             )
             plt.savefig(output_path_iops_prof)
+            plt.savefig(output_path_iops_prof.replace(".svg", ".pgf"))
             fix_svg_latex_escapes(output_path_iops_prof)
             print(f"Saved {prof} profile IOPS visualization to {output_path_iops_prof}")
             plt.close()
