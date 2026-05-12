@@ -9,6 +9,18 @@ scenarios:
     - "small_cluster_clients_high_recovery_ops"
     - "small_cluster_clients_balanced"
     - "small_cluster_clients_high_client_ops"
+
+  "scenario_a_erratic":
+    - "erratic_no_client_high_recovery"
+    - sweep:
+        base: "erratic_no_client_high_recovery"
+        name_template: "erratic_clients_{profile}"
+        axes:
+          profile: ["balanced", "high_recovery_ops", "high_client_ops"]
+        overrides:
+          clients_num: 1
+          profile: "{profile}"
+
   
   "scenario_b":
     - "big_cluster_max_no_clients"
@@ -65,6 +77,31 @@ scenarios:
 
 
 cases:
+  "erratic_no_client_high_recovery":
+    template: "inputs/templates/cm_simple.j2"
+    osd_num: 4
+    pg_num: 32
+    profile: "high_recovery_ops"
+    "crush_spec_params":
+      - dc_shape: "1:3:1"
+        dc_weight: "14.0::"
+        dc_speed: "10:10:10"
+      - dc_shape: ["1:4:1"]
+        dc_weight: ["14.0::"]
+        dc_speed: ["10:10:10"]
+    clients_num: 0
+    client_read_queue_depth: 0
+    client_write_queue_depth: 64
+    client_op_size: 4096
+    client_read_bandwidth: 0
+    client_write_bandwidth: 0
+    disk_write_bandwidth: 209715200
+    iops: 30000
+    pg_objects: 100
+    object_size: 4194304
+    start_up_delay: 0
+    shut_down_delay: 0
+
   "small_cluster_no_clients_high_recovery":
     template: "inputs/templates/cm_simple.j2"
     osd_num: 4
