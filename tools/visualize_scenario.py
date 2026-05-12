@@ -552,6 +552,22 @@ def main():
         plt.savefig(output_path_rec)
         plt.savefig(output_path_rec.replace(".svg", ".pgf"))
         fix_svg_latex_escapes(output_path_rec)
+
+        # Save data to CSV
+        all_recovery_data = []
+        for series in recovery_series:
+            df = series["df"].copy()
+            df["label"] = series["label"]
+            all_recovery_data.append(
+                df[["label", "time", "backlog", "backfill", "backfill_wait"]]
+            )
+
+        if all_recovery_data:
+            recovery_df = pd.concat(all_recovery_data)
+            recovery_df.to_csv(
+                os.path.join(output_dir, "recovery_progress.csv"), index=False
+            )
+
         print(f"Saved recovery visualization to {output_path_rec}")
     else:
         print("No recovery data found, skipping recovery plot.")
